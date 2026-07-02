@@ -955,8 +955,9 @@ def test_s35_v2_para128_emitted_cols_stripped():
     cols = sp.find(f"{{{_W_NS}}}cols")
     assert cols is None, "para_128 sectPr must have w:cols stripped"
     type_el = sp.find(f"{{{_W_NS}}}type")
-    assert type_el is not None and type_el.get(f"{{{_W_NS}}}val") == "continuous", (
-        "para_128 sectPr must be type=continuous to avoid a page break"
+    assert type_el is None, (
+        "para_128 sectPr must preserve original type=absent (nextPage) — "
+        "_ensure_continuous was removed so lower sections start on the correct page"
     )
 
 

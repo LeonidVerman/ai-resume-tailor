@@ -683,7 +683,7 @@ def _clear_sdt_placeholder(p_elem) -> None:
         p_elem.remove(sdt_elem)
 
 
-def _set_para_text(p_elem, text: str) -> None:
+def _set_para_text(p_elem, text: str, *, normalize_runs: bool = False) -> None:
     """Set text on p_elem in-place, preserving all per-run formatting.
 
     Text is distributed across runs proportionally to their original character
@@ -696,6 +696,15 @@ def _set_para_text(p_elem, text: str) -> None:
     Note: w:br elements in the XML proto already provide in-paragraph line
     breaks.  Strip any '\\n' characters from *text* before distributing so
     that the line break is not written twice (once into w:t and once via w:br).
+
+    When *normalize_runs* is True the function collapses all content runs into
+    a single run (the first run that originally contained text) and writes the
+    full *text* there.  This eliminates run-fragmentation artifacts inherited
+    from PDF→DOCX conversion (partial bold, micro-font glyphs, mixed fonts)
+    for semantic paragraph types where uniform formatting is expected (e.g.
+    bullet points and body paragraphs).  Paragraph-level properties (indent,
+    spacing, numbering) are unaffected.  Whitespace-only structural spacer runs
+    and VML-embedded runs are preserved as-is.
     """
     # Preserve original text for multi-line distribution check (before stripping \n).
     _text_has_newlines = "\n" in text
@@ -989,7 +998,65 @@ def _set_para_text(p_elem, text: str) -> None:
         return  # all text is in VML boxes or structural spacers — nothing to write
 
     if total_orig == 0 or len(content_indices) == 1:
-        _set_run_text(all_runs[content_indices[0]], text)
+        _early_r = all_runs[content_indices[0]]
+        _set_run_text(_early_r, text)
+        if normalize_runs:
+            _early_rpr = _early_r.find(f"{{{_W}}}rPr")
+            if _early_rpr is not None:
+                _early_rf = _early_rpr.find(f"{{{_W}}}rFonts")
+                if _early_rf is not None and _early_rf.get(f"{{{_W}}}ascii", "") == "Arial Black":
+                    _early_rf.attrib.pop(f"{{{_W}}}ascii", None)
+                    _early_rf.attrib.pop(f"{{{_W}}}hAnsi", None)
+                    if not _early_rf.attrib:
+                        _early_rpr.remove(_early_rf)
+        return
+
+    if normalize_runs:
+        # Collapse fragmented runs to one: write full text into the first run
+        # that originally carried text characters.  Other content runs are left
+        # empty (already cleared above).  This removes inherited PDF→DOCX run
+        # artifacts (partial bold, micro-font glyphs, mixed fonts) for body
+        # paragraph types where uniform formatting is expected.
+        #
+        # Dominant run selection: majority-vote on rFonts (font family) by character
+        # count.  "First run with text" is wrong when the paragraph proto starts with
+        # a display-font run (e.g. "Senior Engineer" in Arial Black from a combined
+        # role-header + body paragraph).  The majority of body-text characters inherit
+        # no explicit rFonts, so the dominant run is the first one whose font family
+        # accounts for the most original characters.
+        _cands = [(ci, orig_lens[ci]) for ci in content_indices if orig_lens[ci] > 0]
+
+        def _run_font_ascii(r):
+            _rpr = r.find(f"{{{_W}}}rPr")
+            if _rpr is None:
+                return ""
+            _rf = _rpr.find(f"{{{_W}}}rFonts")
+            return _rf.get(f"{{{_W}}}ascii", "") if _rf is not None else ""
+
+        if _cands:
+            _font_votes: dict = {}
+            for _fci, _fchars in _cands:
+                _fkey = _run_font_ascii(all_runs[_fci])
+                _font_votes[_fkey] = _font_votes.get(_fkey, 0) + _fchars
+            _maj_font = max(_font_votes, key=_font_votes.__getitem__)
+            _dom_ci = next(
+                (ci for ci, _ in _cands if _run_font_ascii(all_runs[ci]) == _maj_font),
+                _cands[0][0],
+            )
+        else:
+            _dom_ci = content_indices[0]
+        _dom_r = all_runs[_dom_ci]
+        _set_run_text(_dom_r, text)
+        # Strip display fonts (e.g. Arial Black) that may be dominant when a
+        # combined role-header proto has more display-font chars than body chars.
+        _dom_rpr = _dom_r.find(f"{{{_W}}}rPr")
+        if _dom_rpr is not None:
+            _dom_rf = _dom_rpr.find(f"{{{_W}}}rFonts")
+            if _dom_rf is not None and _dom_rf.get(f"{{{_W}}}ascii", "") == "Arial Black":
+                _dom_rf.attrib.pop(f"{{{_W}}}ascii", None)
+                _dom_rf.attrib.pop(f"{{{_W}}}hAnsi", None)
+                if not _dom_rf.attrib:
+                    _dom_rpr.remove(_dom_rf)
         return
 
     # Tab-column overflow guard: when a paragraph uses pure-tab separator runs
@@ -1145,7 +1212,7 @@ def _render_para(pm: ParaModel, body, sectPr, preserve_section_break: bool = Fal
         _strip_last_rendered_page_breaks(clone)
         if not preserve_section_break:
             _strip_section_break(clone)
-        _set_para_text(clone, pm.text)
+        _set_para_text(clone, pm.text, normalize_runs=pm.semantic in ("bullet", "paragraph", "role_meta", "role_intro"))
         _clear_sdt_placeholder(clone)
     elif pm.paragraph_profile is not None:
         from tailor.compiler.para_builder import build_para_element
@@ -3563,6 +3630,41 @@ def _strip_column_bullet_drawings(tc_elem) -> None:
                 p_elem.insert(0, new_r)
 
 
+def _strip_decorative_inline_images(p_elem) -> None:
+    """Remove small wp:inline images from section-heading paragraphs.
+
+    PDF→DOCX conversion embeds decorative separator bars (thin horizontal rules,
+    ~22 mm wide × ~5 mm tall) as wp:inline drawings inside heading paragraphs.
+    In the original 2-column layout the narrow left column forced the image onto
+    its own line above the heading text.  In the single-column rendered layout
+    the image is inline on the same line as the text, producing "────Other skills"
+    with the bar visually merged into the heading.  Removing the drawing run
+    eliminates the corrupted separator; the heading renders cleanly without it.
+
+    Threshold: cy < 200 000 EMU (< ~16 mm tall) — decorative bars only; does not
+    affect full-page background images (cy in the millions of EMU).
+    """
+    _WP_INL = f"{{{_WP}}}inline"
+    _WP_EXT = f"{{{_WP}}}extent"
+    _DECOR_CY_MAX = 200_000
+    for r in list(p_elem.findall(f"{{{_W}}}r")):
+        drawing = r.find(f"{{{_W}}}drawing")
+        if drawing is None:
+            continue
+        inline = drawing.find(_WP_INL)
+        if inline is None:
+            continue
+        extent = inline.find(_WP_EXT)
+        if extent is None:
+            continue
+        try:
+            cy = int(extent.get("cy", "0"))
+        except (ValueError, TypeError):
+            continue
+        if cy < _DECOR_CY_MAX:
+            p_elem.remove(r)
+
+
 def _is_docx_section_header_left_layout(doc, left_blocks) -> bool:
     """Return True when the left column contains ONLY section-heading + spacer blocks.
 
@@ -4004,7 +4106,7 @@ def _render_block_into_elem(
             and _pPr_proto.find(f"{{{_W}}}rPr/{{{_W}}}b") is not None
         )
         _strip_text_wrapping_breaks(elem, _render_text)
-        _set_para_text(elem, _render_text)
+        _set_para_text(elem, _render_text, normalize_runs=pm.semantic in ("bullet", "paragraph", "role_meta", "role_intro"))
         _clear_sdt_placeholder(elem)
         # Cap oversized font when:
         #   (a) _ext_ blocks cloned from large-font heading protos (original guard), OR
@@ -4205,6 +4307,8 @@ def _render_block_into_elem(
                         del _ind.attrib[f"{{{_W}}}left"]
                         if not _ind.attrib:
                             _pPr.remove(_ind)
+        if pm.semantic == "section_heading":
+            _strip_decorative_inline_images(elem)
     _collapse_oversized_spacer(elem)
     return elem
 
@@ -6306,11 +6410,13 @@ def _render_from_layout_blocks(
                         _cols_strip = _sp_strip.find(f"{{{_W}}}cols")
                         if _cols_strip is not None:
                             _sp_strip.remove(_cols_strip)
-                        # Ensure the stripped sectPr creates a continuous break so
-                        # the top=860 margin applies without forcing a new page.
-                        _ensure_continuous(_sp_strip)
+                        # Preserve original sectPr type (e.g. absent = nextPage for
+                        # para_128 in S35) so the page geometry of lower sections
+                        # (Education/Skills/Projects) matches the original template.
+                        # _ensure_continuous was previously called here but caused
+                        # those sections to appear shifted upward vs original.
                     _log.debug(
-                        "TIMELINE_V2_COLS_STRIPPED: para_id=%r emitted without w:cols (continuous)",
+                        "TIMELINE_V2_COLS_STRIPPED: para_id=%r emitted without w:cols",
                         block.para_id,
                     )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
@@ -6362,7 +6468,7 @@ def _render_from_layout_blocks(
                         and _pPr_proto_lb.find(f"{{{_W}}}rPr/{{{_W}}}b") is not None
                     )
                     _strip_text_wrapping_breaks(elem, _render_text_lb)
-                    _set_para_text(elem, _render_text_lb)
+                    _set_para_text(elem, _render_text_lb, normalize_runs=pm.semantic in ("bullet", "paragraph", "role_meta", "role_intro"))
                     _clear_sdt_placeholder(elem)
                     # Reuse the expanded font-cap logic from _render_block_into_elem.
                     # The check covers both _ext_ blocks and any block where the XML
@@ -6530,6 +6636,8 @@ def _render_from_layout_blocks(
                             for _t_sb_lb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
                                 if _rPr_sb_lb.find(_t_sb_lb) is None:
                                     etree.SubElement(_rPr_sb_lb, _t_sb_lb)
+                    if pm.semantic == "section_heading":
+                        _strip_decorative_inline_images(elem)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
                 else:
                     if block.para_id:
