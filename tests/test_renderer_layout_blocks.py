@@ -1065,38 +1065,38 @@ class TestSetParaTextNormalizeRuns:
             for r in elem.findall(f"{{{_W}}}r")
         ]
 
-    def test_collapses_three_runs_to_dominant(self):
-        """With normalize_runs=True, full text goes to the first text-bearing run."""
+    def test_no_arial_black_uses_proportional_distribution(self):
+        """Without Arial Black contamination, normalize_runs falls through to proportional.
+
+        normalize_runs only collapses runs when display-font (Arial Black) contamination
+        is detected.  Paragraphs without it keep the standard proportional distribution,
+        preserving intentional run-level formatting (bold keywords, italic terms).
+        """
         runs = [
-            {"text": "Led a"},
-            {"text": " tech-debt"},
-            {"text": " initiative"},
+            {"text": "Led a"},       # 5 chars
+            {"text": " tech-debt"},  # 10 chars
+            {"text": " initiative"}, # 11 chars — total 26
         ]
         elem = self._call(runs, "Led a tech-debt initiative", normalize_runs=True)
         texts = self._run_texts(elem)
-        assert texts[0] == "Led a tech-debt initiative", (
-            "First (dominant) run must receive the full rewritten text"
-        )
-        assert texts[1] == "", "Second run must be cleared in normalize_runs mode"
-        assert texts[2] == "", "Third run must be cleared in normalize_runs mode"
+        # No Arial Black → proportional distribution (same total length = same split)
+        assert texts[0] == "Led a", "First run keeps proportional share (no collapse)"
+        assert texts[1] == " tech-debt", "Second run keeps proportional share"
+        assert texts[2] == " initiative", "Third run keeps proportional share"
 
-    def test_dominant_is_first_run_with_original_text(self):
-        """Dominant run is the first run that originally had characters, not a tab run."""
-        # Simulate: run0 has no text (tab-only), run1 is the first content run.
-        # _make_para_xml always sets w:t, so we test with a zero-length-text run
-        # by using an empty string — orig_lens[0] == 0 → skip to run1.
+    def test_no_arial_black_empty_lead_run_stays_empty(self):
+        """Without Arial Black, proportional distribution leaves the empty lead run empty."""
         runs = [
-            {"text": ""},        # tab/empty run — orig_lens = 0
-            {"text": "First content here"},
-            {"text": " more text"},
+            {"text": ""},                   # empty — proportional share = 0
+            {"text": "First content here"}, # 18 chars
+            {"text": " more text"},         # 10 chars
         ]
         elem = self._call(runs, "First content here more text", normalize_runs=True)
         texts = self._run_texts(elem)
-        assert texts[1] == "First content here more text", (
-            "Dominant run must be run1 (first with orig_lens > 0); run0 was empty"
-        )
-        assert texts[0] == "", "Empty placeholder run must stay empty"
-        assert texts[2] == "", "Third run must be cleared"
+        # Proportional: run0 has orig_len=0 so gets 0/28 chars; run1 and run2 split the rest
+        assert texts[0] == "", "Empty lead run stays empty in proportional distribution"
+        assert texts[1] == "First content here", "run1 gets proportional 18/28 chars"
+        assert texts[2] == " more text", "run2 gets proportional 10/28 chars"
 
     def test_false_uses_proportional_distribution(self):
         """normalize_runs=False (default) keeps proportional distribution intact."""
@@ -1173,16 +1173,19 @@ class TestSetParaTextNormalizeRuns:
         )
         assert texts[2] == "", "Third run must be cleared"
 
-    def test_majority_vote_uses_dominant_font_when_all_same(self):
-        """When all runs share the same font, the first run with chars is dominant."""
+    def test_uniform_non_display_font_uses_proportional(self):
+        """Uniform non-display font (e.g. Palatino) → no collapse, proportional distribution."""
         runs = [
-            {"text": "Aaa", "rfonts": "Palatino"},
-            {"text": "Bbb Bbb", "rfonts": "Palatino"},
+            {"text": "Aaa", "rfonts": "Palatino"},     # 3 chars
+            {"text": "Bbb Bbb", "rfonts": "Palatino"}, # 7 chars — total 10
         ]
+        # new text 11 chars; proportional: 3/10*11=3 → "Aaa", 7/10*11=8 → " Bbb Bbb"
         elem = self._call(runs, "Aaa Bbb Bbb", normalize_runs=True)
         texts = self._run_texts(elem)
-        assert texts[0] == "Aaa Bbb Bbb", "First run gets all text when font is uniform"
-        assert texts[1] == ""
+        # Palatino is not Arial Black → no collapse → proportional distribution
+        assert texts[0] != "", "First run still receives text proportionally"
+        assert texts[1] != "", "Second run still receives text proportionally"
+        assert len(texts[0]) + len(texts[1]) == len("Aaa Bbb Bbb"), "Total text preserved"
 
     def test_single_run_arial_black_stripped_in_early_exit(self):
         """Single Arial Black run (ext-bullet proto from role header) gets font stripped.

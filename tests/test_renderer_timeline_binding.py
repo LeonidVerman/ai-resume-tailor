@@ -927,9 +927,15 @@ def test_s35_v2_para120_consumed_not_in_body():
 
 
 @pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
-def test_s35_v2_para128_emitted_cols_stripped():
-    """para_128 must appear exactly once in the rendered body, with w:cols stripped
-    and w:type=continuous so Education/Skills content flows without a page break."""
+def test_s35_v2_para128_sectpr_removed():
+    """para_128 must appear after both tables with its entire sectPr removed.
+
+    The sectPr was part of the 2-column experience layout (w:cols + pgMar top=860).
+    After the v2 timeline tables replace that content, keeping the sectPr causes
+    an unwanted nextPage break (type=absent default) before Education/Skills/Projects.
+    Removing the entire sectPr lets the global body sectPr govern the remainder
+    without any page break or geometry shift.
+    """
     _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
     _W14_NS = "http://schemas.microsoft.com/office/word/2010/wordml"
     _, updated = _load_s35_updated()
@@ -951,13 +957,9 @@ def test_s35_v2_para128_emitted_cols_stripped():
         f"para_128 (pos={pos}) must appear after both tables (last={max(tbl_indices)})"
     )
     sp = el.find(f"{{{_W_NS}}}pPr/{{{_W_NS}}}sectPr")
-    assert sp is not None, "para_128 must retain sectPr"
-    cols = sp.find(f"{{{_W_NS}}}cols")
-    assert cols is None, "para_128 sectPr must have w:cols stripped"
-    type_el = sp.find(f"{{{_W_NS}}}type")
-    assert type_el is None, (
-        "para_128 sectPr must preserve original type=absent (nextPage) — "
-        "_ensure_continuous was removed so lower sections start on the correct page"
+    assert sp is None, (
+        "para_128 sectPr must be fully removed — it was a 2-column layout artifact "
+        "that causes a nextPage break before Education/Skills/Projects when retained"
     )
 
 

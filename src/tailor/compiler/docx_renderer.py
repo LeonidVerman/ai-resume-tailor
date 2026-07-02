@@ -1012,19 +1012,18 @@ def _set_para_text(p_elem, text: str, *, normalize_runs: bool = False) -> None:
         return
 
     if normalize_runs:
-        # Collapse fragmented runs to one: write full text into the first run
-        # that originally carried text characters.  Other content runs are left
-        # empty (already cleared above).  This removes inherited PDF→DOCX run
-        # artifacts (partial bold, micro-font glyphs, mixed fonts) for body
-        # paragraph types where uniform formatting is expected.
+        # Conditional run collapse: only activate when Arial Black display-font
+        # contamination is detected in the paragraph's content runs.
+        # Paragraphs without display-font mixing fall through to proportional
+        # distribution, preserving intentional emphasis (bold keywords, italic
+        # terms, deliberate font variation).
         #
-        # Dominant run selection: majority-vote on rFonts (font family) by character
-        # count.  "First run with text" is wrong when the paragraph proto starts with
-        # a display-font run (e.g. "Senior Engineer" in Arial Black from a combined
-        # role-header + body paragraph).  The majority of body-text characters inherit
-        # no explicit rFonts, so the dominant run is the first one whose font family
-        # accounts for the most original characters.
-        _cands = [(ci, orig_lens[ci]) for ci in content_indices if orig_lens[ci] > 0]
+        # When Arial Black IS detected, collapse all content runs to a single
+        # dominant run chosen by majority-vote on rFonts by character count,
+        # then strip Arial Black from that run so the text renders in the body
+        # font.  This eliminates the PDF→DOCX proto artifact where a combined
+        # role-header paragraph (Arial Black "Senior Engineer" + body text) gets
+        # assigned to a bullet, making the entire bullet render in Arial Black.
 
         def _run_font_ascii(r):
             _rpr = r.find(f"{{{_W}}}rPr")
@@ -1033,31 +1032,34 @@ def _set_para_text(p_elem, text: str, *, normalize_runs: bool = False) -> None:
             _rf = _rpr.find(f"{{{_W}}}rFonts")
             return _rf.get(f"{{{_W}}}ascii", "") if _rf is not None else ""
 
-        if _cands:
-            _font_votes: dict = {}
-            for _fci, _fchars in _cands:
-                _fkey = _run_font_ascii(all_runs[_fci])
-                _font_votes[_fkey] = _font_votes.get(_fkey, 0) + _fchars
-            _maj_font = max(_font_votes, key=_font_votes.__getitem__)
-            _dom_ci = next(
-                (ci for ci, _ in _cands if _run_font_ascii(all_runs[ci]) == _maj_font),
-                _cands[0][0],
-            )
-        else:
-            _dom_ci = content_indices[0]
-        _dom_r = all_runs[_dom_ci]
-        _set_run_text(_dom_r, text)
-        # Strip display fonts (e.g. Arial Black) that may be dominant when a
-        # combined role-header proto has more display-font chars than body chars.
-        _dom_rpr = _dom_r.find(f"{{{_W}}}rPr")
-        if _dom_rpr is not None:
-            _dom_rf = _dom_rpr.find(f"{{{_W}}}rFonts")
-            if _dom_rf is not None and _dom_rf.get(f"{{{_W}}}ascii", "") == "Arial Black":
-                _dom_rf.attrib.pop(f"{{{_W}}}ascii", None)
-                _dom_rf.attrib.pop(f"{{{_W}}}hAnsi", None)
-                if not _dom_rf.attrib:
-                    _dom_rpr.remove(_dom_rf)
-        return
+        _cands = [(ci, orig_lens[ci]) for ci in content_indices if orig_lens[ci] > 0]
+        _has_display_font = any(_run_font_ascii(all_runs[ci]) == "Arial Black" for ci, _ in _cands)
+
+        if _has_display_font:
+            if _cands:
+                _font_votes: dict = {}
+                for _fci, _fchars in _cands:
+                    _fkey = _run_font_ascii(all_runs[_fci])
+                    _font_votes[_fkey] = _font_votes.get(_fkey, 0) + _fchars
+                _maj_font = max(_font_votes, key=_font_votes.__getitem__)
+                _dom_ci = next(
+                    (ci for ci, _ in _cands if _run_font_ascii(all_runs[ci]) == _maj_font),
+                    _cands[0][0],
+                )
+            else:
+                _dom_ci = content_indices[0]
+            _dom_r = all_runs[_dom_ci]
+            _set_run_text(_dom_r, text)
+            _dom_rpr = _dom_r.find(f"{{{_W}}}rPr")
+            if _dom_rpr is not None:
+                _dom_rf = _dom_rpr.find(f"{{{_W}}}rFonts")
+                if _dom_rf is not None and _dom_rf.get(f"{{{_W}}}ascii", "") == "Arial Black":
+                    _dom_rf.attrib.pop(f"{{{_W}}}ascii", None)
+                    _dom_rf.attrib.pop(f"{{{_W}}}hAnsi", None)
+                    if not _dom_rf.attrib:
+                        _dom_rpr.remove(_dom_rf)
+            return
+        # No Arial Black contamination — fall through to proportional distribution
 
     # Tab-column overflow guard: when a paragraph uses pure-tab separator runs
     # (no <w:t>, only <w:tab/>) as column dividers and the new text is significantly
@@ -5257,7 +5259,10 @@ def _build_synthetic_para(pm, pid: str):
         _strip_last_rendered_page_breaks(elem)
         _strip_column_break(elem)
         _strip_text_wrapping_breaks(elem, pm.text)
-        _set_para_text(elem, pm.text)
+        _set_para_text(
+            elem, pm.text,
+            normalize_runs=pm.semantic in ("bullet", "paragraph", "role_meta", "role_intro"),
+        )
         _clear_sdt_placeholder(elem)
     elif pm.paragraph_profile is not None:
         from tailor.compiler.para_builder import build_para_element
@@ -6399,24 +6404,26 @@ def _render_from_layout_blocks(
                 # flows as a plain paragraph above the table (not a column jump).
                 if _tl_v2_active and block.para_id == _tl_seg1_heading_pid:
                     _strip_column_break(elem)
-                # v2: strip only w:cols from non-consumed multi-col sectPr paras (e.g.
-                # para_128).  These are emitted normally to preserve their top-margin and
-                # section boundary for Education/Skills/Projects, but their w:cols must be
-                # removed so LibreOffice renders post-table content single-column.
+                # v2: normalize the sectPr on non-consumed multi-col boundary paras
+                # (e.g. para_128).  The sectPr was part of the 2-column architecture
+                # (w:cols + pgMar for the experience section).  After the synthetic
+                # timeline tables replace that content, the sectPr serves no purpose
+                # and must be removed:
+                #   - Keeping it with type=absent causes an unwanted nextPage break
+                #     before Education/Skills/Projects.
+                #   - Keeping it with type=continuous (old _ensure_continuous approach)
+                #     imposed the sectPr's pgMar (top=860) on post-table content,
+                #     causing geometry shifts in Education/Skills/Projects.
+                # Removing the entire sectPr lets the global body sectPr govern the
+                # remainder of the document without any page break.
                 if (_tl_v2_active and _tl_multicol_strip_pids
                         and block.para_id in _tl_multicol_strip_pids):
-                    _sp_strip = elem.find(f"{{{_W}}}pPr/{{{_W}}}sectPr")
+                    _pPr_strip = elem.find(f"{{{_W}}}pPr")
+                    _sp_strip = _pPr_strip.find(f"{{{_W}}}sectPr") if _pPr_strip is not None else None
                     if _sp_strip is not None:
-                        _cols_strip = _sp_strip.find(f"{{{_W}}}cols")
-                        if _cols_strip is not None:
-                            _sp_strip.remove(_cols_strip)
-                        # Preserve original sectPr type (e.g. absent = nextPage for
-                        # para_128 in S35) so the page geometry of lower sections
-                        # (Education/Skills/Projects) matches the original template.
-                        # _ensure_continuous was previously called here but caused
-                        # those sections to appear shifted upward vs original.
+                        _pPr_strip.remove(_sp_strip)
                     _log.debug(
-                        "TIMELINE_V2_COLS_STRIPPED: para_id=%r emitted without w:cols",
+                        "TIMELINE_V2_SECTPR_REMOVED: para_id=%r sectPr removed (was 2-col break)",
                         block.para_id,
                     )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
