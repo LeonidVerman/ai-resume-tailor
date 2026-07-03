@@ -1044,3 +1044,187 @@ class TestSetParaTextMicroKerning:
         assert self._run_sz(elem, 0) == 16, (
             "w:sz=16 (8pt) is above the artifact ceiling and must not be stripped"
         )
+
+
+class TestSetParaTextNormalizeRuns:
+    """Unit tests for the normalize_runs=True path in _set_para_text."""
+
+    def _call(self, runs: list[dict], new_text: str, normalize_runs: bool = True):
+        from lxml import etree
+        from tailor.compiler.docx_renderer import _set_para_text
+
+        xml = _make_para_xml(runs)
+        elem = etree.fromstring(xml.encode())
+        _set_para_text(elem, new_text, normalize_runs=normalize_runs)
+        return elem
+
+    def _run_texts(self, elem) -> list[str]:
+        """Return list of w:t text values for each w:r in the paragraph."""
+        return [
+            "".join(t.text or "" for t in r.findall(f"{{{_W}}}t"))
+            for r in elem.findall(f"{{{_W}}}r")
+        ]
+
+    def test_no_arial_black_uses_proportional_distribution(self):
+        """Without Arial Black contamination, normalize_runs falls through to proportional.
+
+        normalize_runs only collapses runs when display-font (Arial Black) contamination
+        is detected.  Paragraphs without it keep the standard proportional distribution,
+        preserving intentional run-level formatting (bold keywords, italic terms).
+        """
+        runs = [
+            {"text": "Led a"},       # 5 chars
+            {"text": " tech-debt"},  # 10 chars
+            {"text": " initiative"}, # 11 chars — total 26
+        ]
+        elem = self._call(runs, "Led a tech-debt initiative", normalize_runs=True)
+        texts = self._run_texts(elem)
+        # No Arial Black → proportional distribution (same total length = same split)
+        assert texts[0] == "Led a", "First run keeps proportional share (no collapse)"
+        assert texts[1] == " tech-debt", "Second run keeps proportional share"
+        assert texts[2] == " initiative", "Third run keeps proportional share"
+
+    def test_no_arial_black_empty_lead_run_stays_empty(self):
+        """Without Arial Black, proportional distribution leaves the empty lead run empty."""
+        runs = [
+            {"text": ""},                   # empty — proportional share = 0
+            {"text": "First content here"}, # 18 chars
+            {"text": " more text"},         # 10 chars
+        ]
+        elem = self._call(runs, "First content here more text", normalize_runs=True)
+        texts = self._run_texts(elem)
+        # Proportional: run0 has orig_len=0 so gets 0/28 chars; run1 and run2 split the rest
+        assert texts[0] == "", "Empty lead run stays empty in proportional distribution"
+        assert texts[1] == "First content here", "run1 gets proportional 18/28 chars"
+        assert texts[2] == " more text", "run2 gets proportional 10/28 chars"
+
+    def test_false_uses_proportional_distribution(self):
+        """normalize_runs=False (default) keeps proportional distribution intact."""
+        runs = [
+            {"text": "abc"},   # 3 chars
+            {"text": "defgh"}, # 5 chars — total 8
+        ]
+        # new text length 8: "12345678" → split 3+5 proportionally
+        elem = self._call(runs, "12345678", normalize_runs=False)
+        texts = self._run_texts(elem)
+        assert texts[0] == "123", "Proportional: first run gets 3/8 of text"
+        assert texts[1] == "45678", "Proportional: second run gets remaining 5/8"
+
+    def test_single_run_unaffected(self):
+        """Single-run paragraphs are handled by the existing early-exit path."""
+        runs = [{"text": "only run"}]
+        elem = self._call(runs, "new text here", normalize_runs=True)
+        texts = self._run_texts(elem)
+        assert texts[0] == "new text here"
+        assert len(texts) == 1
+
+    def test_bold_run_formatting_preserved_on_dominant(self):
+        """The dominant run's rPr (e.g. bold) is retained after normalization."""
+        runs = [
+            {"text": "bold content", "bold": True},
+            {"text": " normal suffix"},
+        ]
+        elem = self._call(runs, "bold content normal suffix", normalize_runs=True)
+        r0 = elem.findall(f"{{{_W}}}r")[0]
+        rpr = r0.find(f"{{{_W}}}rPr")
+        assert rpr is not None and rpr.find(f"{{{_W}}}b") is not None, (
+            "Bold from the dominant run's rPr must survive normalization"
+        )
+
+    def test_artifact_bold_on_non_dominant_not_applied(self):
+        """Formatting from collapsed (non-dominant) runs does not carry over."""
+        runs = [
+            {"text": "normal first run"},
+            {"text": " bold artifact", "bold": True},
+        ]
+        elem = self._call(runs, "normal first run bold artifact", normalize_runs=True)
+        r0 = elem.findall(f"{{{_W}}}r")[0]
+        rpr = r0.find(f"{{{_W}}}rPr")
+        has_bold = rpr is not None and rpr.find(f"{{{_W}}}b") is not None
+        assert not has_bold, (
+            "Bold from a non-dominant (collapsed) run must not appear on the dominant run"
+        )
+
+    def test_majority_vote_skips_minority_display_font_run(self):
+        """Dominant run is the first run with the MAJORITY font, not the first run.
+
+        S35 'Led a partner migration' scenario: the paragraph proto starts with
+        an Arial Black role-title run (few chars) followed by many body-text runs
+        with no explicit font.  The majority font is '' (no rFonts), so the dominant
+        run is the first run WITHOUT Arial Black — not the first run overall.
+        """
+        runs = [
+            {"text": "Senior Engineer", "rfonts": "Arial Black"},   # 15 chars, display font
+            {"text": ", "},                                           # 2 chars, no font
+            {"text": "body text that is much longer than the header"},  # 46 chars, no font
+        ]
+        elem = self._call(
+            runs,
+            "Led a partner migration initiative for MoneyGram",
+            normalize_runs=True,
+        )
+        texts = self._run_texts(elem)
+        assert texts[0] == "", (
+            "Arial Black run (minority font by char count) must be cleared, "
+            "not chosen as dominant"
+        )
+        assert texts[1] == "Led a partner migration initiative for MoneyGram", (
+            "First run without explicit rFonts (majority font) must receive full text"
+        )
+        assert texts[2] == "", "Third run must be cleared"
+
+    def test_uniform_non_display_font_uses_proportional(self):
+        """Uniform non-display font (e.g. Palatino) → no collapse, proportional distribution."""
+        runs = [
+            {"text": "Aaa", "rfonts": "Palatino"},     # 3 chars
+            {"text": "Bbb Bbb", "rfonts": "Palatino"}, # 7 chars — total 10
+        ]
+        # new text 11 chars; proportional: 3/10*11=3 → "Aaa", 7/10*11=8 → " Bbb Bbb"
+        elem = self._call(runs, "Aaa Bbb Bbb", normalize_runs=True)
+        texts = self._run_texts(elem)
+        # Palatino is not Arial Black → no collapse → proportional distribution
+        assert texts[0] != "", "First run still receives text proportionally"
+        assert texts[1] != "", "Second run still receives text proportionally"
+        assert len(texts[0]) + len(texts[1]) == len("Aaa Bbb Bbb"), "Total text preserved"
+
+    def test_single_run_arial_black_stripped_in_early_exit(self):
+        """Single Arial Black run (ext-bullet proto from role header) gets font stripped.
+
+        S35 _ext_* bullet scenario: the parser assigns a role-header paragraph as the
+        proto for extension bullets.  That proto has exactly one run in Arial Black.
+        The early-exit path (len(content_indices)==1) must also strip Arial Black when
+        normalize_runs=True, otherwise the entire bullet body renders in display font.
+        """
+        runs = [{"text": "Software Engineer", "rfonts": "Arial Black"}]
+        elem = self._call(runs, "Maintained 3 core currencies", normalize_runs=True)
+        r0 = elem.findall(f"{{{_W}}}r")[0]
+        rpr = r0.find(f"{{{_W}}}rPr")
+        rf = rpr.find(f"{{{_W}}}rFonts") if rpr is not None else None
+        font = rf.get(f"{{{_W}}}ascii", "") if rf is not None else ""
+        assert font != "Arial Black", (
+            "Arial Black must be stripped from single-run proto when normalize_runs=True"
+        )
+        texts = self._run_texts(elem)
+        assert texts[0] == "Maintained 3 core currencies"
+
+    def test_majority_vote_all_arial_black_stripped(self):
+        """When all runs have Arial Black (role header proto), the dominant run is stripped.
+
+        Handles the case where a bullet paragraph's proto is a pure role-header paragraph
+        (all runs in Arial Black).  The majority-vote selects Arial Black as dominant,
+        but it must then be stripped so the body text renders in the default body font.
+        """
+        runs = [
+            {"text": "Senior Engineer", "rfonts": "Arial Black"},
+            {"text": " | March 2025", "rfonts": "Arial Black"},
+        ]
+        elem = self._call(runs, "Led the platform migration", normalize_runs=True)
+        texts = self._run_texts(elem)
+        assert texts[0] == "Led the platform migration"
+        r0 = elem.findall(f"{{{_W}}}r")[0]
+        rpr = r0.find(f"{{{_W}}}rPr")
+        rf = rpr.find(f"{{{_W}}}rFonts") if rpr is not None else None
+        font = rf.get(f"{{{_W}}}ascii", "") if rf is not None else ""
+        assert font != "Arial Black", (
+            "Arial Black must be stripped from dominant run even when all runs use it"
+        )
