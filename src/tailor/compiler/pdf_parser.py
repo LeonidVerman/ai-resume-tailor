@@ -3139,6 +3139,60 @@ def _redistribute_parallel_body(
         target_sec.body_paras.append(pm)
 
 
+def _fix_sibling_section_body_attribution(sections: "list[ResumeSection]") -> None:
+    """Re-attribute body_paras among same-column sections at the same heading y.
+
+    When multiple right-column sections have headings at the same y position
+    (e.g. 'SKILLS' at x=49.8 and 'INTERESTS' at x=220.5 both at y=543.4),
+    _group_sections assigns ALL body_paras to the LAST sibling because sections
+    are opened sequentially in extraction order.  This function redistributes
+    body_paras to the sibling whose heading x is closest to each para's x.
+    Operates in-place.
+    """
+    if len(sections) < 2:
+        return
+
+    # Group sections by (column_id, bucketed_y) — only reshuffle within same col.
+    _y_groups: "dict" = {}
+    for _s in sections:
+        _pp = _s.heading.paragraph_profile
+        if _pp is None:
+            continue
+        _hy = _pp.y_top_pt or 0.0
+        _hcol = _pp.column_id or ""
+        _ykey = round(_hy / 5.0) * 5  # 5 pt bucket
+        _gkey = (_hcol, _ykey)
+        _y_groups.setdefault(_gkey, []).append(_s)
+
+    for _grp in _y_groups.values():
+        if len(_grp) < 2:
+            continue
+        _grp.sort(
+            key=lambda _s: (_s.heading.paragraph_profile.indent_left_pt or 0.0)
+            if _s.heading.paragraph_profile else 0.0
+        )
+        _hxs = [
+            (_s.heading.paragraph_profile.indent_left_pt or 0.0)
+            if _s.heading.paragraph_profile else 0.0
+            for _s in _grp
+        ]
+        # Collect ALL body_paras, then redistribute by x-proximity to heading x.
+        _all_body: "list" = []
+        for _s in _grp:
+            _all_body.extend(_s.body_paras)
+            _s.body_paras = []
+        for _pm in _all_body:
+            _px = (_pm.paragraph_profile.indent_left_pt or 0.0) if _pm.paragraph_profile else 0.0
+            _best_idx = 0
+            _best_dist = abs(_px - _hxs[0])
+            for _i, _hx in enumerate(_hxs[1:], 1):
+                _d = abs(_px - _hx)
+                if _d < _best_dist:
+                    _best_dist = _d
+                    _best_idx = _i
+            _grp[_best_idx].body_paras.append(_pm)
+
+
 def _group_sections(
     paras: list[ParaModel],
 ) -> tuple[list[ParaModel], list[ResumeSection]]:
@@ -3663,6 +3717,11 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
             # significantly above their section heading's y and re-associate
             # them with the contextual left-column section.
             _rescue_cross_col_paras(left_secs, right_secs)
+            # Sibling-section body attribution: multiple sections in the same column
+            # at the same heading y (e.g. SKILLS and INTERESTS both at y=543) cause
+            # _group_sections to place ALL body_paras under the last sibling.  Fix by
+            # redistributing body_paras to the sibling with the closest heading x.
+            _fix_sibling_section_body_attribution(right_secs)
             # Parallel-body redistribution: when the right column has no
             # section headings (parallel-body layout where labels appear only
             # on the left), redistribute right-column paragraphs into the left
