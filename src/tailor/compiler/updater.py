@@ -2197,6 +2197,47 @@ def _rebuild_roles_from_classification(
             role_id_stable=header_para.para_id or header_para.text.strip(),
         ))
 
+    # Fallback: classification sometimes emits roles with empty body_blocks
+    # (or para_ids that don't resolve).  Without bullet slots,
+    # _update_experience_date_first has no targets and silently drops all
+    # LLM content for the role while template description/placeholder
+    # paragraphs survive verbatim (samples 6/7).  Claim the unclaimed
+    # bullet/paragraph body paras between this role's resolved paras and
+    # the next claimed para as the role's bullet slots.
+    if any(not r.bullets for r in roles):
+        pos_by_id = {id(p): i for i, p in enumerate(section.body_paras)}
+        claimed: set[int] = set()
+        for r in roles:
+            for p in [r.header, *r.meta_lines, *r.bullets]:
+                idx = pos_by_id.get(id(p))
+                if idx is not None:
+                    claimed.add(idx)
+        for r in roles:
+            if r.bullets:
+                continue
+            own = [
+                i for i in (pos_by_id.get(id(p)) for p in [r.header, *r.meta_lines])
+                if i is not None
+            ]
+            if not own:
+                continue
+            start = max(own) + 1
+            later_claimed = [i for i in claimed if i >= start]
+            end = min(later_claimed) if later_claimed else len(section.body_paras)
+            span = [
+                p for p in section.body_paras[start:end]
+                if p.text.strip() and p.semantic in ("bullet", "paragraph")
+            ]
+            if span:
+                r.bullets = span
+                claimed.update(pos_by_id[id(p)] for p in span)
+                _log.debug(
+                    "cls-rebuild: role %r has no body_blocks — claimed %d "
+                    "span para(s) as bullet slots (%s)",
+                    r.role_id, len(span),
+                    ", ".join(p.para_id or "?" for p in span),
+                )
+
     _log.debug(
         "cls-rebuild: section %r → %d roles from classification "
         "(cls_roles=%d, body_paras=%d)",
@@ -2336,6 +2377,9 @@ def _update_experience_date_first(
         "add your experience",
         "describe your experience",
     )
+    # Contact info (phone/email/url) sometimes lands inside a role's body span
+    # in scrambled templates (sample 25 footer line).  Never blank it.
+    _contact_line_re = re.compile(r"@|\d{3,}|https?://|www\.", re.IGNORECASE)
 
     # Mutate bullet text in-place (the ParaModel objects are shared with body_paras).
     # When the template has no bullet-semantic paragraphs for a role (e.g. only a
@@ -2343,6 +2387,27 @@ def _update_experience_date_first(
     # header_extra paragraphs so LLM content is still injected.
     # _extra_injections: anchor_para_id → [extra ParaModel, ...]
     _extra_injections: "dict[str, list[ParaModel]]" = {}
+    # Header/meta paras of ALL rebuilt roles must never be blanked as surplus
+    # slots: a mega-role split can leave the next role's company line inside
+    # the previous role's bullet list.
+    _body_pos = {id(p): i for i, p in enumerate(orig.body_paras)}
+    _protected_pids = {
+        p.para_id
+        for r in rebuilt_roles
+        for p in [r.header, *r.header_extra, *r.meta_lines]
+        if p is not None and p.para_id
+    }
+    # Company-line guard: classification sometimes misassigns the NEXT role's
+    # company line into the previous role's body_blocks (sample 36 para_124
+    # 'GlobalLogic – Krakow, Poland' inside the T-Systems role).  A surplus
+    # slot whose text shares company tokens with any role header must never
+    # be blanked — losing a company line is worse than keeping a stale one.
+    _company_guard_tokens: set[str] = set()
+    for _lr in llm_roles:
+        _company_guard_tokens |= _extract_company_tokens(_lr.header)
+    for _rr in rebuilt_roles:
+        if _rr.header is not None:
+            _company_guard_tokens |= _extract_company_tokens(_rr.header.text)
     for ir_idx, ir_role in enumerate(rebuilt_roles):
         llm_idx = match_map[ir_idx]
         if llm_idx is None:
@@ -2386,6 +2451,37 @@ def _update_experience_date_first(
                     orig.title, ir_role.role_id, first[:60],
                 )
         targets = ir_role.bullets if ir_role.bullets else ir_role.header_extra
+        if not targets:
+            if llm_bullets:
+                # No template slot exists for this role (classification gave
+                # it no body_blocks and no span paras could be claimed).
+                # Anchor all LLM bullets as extra paragraphs after the role's
+                # last header/meta para so the content is not silently dropped.
+                _role_paras = sorted(
+                    (
+                        p for p in [ir_role.header, *ir_role.meta_lines]
+                        if p is not None and p.para_id
+                    ),
+                    key=lambda p: _body_pos.get(id(p), -1),
+                )
+                if _role_paras:
+                    anchor = _role_paras[-1]
+                    for extra_text in llm_bullets:
+                        _extra_injections.setdefault(anchor.para_id, []).append(
+                            anchor.clone_as(extra_text, "bullet")
+                        )
+                    _log.debug(
+                        "date-first: role %r has no bullet slots — %d LLM "
+                        "bullet(s) anchored as extras at %r",
+                        ir_role.role_id, len(llm_bullets), anchor.para_id,
+                    )
+                else:
+                    _log.debug(
+                        "EXPERIENCE_BULLETS_DROPPED_NO_ANCHOR: role %r — "
+                        "%d LLM bullet(s) lost (no para_id anchor)",
+                        ir_role.role_id, len(llm_bullets),
+                    )
+            continue
         for i, bullet_para in enumerate(targets):
             if i < len(llm_bullets):
                 _log.debug(
@@ -2395,6 +2491,20 @@ def _update_experience_date_first(
                     llm_bullets[i][:40],
                 )
                 bullet_para.text = llm_bullets[i]
+            elif (
+                llm_bullets
+                and bullet_para.para_id not in _protected_pids
+                and not (_extract_company_tokens(bullet_para.text) & _company_guard_tokens)
+                and not _contact_line_re.search(bullet_para.text)
+            ):
+                # Surplus template slot beyond the LLM bullet count: blank it
+                # so stale template content does not render alongside the
+                # injected bullets (sample 36: sub-project lines).
+                _log.debug(
+                    "date-first: surplus slot %r blanked  (%r)",
+                    bullet_para.para_id, bullet_para.text[:40],
+                )
+                bullet_para.text = ""
 
         # Extra LLM bullets beyond the template's existing slots.
         # Clone from the last target paragraph; leave para_id="" — the injection
