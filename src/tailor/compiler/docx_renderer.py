@@ -549,7 +549,7 @@ def _clear_sdt_placeholder(p_elem) -> None:
         p_elem.remove(sdt_elem)
 
 
-def _set_para_text(p_elem, text: str) -> None:
+def _set_para_text(p_elem, text: str) -> bool:
     """Set text on p_elem in-place, preserving all per-run formatting.
 
     Text is distributed across runs proportionally to their original character
@@ -559,6 +559,10 @@ def _set_para_text(p_elem, text: str) -> None:
 
     If no runs exist a minimal w:r/w:t structure is created.
 
+    Returns True when the paragraph text was written, False when the paragraph
+    was intentionally preserved unchanged (multi-column SDT row whose text did
+    not change).
+
     Note: w:br elements in the XML proto already provide in-paragraph line
     breaks.  Strip any '\\n' characters from *text* before distributing so
     that the line break is not written twice (once into w:t and once via w:br).
@@ -567,16 +571,24 @@ def _set_para_text(p_elem, text: str) -> None:
     _text_has_newlines = "\n" in text
     # w:br elements provide the line break; avoid doubling by stripping \n from text.
     text = text.replace("\n", "")
-    # Early-exit for multi-SDT paragraphs: when a paragraph has two or more
-    # direct w:sdt children, those SDTs form a structured multi-column layout
-    # (e.g. sample 7 "email TAB phone TAB LinkedIn" contact row).  Distributing
-    # new text across the SDT runs collapses all columns into a single run and
-    # destroys the tab-stop-based horizontal spread.  Skip text update entirely;
-    # _clear_sdt_placeholder will flatten each SDT to its original runs,
-    # preserving the original text and tab structure.
+    # Multi-SDT paragraphs: two or more direct w:sdt children form a structured
+    # multi-column layout (e.g. sample 7 "email TAB phone TAB LinkedIn" contact
+    # row).  Distributing new text across the SDT runs collapses all columns
+    # into a single run and destroys the tab-stop-based horizontal spread, so
+    # when the text is unchanged the paragraph is preserved as-is and
+    # _clear_sdt_placeholder flattens each SDT to its original runs.  When the
+    # text genuinely differs the updater injected new content into this slot;
+    # the column layout is stale for that text, so strip the content children
+    # (same as the _ext_-slot handling in the layout-block renderers) and write
+    # the new text into a fresh simple run instead of silently dropping it.
     _sdt_count = sum(1 for child in p_elem if child.tag == f"{{{_W}}}sdt")
     if _sdt_count >= 2:
-        return  # multi-column SDT row — preserve structure unchanged
+        _current = "".join(t.text or "" for t in p_elem.iter(f"{{{_W}}}t"))
+        if "".join(text.split()) == "".join(_current.split()):
+            return False  # multi-column SDT row unchanged — preserve structure
+        for _child in list(p_elem):
+            if _child.tag != f"{{{_W}}}pPr":
+                p_elem.remove(_child)
     all_runs: list = []
     for child in p_elem:
         tag = child.tag
@@ -603,7 +615,7 @@ def _set_para_text(p_elem, text: str) -> None:
         t.text = text
         if text and (text[0] == " " or text[-1] == " "):
             t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
-        return
+        return True
 
     # Collect original text length of each run (used for proportional split).
     # Two kinds of runs are excluded from content distribution:
@@ -698,11 +710,11 @@ def _set_para_text(p_elem, text: str) -> None:
     content_indices = [i for i in range(len(all_runs)) if i not in ws_text and i not in vml_indices]
 
     if not content_indices:
-        return  # all text is in VML boxes or structural spacers — nothing to write
+        return True  # all text is in VML boxes or structural spacers — nothing to write
 
     if total_orig == 0 or len(content_indices) == 1:
         _set_run_text(all_runs[content_indices[0]], text)
-        return
+        return True
 
     # Tab-column overflow guard: when a paragraph uses pure-tab separator runs
     # (no <w:t>, only <w:tab/>) as column dividers and the new text is significantly
@@ -722,7 +734,7 @@ def _set_para_text(p_elem, text: str) -> None:
         _set_run_text(all_runs[_first_ci], text)
         for ci in content_indices[1:]:
             _set_run_text(all_runs[ci], "")
-        return
+        return True
 
     # Tab-split label fix: when the paragraph has pure-tab separator runs (column
     # dividers) and the new text contains no tab characters, place ALL text in the
@@ -744,7 +756,7 @@ def _set_para_text(p_elem, text: str) -> None:
                     _set_run_text(all_runs[ci], _post_tab_preserve[ci])
                 else:
                     _set_run_text(all_runs[ci], "")
-            return
+            return True
 
     # Multi-line paragraph distribution: when the original text had \n (line breaks
     # correspond to <w:br type="textWrapping"/> elements) and the paragraph still
@@ -805,7 +817,7 @@ def _set_para_text(p_elem, text: str) -> None:
                     _set_run_text(all_runs[_grp[0]], _seg)
                     for _ci in _grp[1:]:
                         _set_run_text(all_runs[_ci], "")
-                return
+                return True
 
     # Distribute new text proportionally across content runs only.
     last_ci = content_indices[-1]
@@ -837,6 +849,7 @@ def _set_para_text(p_elem, text: str) -> None:
         if has_text_content:
             for tab in list(r.findall(f"{{{_W}}}tab")):
                 r.remove(tab)
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -4520,7 +4533,7 @@ def _render_from_layout_blocks(
                     if pm.semantic == "role_meta" and "\n" in pm.text:
                         _render_text_lb = pm.text.split("\n")[0]
                     _strip_text_wrapping_breaks(elem, _render_text_lb)
-                    _set_para_text(elem, _render_text_lb)
+                    _text_written_lb = _set_para_text(elem, _render_text_lb)
                     _clear_sdt_placeholder(elem)
                     # Reuse the expanded font-cap logic from _render_block_into_elem.
                     # The check covers both _ext_ blocks and any block where the XML
@@ -4612,7 +4625,13 @@ def _render_from_layout_blocks(
                                 }
                                 if _fn_lb and _fn_lb.issubset(_DISPLAY_FONTS_LB):
                                     _rPr_sym_lb.remove(_rFonts_sym_lb)
-                    _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
+                    if _text_written_lb:
+                        _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
+                    else:
+                        _log.debug(
+                            "PARAGRAPH_BLOCK_PRESERVED_MULTI_SDT: para_id=%r",
+                            block.para_id,
+                        )
                 else:
                     if block.para_id:
                         _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: para_id=%r", block.para_id)

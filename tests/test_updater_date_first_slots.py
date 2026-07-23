@@ -112,6 +112,30 @@ class TestSpanClaimFallback:
         assert "para_26" not in claimed_role1
         assert "para_27" not in claimed_role1
 
+    def test_span_stops_at_unclaimed_llm_header_line(self):
+        # Sample 6: a third role's header para ("Office manager, Southridge
+        # Video", semantic "paragraph") is unclaimed by classification and
+        # sits inside role 2's span.  It must not become a bullet slot, and
+        # paras after it belong to the next role, not the span.
+        from tailor.compiler.text_parser import LlmRole
+
+        sec = _date_first_section()
+        header3 = _para("Office manager, Southridge Video ", "paragraph", "para_33")
+        placeholder3 = _para("Summarize your key responsibilities third.",
+                             "paragraph", "para_35")
+        sec.body_paras = sec.body_paras + [header3, placeholder3]
+        llm_roles = [
+            LlmRole(header="Office manager, The Phone Company", bullets=["a"]),
+            LlmRole(header="Office manager, Nod Publishing", bullets=["b"]),
+            LlmRole(header="Office manager, Southridge Video", bullets=["c"]),
+        ]
+        roles = _rebuild_roles_from_classification(
+            sec, _cls_sec_empty_body_blocks(), llm_roles
+        )
+        claimed_role2 = {b.para_id for b in roles[1].bullets}
+        assert claimed_role2 == {"para_27"}
+        assert header3.text == "Office manager, Southridge Video "
+
 
 class TestDateFirstInjection:
     def _llm(self, bullets_per_role: list[list[str]]) -> LlmSection:

@@ -2162,6 +2162,7 @@ def _rebuild_date_first_roles(section: "ResumeSection") -> "list[RoleEntry]":
 def _rebuild_roles_from_classification(
     section: "ResumeSection",
     cls_sec: "ClassificationSection",
+    llm_roles: "list[LlmRole] | None" = None,
 ) -> "list[RoleEntry]":
     """Rebuild RoleEntry list from classification block para_id assignments.
 
@@ -2213,13 +2214,76 @@ def _rebuild_roles_from_classification(
             role_id_stable=header_para.para_id or header_para.text.strip(),
         ))
 
+    _norm_hdr = lambda s: re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+    _llm_headers = [
+        _norm_hdr(lr.header) for lr in (llm_roles or []) if lr.header.strip()
+    ]
+
+    def _is_llm_header_line(p: "ParaModel") -> bool:
+        t = p.text.strip()
+        if not t or len(t) > 90 or not _llm_headers:
+            return False
+        n = _norm_hdr(t)
+        return any(
+            n == h or difflib.SequenceMatcher(None, n, h).ratio() >= 0.85
+            for h in _llm_headers
+        )
+
+    # Repair duplicate headers: classification sometimes assigns the same
+    # header para to two roles (sample 6: role 3's header_blocks point to
+    # role 1's "The Phone Company" para while the real "Southridge Video"
+    # line sits unclaimed with semantic "paragraph").  Reassign the duplicate
+    # role's header to the first unclaimed body para that closely matches an
+    # LLM role header not already represented by another rebuilt role.
+    # Only roles with NO body content are repaired: a duplicate-header role
+    # that already has body_blocks is functioning (sample 36) and re-matching
+    # it would inject its LLM bullets a second time as extras.
+    _seen_header_ids: set[int] = set()
+    _dup_roles: list[RoleEntry] = []
+    for r in roles:
+        if id(r.header) in _seen_header_ids:
+            if not r.bullets:
+                _dup_roles.append(r)
+        else:
+            _seen_header_ids.add(id(r.header))
+    if _dup_roles and _llm_headers:
+        _claimed_ids = {
+            id(p) for r in roles for p in [r.header, *r.meta_lines, *r.bullets]
+        }
+        for r in _dup_roles:
+            _existing_hdrs = {
+                _norm_hdr(r2.header.text) for r2 in roles if r2 is not r
+            }
+            for p in section.body_paras:
+                if id(p) in _claimed_ids or not p.text.strip():
+                    continue
+                if p.semantic not in ("bullet", "paragraph", "role_header"):
+                    continue
+                if not _is_llm_header_line(p):
+                    continue
+                if _norm_hdr(p.text) in _existing_hdrs:
+                    continue
+                _log.debug(
+                    "cls-rebuild: role %r header para duplicates another "
+                    "role's — reassigned to %r (%s)",
+                    r.role_id, p.text.strip()[:40], p.para_id,
+                )
+                r.header = p
+                r.role_id = p.text.strip()
+                r.role_id_stable = p.para_id or p.text.strip()
+                _claimed_ids.add(id(p))
+                break
+
     # Fallback: classification sometimes emits roles with empty body_blocks
     # (or para_ids that don't resolve).  Without bullet slots,
     # _update_experience_date_first has no targets and silently drops all
     # LLM content for the role while template description/placeholder
     # paragraphs survive verbatim (samples 6/7).  Claim the unclaimed
     # bullet/paragraph body paras between this role's resolved paras and
-    # the next claimed para as the role's bullet slots.
+    # the next claimed para as the role's bullet slots.  A span para that
+    # closely matches an LLM role header is the NEXT role's header line that
+    # classification left unclaimed — claiming it as a bullet slot would
+    # overwrite the header with LLM bullet text, so stop the span there.
     if any(not r.bullets for r in roles):
         pos_by_id = {id(p): i for i, p in enumerate(section.body_paras)}
         claimed: set[int] = set()
@@ -2240,10 +2304,13 @@ def _rebuild_roles_from_classification(
             start = max(own) + 1
             later_claimed = [i for i in claimed if i >= start]
             end = min(later_claimed) if later_claimed else len(section.body_paras)
-            span = [
-                p for p in section.body_paras[start:end]
-                if p.text.strip() and p.semantic in ("bullet", "paragraph")
-            ]
+            span = []
+            for p in section.body_paras[start:end]:
+                if not (p.text.strip() and p.semantic in ("bullet", "paragraph")):
+                    continue
+                if _is_llm_header_line(p):
+                    break
+                span.append(p)
             if span:
                 r.bullets = span
                 claimed.update(pos_by_id[id(p)] for p in span)
@@ -2751,7 +2818,7 @@ def _update_experience_classified(
     # Prefer classification-based role structure when it provides more
     # granularity than the parser (e.g. mega-role spanning multiple companies).
     if cls_sec.roles:
-        rebuilt = _rebuild_roles_from_classification(orig, cls_sec)
+        rebuilt = _rebuild_roles_from_classification(orig, cls_sec, llm_roles or None)
         if rebuilt:
             expanded: list[RoleEntry] = []
             for r in rebuilt:
@@ -4135,7 +4202,20 @@ def apply_tailored(
             # Expand any mega-role (e.g. multiple companies under one cls role)
             # so each company gets its own role entry matched to an LLM role.
             if cls_sec is not None and cls_sec.roles:
-                rebuilt_raw = _rebuild_roles_from_classification(orig_section, cls_sec)
+                # Resolve LLM roles the same way _update_experience_date_first
+                # does (pipe format, else dash/date reparse) so the rebuild can
+                # use LLM headers to guard span claims and repair duplicate
+                # headers.  The mega-role split keeps using only parsed pipe
+                # roles: reparsed dash/date roles include company lines as
+                # separate roles and over-split (sample 36 duplication).
+                _df_llm_roles = llm_section.roles
+                if not _df_llm_roles and llm_section.body_lines:
+                    _df_llm_roles = _reparse_body_lines_as_roles(
+                        llm_section.body_lines
+                    ) or []
+                rebuilt_raw = _rebuild_roles_from_classification(
+                    orig_section, cls_sec, _df_llm_roles or None
+                )
                 rebuilt: list[RoleEntry] = []
                 for _r in rebuilt_raw:
                     rebuilt.extend(_split_cls_mega_role(_r, llm_section.roles or None))
