@@ -41,6 +41,7 @@ When classification is None the function behaves identically to before.
 """
 from __future__ import annotations
 
+import difflib
 import logging
 import re
 from dataclasses import dataclass, field
@@ -98,6 +99,7 @@ class _MatchResult:
 def _match_sections(
     orig: list[ResumeSection],
     llm: list[LlmSection],
+    strict: bool = True,
 ) -> _MatchResult:
     """Match original sections to LLM sections.
 
@@ -105,6 +107,12 @@ def _match_sections(
     unmatched original section (structural mismatch that cannot be recovered).
     When all originals are matched and extra LLM sections remain, those extras
     are returned in _MatchResult.extras for the caller to handle.
+
+    With strict=False the ValueError is suppressed: unmatched originals are
+    kept verbatim (they simply have no pair) and unmatched LLM sections are
+    handled as extras.  Used as a degraded retry so one unmatchable section
+    no longer discards every matched pair (sample 28 lost 100% of the LLM
+    content to a single mismatch).
     """
     used_llm: set[int] = set()
     used_orig: set[int] = set()
@@ -188,10 +196,18 @@ def _match_sections(
         ]
         all_orig_matched = len(unmatched_content_orig) == 0
         if not all_orig_matched:
-            # Hard fail: LLM both dropped a real content section and invented one.
-            raise ValueError(
-                f"LLM output contains section '{llm[unmatched_llm[0]].heading}' "
-                f"that cannot be matched to any section in the original document."
+            if strict:
+                # Hard fail: LLM both dropped a real content section and invented one.
+                raise ValueError(
+                    f"LLM output contains section '{llm[unmatched_llm[0]].heading}' "
+                    f"that cannot be matched to any section in the original document."
+                )
+            _log.debug(
+                "SECTION_MAP_DEGRADED: %d unmatched content original(s) kept "
+                "verbatim (%s); %d unmatched LLM section(s) handled as extras",
+                len(unmatched_content_orig),
+                ", ".join(repr(orig[oi].title) for oi in unmatched_content_orig),
+                len(unmatched_llm),
             )
         # All content originals matched — extras are new sections added by the LLM.
         # Drop extras that belong to locked types (e.g. Education, Certifications):
@@ -2258,6 +2274,7 @@ def _match_llm_to_ir_roles(
     by position (fallback).
 
     Matching strategy (logged per role):
+    0. Exact normalized full-header match → exact_header
     1. Jaccard similarity of normalised company tokens > 0.3 → company_similarity
     2. First unmatched LLM role in LLM output order → position
     """
@@ -2271,9 +2288,32 @@ def _match_llm_to_ir_roles(
     used_llm: set[int] = set()
     result: list[int | None] = [None] * len(ir_roles)
 
+    # Pass 0: exact normalized full-header match.  Company tokens alone
+    # cannot separate pipe headers that share a title ("Engineer | Acme" vs
+    # "Engineer | Globex" both tokenize to {engineer}); the LLM usually
+    # echoes template headers verbatim, so an exact match is authoritative.
+    def _norm_header(s: str) -> str:
+        return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+
+    for ir_idx, ir_role in enumerate(ir_roles):
+        target = _norm_header(ir_role.header.text if ir_role.header else "")
+        if not target:
+            continue
+        for llm_idx, llm_role in enumerate(llm_roles):
+            if llm_idx in used_llm:
+                continue
+            if _norm_header(llm_role.header) == target:
+                result[ir_idx] = llm_idx
+                used_llm.add(llm_idx)
+                _log.debug(
+                    "date-first match: IR role %r → LLM[%d] %r (strategy=exact_header)",
+                    ir_role.role_id, llm_idx, llm_role.header,
+                )
+                break
+
     # Pass 1: company similarity
     for ir_idx, ir_tokens in enumerate(ir_token_sets):
-        if not ir_tokens:
+        if result[ir_idx] is not None or not ir_tokens:
             continue
         best_score = 0.0
         best_llm_idx: int | None = None
@@ -2556,7 +2596,10 @@ def _update_experience_date_first(
 # Classification-constrained update helpers
 # ---------------------------------------------------------------------------
 
-def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
+def _split_cls_mega_role(
+    role: "RoleEntry",
+    llm_roles: "list[LlmRole] | None" = None,
+) -> "list[RoleEntry]":
     """Split a classification-rebuilt role into sub-roles when its bullet list
     contains company-separator paragraphs.
 
@@ -2566,6 +2609,12 @@ def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
       (handles the case where classification assigned a wrong para as the role
       header but the actual company name is in meta_lines[0]).
     - Subsequent sub-roles: company_para as header, leading role_meta as meta.
+
+    When *llm_roles* is given, a second boundary strategy applies: a bullet
+    whose text closely matches an LLM role header is a role boundary even
+    without a following role_meta para.  Handles templates whose dates live
+    in another column (sample 35: one mega-role covering 6 real roles, with
+    the 5 other role-header lines classified as bullets).
     """
     bullets = role.bullets
     if not bullets:
@@ -2580,6 +2629,44 @@ def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
             j += 1
         if j < len(bullets) and bullets[j].semantic == "role_meta":
             boundaries.append(i)
+
+    if llm_roles:
+        def _norm(s: str) -> str:
+            return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+
+        _date_seg = re.compile(r"\b(19|20)\d{2}\b|present|current", re.IGNORECASE)
+        headers: list[str] = []
+        for lr in llm_roles:
+            if not lr.header.strip():
+                continue
+            # Drop trailing pipe segments that are date ranges
+            # ("Title, Company | March 2025 – Present" → "Title, Company").
+            segs = [s for s in lr.header.split("|")]
+            while len(segs) > 1 and _date_seg.search(segs[-1]):
+                segs.pop()
+            h = _norm("|".join(segs))
+            if len(h) >= 15:
+                headers.append(h)
+        for i, p in enumerate(bullets):
+            if i in boundaries:
+                continue
+            t = _norm(p.text)
+            if not t:
+                continue
+            # Prefix match handles template paras where the role header is
+            # glued with following prose ("... Remote Highlights: Leading...");
+            # fuzzy ratio handles minor punctuation/wording drift.
+            if any(
+                t.startswith(h)
+                or (len(t) <= 90 and difflib.SequenceMatcher(None, t, h).ratio() >= 0.75)
+                for h in headers
+            ):
+                boundaries.append(i)
+                _log.debug(
+                    "mega-role split: bullet %r matches an LLM role header → boundary",
+                    p.text[:60],
+                )
+        boundaries.sort()
 
     if not boundaries:
         return [role]
@@ -2655,6 +2742,12 @@ def _update_experience_classified(
     Falls back to _update_body_classified when no role structure can be derived
     from either the parser or classification.
     """
+    # Resolve LLM roles early (pipe format, else dash/date reparse) so the
+    # mega-role split can use LLM role headers as boundary hints.
+    llm_roles = llm.roles
+    if not llm_roles and llm.body_lines:
+        llm_roles = _reparse_body_lines_as_roles(llm.body_lines) or []
+
     # Prefer classification-based role structure when it provides more
     # granularity than the parser (e.g. mega-role spanning multiple companies).
     if cls_sec.roles:
@@ -2662,7 +2755,7 @@ def _update_experience_classified(
         if rebuilt:
             expanded: list[RoleEntry] = []
             for r in rebuilt:
-                expanded.extend(_split_cls_mega_role(r))
+                expanded.extend(_split_cls_mega_role(r, llm_roles))
             if len(expanded) > len(orig.roles):
                 _log.debug(
                     "classification: expanding %d parser roles → %d cls roles "
@@ -2685,37 +2778,42 @@ def _update_experience_classified(
         )
         return _update_body_classified(orig, llm, cls_sec, layout_bound=layout_bound)
 
-    # Resolve LLM roles: try pipe format first, then dash/date format.
-    llm_roles = llm.roles
-    if not llm_roles and llm.body_lines and orig.roles:
-        reparsed = _reparse_body_lines_as_roles(llm.body_lines)
-        if reparsed:
-            llm_roles = reparsed
-            if len(reparsed) != len(orig.roles):
-                _log.debug(
-                    "EXPERIENCE_ROLE_COUNT_MISMATCH: section=%r orig_roles=%d reparsed_roles=%d",
-                    orig.title, len(orig.roles), len(reparsed),
-                )
-        else:
-            _log.debug(
-                "EXPERIENCE_LLM_ROLE_PARSE_FAILED: section=%r body_lines=%d "
-                "reason=no_boundaries; keeping %d orig roles verbatim",
-                orig.title, len(llm.body_lines), len(orig.roles),
-            )
-
+    if not llm_roles and llm.body_lines:
+        _log.debug(
+            "EXPERIENCE_LLM_ROLE_PARSE_FAILED: section=%r body_lines=%d "
+            "reason=no_boundaries; keeping %d orig roles verbatim",
+            orig.title, len(llm.body_lines), len(orig.roles),
+        )
+    elif len(llm_roles) != len(orig.roles):
+        _log.debug(
+            "EXPERIENCE_ROLE_COUNT_MISMATCH: section=%r orig_roles=%d llm_roles=%d",
+            orig.title, len(orig.roles), len(llm_roles),
+        )
     if len(llm_roles) > len(orig.roles):
         _log.debug(
             "classification: ignoring %d extra LLM roles for section %r (IR has %d)",
             len(llm_roles) - len(orig.roles), orig.title, len(orig.roles),
         )
 
+    # Pair LLM roles to IR roles by company similarity (positional fallback),
+    # not by list position: classification/parser role under-detection made
+    # positional zip inject the wrong role's bullets (samples 29, 33).
+    match_map = (
+        _match_llm_to_ir_roles(llm_roles, orig.roles)
+        if llm_roles else [None] * len(orig.roles)
+    )
+
     updated_roles: list[RoleEntry] = []
     for i, o_role in enumerate(orig.roles):
-        if i < len(llm_roles):
-            updated = _update_role_bullets_only(o_role, llm_roles[i].bullets, layout_bound=layout_bound)
+        llm_idx = match_map[i]
+        if llm_idx is not None:
+            updated = _update_role_bullets_only(
+                o_role, llm_roles[llm_idx].bullets, layout_bound=layout_bound
+            )
             _log.debug(
-                "classification: role %r → updated %d bullets",
-                o_role.role_id, len(llm_roles[i].bullets),
+                "classification: role %r → updated %d bullets (LLM[%d] %r)",
+                o_role.role_id, len(llm_roles[llm_idx].bullets),
+                llm_idx, llm_roles[llm_idx].header[:50],
             )
         else:
             # No LLM counterpart — keep IR role verbatim.
@@ -3936,6 +4034,55 @@ def apply_tailored(
             return by_title
         return by_id
 
+    _TARGET_SEMANTIC_TYPES: frozenset[str] = frozenset({"summary", "skills", "experience"})
+
+    def _trusted_cls_sec(
+        orig_section: "ResumeSection", llm_section: "LlmSection | None"
+    ) -> "ClassificationSection | None":
+        """Resolve classification, bypassing untrustworthy 'preserve' policies.
+
+        Generalizes the Pattern-C summary guard: stored classifications
+        sometimes label real target sections other/preserve (samples 24 'SKILL',
+        26 'Work History', 33 'Proficiency', 35 skills).  Returns None (→
+        unclassified path rewrites the content) when:
+        - the IR says the section is a target type (summary/skills/experience)
+          but the classification's semantic_type disagrees, or
+        - the classification carries no blocks and no roles for the section
+          while a skills/summary LLM section was matched to it (the classifier
+          had nothing to say about content it now claims to preserve).
+        """
+        cls_sec = _resolve_cls_sec(orig_section)
+        if cls_sec is None or cls_sec.rewrite_policy != "preserve":
+            return cls_sec
+        if (
+            orig_section.semantic_type in _TARGET_SEMANTIC_TYPES
+            and cls_sec.semantic_type != orig_section.semantic_type
+        ):
+            _log.debug(
+                "CLS_PRESERVE_BYPASSED: section %r — cls says %s/preserve but "
+                "IR semantic_type=%s; ignoring classification",
+                orig_section.title, cls_sec.semantic_type, orig_section.semantic_type,
+            )
+            return None
+        if (
+            llm_section is not None
+            and llm_section.semantic_type in ("skills", "summary")
+            and cls_sec.semantic_type == "other"
+            and not cls_sec.blocks
+            and not cls_sec.roles
+        ):
+            # other/preserve with zero blocks is the classifier's "don't know"
+            # default, not a deliberate preserve of typed content (sample 35's
+            # 'Skills (used in professional projects)').  An explicitly typed
+            # preserve (e.g. skills/preserve) is honored.
+            _log.debug(
+                "CLS_PRESERVE_BYPASSED: section %r — other/preserve with empty "
+                "blocks/roles while matched to LLM %s section; ignoring classification",
+                orig_section.title, llm_section.semantic_type,
+            )
+            return None
+        return cls_sec
+
     # Layout-bound mode: active when layout_blocks are present and the flag is on.
     # normalize_llm_sections runs whenever layout_blocks exist (flag-independent):
     # it absorbs fake role-title sections and extracts role headers from bullets,
@@ -3948,9 +4095,19 @@ def apply_tailored(
     try:
         match = _match_sections(original.sections, llm_sections)
     except ValueError as exc:
-        # Spec §9: ambiguous section mapping → do NOT modify → return template verbatim.
-        _log.warning("Section mapping failed — returning template verbatim: %s", exc)
-        return original
+        # Degraded retry instead of the old return-template-verbatim: apply
+        # the pairs that DID match; unmatched originals stay verbatim.
+        _log.warning(
+            "Section mapping failed (%s) — retrying leniently: matched pairs "
+            "are applied, unmatched originals kept verbatim", exc,
+        )
+        match = _match_sections(original.sections, llm_sections, strict=False)
+        if not any(ls is not None for _, ls in match.pairs):
+            # Nothing matched at all — there is no content to salvage, and
+            # letting lone extras through would fabricate sections the
+            # template never had (spec §9). Keep the template verbatim.
+            _log.warning("Section mapping degraded with 0 pairs — returning template verbatim")
+            return original
 
     def _apply_section(orig_section: ResumeSection, llm_section: LlmSection) -> ResumeSection:
         """Update orig_section with llm_section content, respecting lock rules."""
@@ -3970,7 +4127,7 @@ def apply_tailored(
                 sum(1 for p in orig_section.body_paras
                     if p.text.strip() and p.semantic == "role_meta"),
             )
-            cls_sec = _resolve_cls_sec(orig_section)
+            cls_sec = _trusted_cls_sec(orig_section, llm_section)
             if cls_sec is not None and cls_sec.rewrite_policy == "preserve":
                 return orig_section
             # When classification has roles, use them to reconstruct role
@@ -3981,24 +4138,15 @@ def apply_tailored(
                 rebuilt_raw = _rebuild_roles_from_classification(orig_section, cls_sec)
                 rebuilt: list[RoleEntry] = []
                 for _r in rebuilt_raw:
-                    rebuilt.extend(_split_cls_mega_role(_r))
+                    rebuilt.extend(_split_cls_mega_role(_r, llm_section.roles or None))
             else:
                 rebuilt = _rebuild_date_first_roles(orig_section)
             return _update_experience_date_first(orig_section, llm_section, rebuilt)
 
-        # Classification-constrained path: look up by section_id with title fallback.
-        cls_sec = _resolve_cls_sec(orig_section)
-        # Pattern C guard: LLM classifier sometimes labels OBJECTIVE/PROFILE
-        # sections as other/preserve when it doesn't recognise the heading.
-        # The PDF parser already set semantic_type="summary", so trust the IR and
-        # bypass classification to let the unclassified path rewrite the content.
-        if (
-            cls_sec is not None
-            and cls_sec.rewrite_policy == "preserve"
-            and orig_section.semantic_type == "summary"
-            and cls_sec.semantic_type != "summary"
-        ):
-            cls_sec = None
+        # Classification-constrained path: look up by section_id with title
+        # fallback, bypassing untrustworthy preserve policies (subsumes the
+        # old summary-only Pattern C guard).
+        cls_sec = _trusted_cls_sec(orig_section, llm_section)
         if cls_sec is not None:
             return _apply_section_classified(
                 orig_section, llm_section, cls_sec, _role_cls, layout_bound=_layout_bound
@@ -4899,7 +5047,10 @@ def apply_tailored(
             if orig_section.semantic_type in _LOCKED_SEMANTIC_TYPES:
                 continue  # Spec §3: locked sections are never updated in-place either.
 
-            cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+            # Same trusted resolution as the section dispatch: title fallback
+            # plus bypass of untrustworthy preserve policies (samples 24/26
+            # died here — 'SKILL'/'Work History' labelled other/preserve).
+            cls_sec = _trusted_cls_sec(orig_section, llm_section)
 
             # Classification: preserve → skip entirely.
             if cls_sec is not None and cls_sec.rewrite_policy == "preserve":
