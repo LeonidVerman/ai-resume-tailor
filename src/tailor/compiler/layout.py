@@ -326,6 +326,13 @@ def compact_experience_bullets(
     result: list[LlmRole] = []
     for i, llm_role in enumerate(llm_roles):
         orig_count = orig_counts[i] if i < len(orig_counts) else int(round(avg_orig))
+        if orig_count == 0:
+            # 0 means the template parser couldn't attribute any bullet paras
+            # to this role (slots are unclaimed placeholder paragraphs), so
+            # the template density is unknown — trimming here silently drops
+            # LLM content that the updater could place (samples 15/17).
+            result.append(llm_role)
+            continue
         # Compact templates: strict cap to preserve visual rhythm
         # Normal templates: allow 1 extra bullet beyond original
         headroom = 0 if compact_template else 1

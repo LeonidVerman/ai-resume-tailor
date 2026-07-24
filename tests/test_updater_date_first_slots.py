@@ -23,6 +23,7 @@ from tailor.compiler.classification_models import (
 from tailor.compiler.models import ParaModel, ParaStyle, ResumeSection, RoleEntry
 from tailor.compiler.text_parser import LlmRole, LlmSection
 from tailor.compiler.updater import (
+    _extract_company_tokens,
     _rebuild_roles_from_classification,
     _update_experience_date_first,
 )
@@ -135,6 +136,175 @@ class TestSpanClaimFallback:
         claimed_role2 = {b.para_id for b in roles[1].bullets}
         assert claimed_role2 == {"para_27"}
         assert header3.text == "Office manager, Southridge Video "
+
+
+class TestCompanyTokenExtraction:
+    def test_three_part_pipe_header_uses_company_segment(self):
+        # "Title | Company | Date" — the company is the segment before the
+        # date, not the first segment (sample 17 pairing swap).
+        toks = _extract_company_tokens(
+            "Lead Mechanical Engineer | VALENTI AND ASSOCIATES | AUG 2016 - PRESENT"
+        )
+        assert toks == {"valenti", "associates"}
+
+    def test_two_part_company_date_header(self):
+        toks = _extract_company_tokens("VALENTI AND ASSOCIATES | AUG 2016 - PRESENT")
+        assert toks == {"valenti", "associates"}
+
+    def test_title_dash_company_without_date_unchanged(self):
+        toks = _extract_company_tokens("Senior Engineer — Acme Corp")
+        assert toks == {"senior", "engineer"}
+
+
+class TestClsTrustGuards:
+    """Sample 24-class classification faults: the only cls role pairs the
+    Project Manager header with the Project Engineer's bullets, while the
+    manager's own slots are misfiled as meta_blocks/preserve."""
+
+    def _section(self) -> ResumeSection:
+        body = [
+            _para("TIMMERMAN INDUSTRIES - Any City", "paragraph", "para_31"),
+            _para("Project Manager (2023 - Present)", "role_meta", "para_33"),
+            _para("Prepare project worksheets.", "paragraph", "para_35"),
+            _para("Prepare administrative documents.", "paragraph", "para_38"),
+            _para("Coordinate with other divisions.", "paragraph", "para_41"),
+            _para("TIMMERMAN INDUSTRIES - Any City", "paragraph", "para_44"),
+            _para("Project Engineer(2021 - 2023)", "role_meta", "para_46"),
+            _para("Control the project's progress.", "paragraph", "para_48"),
+            _para("Responsible for the engineering department.", "paragraph", "para_51"),
+        ]
+        heading = _para("WORK EXPERIENCE", "section_heading", "para_28")
+        sec = ResumeSection(
+            title="WORK EXPERIENCE", heading=heading,
+            semantic_type="experience", body_paras=body,
+        )
+        sec.section_id = "sec_1"
+        return sec
+
+    def _cls_sec(self) -> ClassificationSection:
+        return ClassificationSection(
+            section_id="sec_1",
+            raw_title="WORK EXPERIENCE",
+            display_title="WORK EXPERIENCE",
+            semantic_type="experience",
+            rewrite_policy="rewrite_bullets_only",
+            roles=[
+                ClassificationRole(
+                    role_id="role_1",
+                    header_blocks=[_block("para_33")],
+                    meta_blocks=[
+                        _block("para_35", "role_meta"),
+                        _block("para_38", "role_meta"),
+                        _block("para_41", "role_meta"),
+                        _block("para_44", "role_meta"),
+                    ],
+                    body_blocks=[
+                        _block("para_48", "bullet"),
+                        _block("para_51", "bullet"),
+                    ],
+                ),
+            ],
+        )
+
+    def _llm_roles(self) -> list[LlmRole]:
+        return [
+            LlmRole(
+                header="Project Manager",
+                meta_lines=["TIMMERMAN INDUSTRIES - Any City", "2023 - Present"],
+                bullets=["a", "b", "c"],
+            ),
+            LlmRole(
+                header="Project Engineer",
+                meta_lines=["TIMMERMAN INDUSTRIES - Any City", "2021 - 2023"],
+                bullets=["d", "e"],
+            ),
+        ]
+
+    def test_misassigned_body_blocks_dropped_and_meta_promoted(self):
+        sec = self._section()
+        roles = _rebuild_roles_from_classification(
+            sec, self._cls_sec(), self._llm_roles()
+        )
+        assert len(roles) == 1
+        # The next role's bullets (beyond the unclaimed "Project Engineer"
+        # header line) are dropped; the manager's description-like meta paras
+        # are promoted to its bullet slots instead.
+        assert [b.para_id for b in roles[0].bullets] == [
+            "para_35", "para_38", "para_41",
+        ]
+        # The company line stays meta (no sentence-ending punctuation).
+        assert [m.para_id for m in roles[0].meta_lines] == ["para_44"]
+
+    def test_drop_requires_fallback_content(self):
+        # Word-wrap fragment headers (sample 25): when there is NOTHING of the
+        # role's own between header and boundary, the drop must not fire —
+        # dropping would only orphan the LLM bullets.
+        body = [
+            _para("Mechanical Engineering", "role_header", "para_10"),
+            _para("Mechanical Engineer at", "paragraph", "para_11"),
+            _para("Warner & Spencer", "paragraph", "para_12"),
+            _para("Researched new materials-generation", "paragraph", "para_13"),
+        ]
+        sec = ResumeSection(
+            title="WORK HISTORY",
+            heading=_para("WORK HISTORY", "section_heading", "para_9"),
+            semantic_type="experience", body_paras=body,
+        )
+        sec.section_id = "sec_1"
+        cls_sec = ClassificationSection(
+            section_id="sec_1", raw_title="WORK HISTORY",
+            display_title="WORK HISTORY", semantic_type="experience",
+            rewrite_policy="rewrite_bullets_only",
+            roles=[ClassificationRole(
+                role_id="role_1",
+                header_blocks=[_block("para_10")],
+                meta_blocks=[],
+                body_blocks=[
+                    _block("para_12", "bullet"),
+                    _block("para_13", "bullet"),
+                ],
+            )],
+        )
+        llm_roles = [
+            LlmRole(header="Mechanical Engineering", bullets=["x"]),
+            LlmRole(header="Mechanical Engineer at", bullets=["y"]),
+        ]
+        roles = _rebuild_roles_from_classification(sec, cls_sec, llm_roles)
+        # para_11 matches an LLM "header" but there is no fallback content
+        # between para_10 and para_11 — body blocks must be kept.
+        assert [b.para_id for b in roles[0].bullets] == ["para_12", "para_13"]
+
+    def test_meta_outside_territory_not_promoted(self):
+        # Sample 6: another role's placeholder (BEFORE this role's header) is
+        # misfiled into this role's meta — it must not become a bullet slot.
+        body = [
+            _para("Summarize your key responsibilities.", "paragraph", "para_25"),
+            _para("Office manager, Southridge Video", "role_header", "para_33"),
+            _para("Summarize your responsibilities third.", "paragraph", "para_35"),
+        ]
+        sec = ResumeSection(
+            title="EXPERIENCE",
+            heading=_para("EXPERIENCE", "section_heading", "para_20"),
+            semantic_type="experience", body_paras=body,
+        )
+        sec.section_id = "sec_2"
+        cls_sec = ClassificationSection(
+            section_id="sec_2", raw_title="EXPERIENCE",
+            display_title="EXPERIENCE", semantic_type="experience",
+            rewrite_policy="rewrite_bullets_only",
+            roles=[ClassificationRole(
+                role_id="role_1",
+                header_blocks=[_block("para_33")],
+                meta_blocks=[_block("para_25", "role_meta")],
+                body_blocks=[],
+            )],
+        )
+        llm_roles = [LlmRole(header="Office manager, Southridge Video", bullets=["z"])]
+        roles = _rebuild_roles_from_classification(sec, cls_sec, llm_roles)
+        # para_25 (before the header) must NOT be promoted; the span fallback
+        # claims para_35, the role's own placeholder, instead.
+        assert [b.para_id for b in roles[0].bullets] == ["para_35"]
+        assert [m.para_id for m in roles[0].meta_lines] == ["para_25"]
 
 
 class TestDateFirstInjection:

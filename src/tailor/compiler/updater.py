@@ -1492,11 +1492,53 @@ _BULLET_MARKER_RE = re.compile(
     r"^\s*[-•‣◦⁃▸⦿●*–—‒]\s+"
 )
 
+# Strategy 3: role-header lines with a trailing parenthesised date range,
+# e.g. "Project Manager (2023 - Present)".  Neither a standalone date line
+# nor a dash boundary, so Strategies 1-2 miss this format entirely.
+_PAREN_DATE_HEADER_RE = re.compile(
+    rf"^(?P<title>[^(]{{3,80}}?)\s*\(\s*(?P<dates>{_DATE_RANGE_PAT})\s*\)\s*$",
+    re.IGNORECASE,
+)
+
+
+def _uniform_pre_header_count(body_lines: list[str], boundaries: list[int]) -> int:
+    """Number of header lines (title/company) preceding each boundary line.
+
+    Some LLM outputs place the role title and company BEFORE the boundary::
+
+        Software Engineer
+        Tropang True Po
+        January 2020 - Present
+        - bullet...
+
+    Detected when the first boundary is preceded by exactly 1-2 short,
+    non-sentence lines and every boundary has the same number of such lines
+    directly before it.  Returns 0 when the layout does not match (dates-first
+    templates keep the header-after-date behaviour).
+    """
+    h = boundaries[0]
+    if h not in (1, 2):
+        return 0
+    for prev, nxt in zip(boundaries, boundaries[1:]):
+        if nxt - h <= prev:
+            return 0
+    for b in boundaries:
+        for ln in body_lines[b - h: b]:
+            s = ln.strip()
+            if (
+                not s
+                or len(s) > 80
+                or s.endswith((".", "!", "?"))
+                or _BULLET_MARKER_RE.match(ln)
+            ):
+                return 0
+    return h
+
 
 def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
     """Re-parse experience body_lines into LlmRole objects.
 
-    Tries two strategies in order:
+    Tries three strategies in order:
 
     1. Em/en/figure-dash boundaries — lines containing " — ", " – ", or " ‒ "
        (existing behaviour; handles "Title — Company" format).
@@ -1504,7 +1546,12 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
     2. Standalone date-line boundaries — lines whose entire content is a date
        range (e.g. "Jan 20XX - Current", "March 2020 – December 2022", "2019–2021").
        The line immediately after the date line becomes the role header; subsequent
-       non-date lines up to the next boundary become bullets.
+       non-date lines up to the next boundary become bullets.  When 1-2 short
+       header lines uniformly PRECEDE each date line, those supply header/meta
+       instead (title-company-date format).
+
+    3. Paren-date role headers — "Title (YYYY - Present)" lines start roles;
+       only tried when strategies 1-2 find no boundaries at all.
 
     Returns [] when no role structure is detectable so callers can fall back safely.
     """
@@ -1550,6 +1597,21 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
         )
         return roles
 
+    # Strategy 3 — "Title (YYYY - Present)" role-header lines.  Only tried when
+    # Strategies 1-2 found nothing, so existing formats are unaffected.
+    paren_bounds = [
+        i for i, ln in enumerate(body_lines)
+        if _PAREN_DATE_HEADER_RE.match(ln.strip())
+    ]
+    if paren_bounds:
+        roles = _roles_from_paren_date_headers(body_lines, paren_bounds)
+        _log.debug(
+            "EXPERIENCE_LLM_ROLES_REPARSED: body_lines=%d paren_boundaries=%d "
+            "reparsed_roles=%d pattern=paren_date",
+            len(body_lines), len(paren_bounds), len(roles),
+        )
+        return roles
+
     return []
 
 
@@ -1582,16 +1644,31 @@ def _roles_from_dash_boundaries(
 def _roles_from_date_boundaries(
     body_lines: list[str], boundaries: list[int]
 ) -> list[LlmRole]:
-    """Date-line boundary parser: each standalone date line starts a new role."""
+    """Date-line boundary parser: each standalone date line starts a new role.
+
+    When each date line is uniformly preceded by 1-2 header lines (title /
+    company BEFORE the date), those lines supply the header and meta and every
+    line after the date is a bullet.  Otherwise the line after the date is the
+    header (dates-first template format).
+    """
     roles: list[LlmRole] = []
+    pre_h = _uniform_pre_header_count(body_lines, boundaries)
     for idx, boundary_i in enumerate(boundaries):
-        end_i = boundaries[idx + 1] if idx + 1 < len(boundaries) else len(body_lines)
+        if idx + 1 < len(boundaries):
+            end_i = boundaries[idx + 1] - pre_h
+        else:
+            end_i = len(body_lines)
         date_text = body_lines[boundary_i].strip()
 
         header = date_text  # fallback when no title line follows
         meta: list[str] = [date_text]
         bullets: list[str] = []
         saw_header = False
+        if pre_h:
+            pre = [body_lines[j].strip() for j in range(boundary_i - pre_h, boundary_i)]
+            header = pre[0]
+            meta = pre[1:] + [date_text]
+            saw_header = True
 
         for line in body_lines[boundary_i + 1: end_i]:
             stripped = line.strip()
@@ -1605,6 +1682,37 @@ def _roles_from_date_boundaries(
             else:
                 bullets.append(clean if clean else stripped)
 
+        roles.append(LlmRole(header=header, meta_lines=meta, bullets=bullets))
+    return roles
+
+
+def _roles_from_paren_date_headers(
+    body_lines: list[str], boundaries: list[int]
+) -> list[LlmRole]:
+    """Paren-date header parser: "Project Manager (2023 - Present)" starts a role."""
+    roles: list[LlmRole] = []
+    pre_h = _uniform_pre_header_count(body_lines, boundaries)
+    for idx, boundary_i in enumerate(boundaries):
+        if idx + 1 < len(boundaries):
+            end_i = boundaries[idx + 1] - pre_h
+        else:
+            end_i = len(body_lines)
+        m = _PAREN_DATE_HEADER_RE.match(body_lines[boundary_i].strip())
+        assert m is not None  # boundaries were selected by this regex
+        header = m.group("title").strip()
+        meta: list[str] = [m.group("dates").strip()]
+        if pre_h:
+            meta = [
+                body_lines[j].strip()
+                for j in range(boundary_i - pre_h, boundary_i)
+            ] + meta
+        bullets: list[str] = []
+        for line in body_lines[boundary_i + 1: end_i]:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            clean = _BULLET_MARKER_RE.sub("", stripped).strip()
+            bullets.append(clean if clean else stripped)
         roles.append(LlmRole(header=header, meta_lines=meta, bullets=bullets))
     return roles
 
@@ -2056,9 +2164,23 @@ def _extract_company_tokens(text: str) -> frozenset[str]:
     """
     # Drop parenthesised date ranges like "(2014-Now)", "(2010–2013)"
     text = re.sub(r"\([^)]*(?:19|20)\d{2}[^)]*\)", "", text)
-    # Split on role separators — keep only the first (company) segment
+    # Split on role separators — keep only the company segment
     parts = re.split(r"\s[–—\-]\s|\|", text)
-    company_part = parts[0].strip().lower()
+    # "Title | Company | Date" headers carry the company in the segment just
+    # BEFORE the first date-bearing segment, not the first segment.  Taking
+    # parts[0] there yields title tokens, which mispair roles that share a
+    # title word (sample 17: VALENTI role matched the DURAFAME header).
+    _date_idx = next(
+        (
+            i for i, p in enumerate(parts)
+            if _YEAR_RE.search(p) or re.search(r"(?:19|20)[Xx]{2}", p)
+        ),
+        None,
+    )
+    if _date_idx is not None and _date_idx >= 2:
+        company_part = parts[_date_idx - 1].strip().lower()
+    else:
+        company_part = parts[0].strip().lower()
     # Remove punctuation
     company_part = re.sub(r"[^\w\s]", " ", company_part)
     # Split concatenated year+word tokens (e.g. "2023ginyard" → "2023 ginyard")
@@ -2218,16 +2340,32 @@ def _rebuild_roles_from_classification(
     _llm_headers = [
         _norm_hdr(lr.header) for lr in (llm_roles or []) if lr.header.strip()
     ]
+    _llm_meta_norm = {
+        _norm_hdr(m)
+        for lr in (llm_roles or [])
+        for m in lr.meta_lines
+        if m.strip()
+    } - {""}
 
     def _is_llm_header_line(p: "ParaModel") -> bool:
         t = p.text.strip()
         if not t or len(t) > 90 or not _llm_headers:
             return False
-        n = _norm_hdr(t)
-        return any(
-            n == h or difflib.SequenceMatcher(None, n, h).ratio() >= 0.85
-            for h in _llm_headers
-        )
+        # Compare both the full text and, when the line ends with a
+        # parenthesised date range ("Project Engineer(2021 - 2023)"), the
+        # bare title — the LLM header usually omits the date part.
+        candidates = [t]
+        m = _PAREN_DATE_HEADER_RE.match(t)
+        if m:
+            candidates.append(m.group("title").strip())
+        for c in candidates:
+            n = _norm_hdr(c)
+            if any(
+                n == h or difflib.SequenceMatcher(None, n, h).ratio() >= 0.85
+                for h in _llm_headers
+            ):
+                return True
+        return False
 
     # Repair duplicate headers: classification sometimes assigns the same
     # header para to two roles (sample 6: role 3's header_blocks point to
@@ -2274,6 +2412,114 @@ def _rebuild_roles_from_classification(
                 _claimed_ids.add(id(p))
                 break
 
+    # Trust guard: classification sometimes assigns a role body blocks that
+    # all belong to a LATER role (sample 24: the only cls role pairs the
+    # "Project Manager" header with the Project Engineer's bullets).  When
+    # EVERY body para lies beyond an unclaimed LLM-header-like para that
+    # follows the role's header, the whole span is the next role's content —
+    # drop it so the span fallback below claims the role's own slots instead.
+    # Partial overlaps are left alone: those are mega-role shapes that
+    # _split_cls_mega_role handles.
+    if _llm_headers:
+        _pos = {id(p): i for i, p in enumerate(section.body_paras)}
+        for r in roles:
+            if not r.bullets:
+                continue
+            hpos = _pos.get(id(r.header))
+            if hpos is None:
+                continue
+            own_ids = {id(p) for p in [r.header, *r.meta_lines, *r.bullets]}
+            cut: "int | None" = None
+            for p in section.body_paras[hpos + 1:]:
+                if id(p) not in own_ids and _is_llm_header_line(p):
+                    cut = _pos[id(p)]
+                    break
+            if cut is None:
+                continue
+            if any(_pos.get(id(b), -1) < cut for b in r.bullets):
+                continue
+            # Only drop when the role has fallback content of its own between
+            # header and boundary (slots to re-claim or meta to promote).
+            # Without it, dropping merely orphans the LLM bullets — word-wrap
+            # fragment headers trigger the boundary spuriously (sample 25).
+            if not any(
+                p.text.strip()
+                and (p.semantic in ("bullet", "paragraph") or id(p) in own_ids)
+                for p in section.body_paras[hpos + 1: cut]
+            ):
+                continue
+            _log.debug(
+                "cls-rebuild: role %r — dropped %d body block(s) claimed "
+                "entirely beyond unclaimed role header line %r",
+                r.role_id, len(r.bullets),
+                section.body_paras[cut].text.strip()[:40],
+            )
+            r.bullets = []
+            # Meta blocks beyond the cut are misassigned too — keeping them
+            # would push the span fallback's start past the next role's
+            # header, re-claiming the very paras just dropped.
+            kept_meta = [m for m in r.meta_lines if _pos.get(id(m), -1) < cut]
+            if len(kept_meta) != len(r.meta_lines):
+                _log.debug(
+                    "cls-rebuild: role %r — dropped %d meta block(s) beyond "
+                    "the same boundary",
+                    r.role_id, len(r.meta_lines) - len(kept_meta),
+                )
+                r.meta_lines = kept_meta
+
+    # Trust guard: classification sometimes marks a role's content slots as
+    # meta_blocks/preserve (sample 24: the manager's three description paras
+    # are meta while its body_blocks point at the NEXT role's bullets).  A
+    # meta para that reads as a description sentence (sentence-ending
+    # punctuation, no date hint, content semantic) is really a bullet slot —
+    # promote it so LLM bullets land there instead of being anchored
+    # elsewhere.  Runs after the misassigned-body drop so promoted slots
+    # don't mask a wholesale-misassigned body span.
+    _META_DATE_HINT = re.compile(
+        r"\b\d{4}\b|\b(?:19|20)[Xx]{2}\b|\bPresent\b|\bCurrent\b|\bNow\b",
+        re.IGNORECASE,
+    )
+    _META_SENTENCE_END = re.compile(r"[.!?]\s*$")
+    _pos_all = {id(p): i for i, p in enumerate(section.body_paras)}
+    for r in roles:
+        # Territory bound: only promote meta paras that sit between this
+        # role's header and the next role's header line.  Classification
+        # sometimes stuffs ANOTHER role's placeholder into a role's meta
+        # (sample 6: Phone Company's placeholder in Southridge's meta) —
+        # promoting that would pull this role's bullets into foreign
+        # territory.
+        hpos_r = _pos_all.get(id(r.header))
+        if hpos_r is None:
+            continue
+        _own_r = {id(p) for p in [r.header, *r.meta_lines, *r.bullets]}
+        _bound = len(section.body_paras)
+        for p in section.body_paras[hpos_r + 1:]:
+            if id(p) not in _own_r and p.text.strip() and _is_llm_header_line(p):
+                _bound = _pos_all[id(p)]
+                break
+        promoted = [
+            m for m in r.meta_lines
+            if hpos_r < _pos_all.get(id(m), -1) < _bound
+            and m.semantic in ("bullet", "paragraph")
+            and _META_SENTENCE_END.search(m.text.strip())
+            and not _META_DATE_HINT.search(m.text)
+        ]
+        if promoted:
+            _promoted_ids = {id(m) for m in promoted}
+            r.meta_lines = [
+                m for m in r.meta_lines if id(m) not in _promoted_ids
+            ]
+            r.bullets = sorted(
+                [*r.bullets, *promoted],
+                key=lambda p: _pos_all.get(id(p), 1 << 30),
+            )
+            _log.debug(
+                "cls-rebuild: role %r — promoted %d description-like meta "
+                "block(s) to bullet slots (%s)",
+                r.role_id, len(promoted),
+                ", ".join(p.para_id or "?" for p in promoted),
+            )
+
     # Fallback: classification sometimes emits roles with empty body_blocks
     # (or para_ids that don't resolve).  Without bullet slots,
     # _update_experience_date_first has no targets and silently drops all
@@ -2301,16 +2547,38 @@ def _rebuild_roles_from_classification(
             ]
             if not own:
                 continue
-            start = max(own) + 1
-            later_claimed = [i for i in claimed if i >= start]
-            end = min(later_claimed) if later_claimed else len(section.body_paras)
+            # Scan from just after the header first: a meta block positioned
+            # deep in the section (e.g. the next role's company line claimed
+            # as this role's meta, sample 24) would otherwise push the span
+            # start past this role's own slots.  Fall back to the old
+            # after-all-own-paras start when the header-adjacent scan finds
+            # nothing (meta lines sitting between the header and the slots).
+            hpos = pos_by_id.get(id(r.header))
+            starts = [hpos + 1] if hpos is not None else []
+            if max(own) + 1 not in starts:
+                starts.append(max(own) + 1)
             span = []
-            for p in section.body_paras[start:end]:
-                if not (p.text.strip() and p.semantic in ("bullet", "paragraph")):
-                    continue
-                if _is_llm_header_line(p):
+            for start in starts:
+                later_claimed = [i for i in claimed if i >= start]
+                end = min(later_claimed) if later_claimed else len(section.body_paras)
+                span = []
+                for p in section.body_paras[start:end]:
+                    # The next role's header line is a hard boundary whatever
+                    # its semantic — role_meta headers ("Project Engineer
+                    # (2021 - 2023)") must stop the span, not be skipped.
+                    if p.text.strip() and _is_llm_header_line(p):
+                        break
+                    if not (p.text.strip() and p.semantic in ("bullet", "paragraph")):
+                        continue
+                    # A para matching an LLM role's meta line (company/
+                    # location) is the NEXT role's territory too — claiming
+                    # it as a slot would overwrite the company line with
+                    # bullet text.
+                    if _norm_hdr(p.text) in _llm_meta_norm:
+                        break
+                    span.append(p)
+                if span:
                     break
-                span.append(p)
             if span:
                 r.bullets = span
                 claimed.update(pos_by_id[id(p)] for p in span)
