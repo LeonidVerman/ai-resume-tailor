@@ -478,9 +478,18 @@ def _relabel_implicit_role_headers(body_paras: list[ParaModel]) -> None:
       5. Within the next two non-empty paragraphs there is either a role_meta
          paragraph OR a paragraph whose text contains a four-digit year
 
+    Undated variant (sample 33): an ALL-CAPS job-title line with no nearby
+    date is still relabeled when the section already shows role structure
+    elsewhere (≥1 role_meta or role_header among body_paras) — templates that
+    date only some roles leave the undated ones as plain paragraphs, and the
+    whole role's bullets are then never matched.
+
     Mutations are applied in place; no new ParaModel objects are created.
     """
     n = len(body_paras)
+    _has_role_signal = any(
+        p.semantic in ("role_meta", "role_header") for p in body_paras
+    )
     for i, pm in enumerate(body_paras):
         if pm.semantic != "paragraph":
             continue
@@ -527,6 +536,34 @@ def _relabel_implicit_role_headers(body_paras: list[ParaModel]) -> None:
             ):
                 pm.semantic = "role_header"
                 break
+        else:
+            # Undated variant: ALL-CAPS job-title line ("SOFTWARE ENGINEER")
+            # in a section that shows role structure elsewhere (sample 33).
+            if (
+                _has_role_signal
+                and text == text.upper()
+                and len(text.split()) <= 4
+                and not text.endswith((".", "!", "?", ":"))
+            ):
+                pm.semantic = "role_header"
+
+    # Dated title lines: a role_meta whose text minus the date is an ALL-CAPS
+    # job title ("PROGRAMMER 2019") is a role HEADER that carries its own
+    # date, not a boundary date belonging to a neighbouring role.  Left as
+    # role_meta it gets absorbed into the previous role's meta and the role
+    # (with its bullets) disappears from grouping (sample 33).
+    for pm in body_paras:
+        if pm.semantic != "role_meta":
+            continue
+        text = pm.text.strip()
+        if not text or len(text) > 40 or text != text.upper():
+            continue
+        dedated = _YEAR_RE.sub("", text)
+        words = [w for w in re.split(r"\W+", dedated.lower()) if w and not w.isdigit()]
+        if not words or len(words) > 3:
+            continue
+        if any(w in _JOB_TITLE_WORDS for w in words):
+            pm.semantic = "role_header"
 
 
 _EDUCATION_INSTITUTION_WORDS = frozenset(

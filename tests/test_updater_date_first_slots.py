@@ -113,6 +113,37 @@ class TestSpanClaimFallback:
         assert "para_26" not in claimed_role1
         assert "para_27" not in claimed_role1
 
+    def test_span_never_claims_pipe_header_segment_line(self):
+        # Sample 10: role 3's company line ("Safewest Banking") sits right
+        # after its header; the LLM role is pipe-format so the company lives
+        # in a header SEGMENT, not meta_lines.  The span fallback must not
+        # claim it as a bullet slot (it would be overwritten with bullet text).
+        sec = _date_first_section()
+        company3 = _para("Safewest Banking", "paragraph", "para_47")
+        sec.body_paras = sec.body_paras + [
+            _para("Aug 20XX - Jan 20XX", "role_meta", "para_45"),
+            _para("Sales Associate", "role_header", "para_46"),
+            company3,
+        ]
+        cls_sec = _cls_sec_empty_body_blocks()
+        cls_sec.roles.append(ClassificationRole(
+            role_id="role_3",
+            header_blocks=[_block("para_46")],
+            meta_blocks=[_block("para_45", "role_meta")],
+            body_blocks=[],
+        ))
+        llm_roles = [
+            LlmRole(header="Office manager | The Phone Company | Jan 20XX - Current",
+                    bullets=["a"]),
+            LlmRole(header="Office manager | Nod Publishing | Mar 20XX - Dec 20XX",
+                    bullets=["b"]),
+            LlmRole(header="Sales Associate | Safewest Banking | Aug 20XX - Jan 20XX",
+                    bullets=["c"]),
+        ]
+        roles = _rebuild_roles_from_classification(sec, cls_sec, llm_roles)
+        assert roles[2].bullets == []
+        assert company3.text == "Safewest Banking"
+
     def test_span_stops_at_unclaimed_llm_header_line(self):
         # Sample 6: a third role's header para ("Office manager, Southridge
         # Video", semantic "paragraph") is unclaimed by classification and

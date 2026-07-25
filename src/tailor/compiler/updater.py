@@ -1458,8 +1458,23 @@ def _inject_fragmented_experience(
         if i >= len(llm_exp.roles):
             break
         llm_role = llm_exp.roles[i]
-        # Update heading with LLM role header text
-        new_heading = _strip_col_break_para(sec.heading.with_text(llm_role.header))
+        # Keep the template heading verbatim when it equals the LLM role
+        # header's title segment ('Senior Software Engineer' == first pipe
+        # segment of 'Senior Software Engineer | Brightline Technologies |
+        # ... | May 2017 – Present').  Overwriting it with the full pipe
+        # header fabricates a section title the template never had (sample
+        # 38); the company/date paras exist elsewhere in the template and
+        # stay verbatim.  A differing title (e.g. template 'Backend
+        # Engineer' vs LLM 'Senior Backend Engineer') keeps the original
+        # replace behaviour.
+        _norm_frag = lambda s: re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+        _llm_title_seg = llm_role.header.split("|")[0]
+        _new_title = llm_role.header
+        if _norm_frag(sec.title) and _norm_frag(sec.title) == _norm_frag(_llm_title_seg):
+            _new_title = sec.title
+            new_heading = _strip_col_break_para(sec.heading)
+        else:
+            new_heading = _strip_col_break_para(sec.heading.with_text(llm_role.header))
         # Fill available body_para slots with bullets, pack overflow into last slot
         body = list(sec.body_paras)
         bullet_slots = [j for j, bp in enumerate(body) if bp.para_id and not bp.text.startswith('\n')]
@@ -1476,7 +1491,7 @@ def _inject_fragmented_experience(
                 body[slot_j] = body[slot_j].with_text(packed)
 
         updated_sec = ResumeSection(
-            title=llm_role.header,
+            title=_new_title,
             heading=new_heading,
             semantic_type="other",
             body_paras=body,
@@ -1486,7 +1501,7 @@ def _inject_fragmented_experience(
         replacement[sec.section_id] = updated_sec
         _log.debug(
             "FRAGMENTED_EXPERIENCE_SYNTHESIZED: %r -> %r",
-            sec.title[:40], llm_role.header[:40],
+            sec.title[:40], _new_title[:40],
         )
 
     # Rebuild sections with replacements applied
@@ -2383,6 +2398,17 @@ def _rebuild_roles_from_classification(
         for m in lr.meta_lines
         if m.strip()
     } - {""}
+    # Pipe-header segments are role-identity material too: for pipe-format
+    # LLM roles ("Sales Associate | Safewest Banking | Aug 20XX – Jan 20XX")
+    # the company/date live inside the header, not meta_lines.  A span para
+    # matching a segment is the next role's company or date line — claiming
+    # it as a bullet slot overwrites it with bullet text (sample 10).
+    for _lr in (llm_roles or []):
+        if "|" in _lr.header:
+            for _seg in _lr.header.split("|"):
+                _seg_n = _norm_hdr(_seg)
+                if _seg_n:
+                    _llm_meta_norm.add(_seg_n)
 
     def _is_llm_header_line(p: "ParaModel") -> bool:
         t = p.text.strip()
