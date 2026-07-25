@@ -2492,6 +2492,44 @@ def _rebuild_roles_from_classification(
                 _claimed_ids.add(id(p))
                 break
 
+    # Release meta blocks stranded in another role's territory: a meta para
+    # belongs to a role only when no OTHER role's header stands between it
+    # and the role's own header.  Sample 6: classification hands the
+    # (repaired) Southridge role Phone Company's placeholder para as meta —
+    # the claim blocks Phone's span fallback from using its own slot, so its
+    # bullets are cloned as bold extras under the header and the placeholder
+    # survives.  Date lines directly before their own header (date-first
+    # layouts) have no intervening header and are kept.
+    _pos_terr = {id(p): i for i, p in enumerate(section.body_paras)}
+    _hdr_positions = [
+        _pos_terr.get(id(r.header)) for r in roles
+    ]
+    for _ri, r in enumerate(roles):
+        hpos_t = _pos_terr.get(id(r.header))
+        if hpos_t is None or not r.meta_lines:
+            continue
+        _other_hdrs = [
+            hp for _rj, hp in enumerate(_hdr_positions)
+            if _rj != _ri and hp is not None
+        ]
+        kept_terr = []
+        for m in r.meta_lines:
+            mpos = _pos_terr.get(id(m))
+            if mpos is None:
+                kept_terr.append(m)
+                continue
+            lo, hi = (mpos, hpos_t) if mpos < hpos_t else (hpos_t, mpos)
+            if any(lo < op < hi for op in _other_hdrs):
+                _log.debug(
+                    "cls-rebuild: role %r — released meta block %s "
+                    "(stranded in another role's territory)",
+                    r.role_id, m.para_id or "?",
+                )
+            else:
+                kept_terr.append(m)
+        if len(kept_terr) != len(r.meta_lines):
+            r.meta_lines = kept_terr
+
     # Trust guard: classification sometimes assigns a role body blocks that
     # all belong to a LATER role (sample 24: the only cls role pairs the
     # "Project Manager" header with the Project Engineer's bullets).  When

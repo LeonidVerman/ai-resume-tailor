@@ -309,6 +309,72 @@ class TestClsTrustGuards:
         # between para_10 and para_11 — body blocks must be kept.
         assert [b.para_id for b in roles[0].bullets] == ["para_12", "para_13"]
 
+    def test_stranded_meta_released_so_owner_claims_slot(self):
+        # Sample 6: classification hands role 3 (repaired to Southridge)
+        # Phone Company's placeholder para as META.  The claim blocked
+        # Phone's span fallback (end = first claimed para), so Phone had no
+        # slot: its bullets were cloned from the bold header para and the
+        # placeholder survived.  A meta para with another role's header
+        # between it and its role's own header must be released.
+        body = [
+            _para("Jan 20XX - Current", "role_meta", "para_22"),
+            _para("Office manager, The Phone Company", "role_header", "para_23"),
+            _para("Summarize your key responsibilities.", "paragraph", "para_25"),
+            _para("Mar 20XX - Dec 20XX", "role_meta", "para_27"),
+            _para("Office manager, Nod Publishing", "role_header", "para_28"),
+            _para("Summarize your key responsibilities again.", "paragraph", "para_30"),
+            _para("Aug 20XX - Mar 20XX", "role_meta", "para_32"),
+            _para("Office manager, Southridge Video", "role_header", "para_33"),
+            _para("Summarize your key responsibilities third.", "paragraph", "para_35"),
+        ]
+        sec = ResumeSection(
+            title="EXPERIENCE",
+            heading=_para("EXPERIENCE", "section_heading", "para_20"),
+            semantic_type="experience", body_paras=body,
+        )
+        sec.section_id = "sec_2"
+        cls_sec = ClassificationSection(
+            section_id="sec_2", raw_title="EXPERIENCE",
+            display_title="EXPERIENCE", semantic_type="experience",
+            rewrite_policy="rewrite_bullets_only",
+            roles=[
+                ClassificationRole(
+                    role_id="role_1",
+                    header_blocks=[_block("para_23")],
+                    meta_blocks=[_block("para_22", "role_meta")],
+                    body_blocks=[],
+                ),
+                ClassificationRole(
+                    role_id="role_2",
+                    header_blocks=[_block("para_28")],
+                    meta_blocks=[_block("para_27", "role_meta")],
+                    body_blocks=[],
+                ),
+                ClassificationRole(
+                    role_id="role_3",
+                    header_blocks=[_block("para_33")],
+                    # Phone's placeholder misfiled as role 3's meta: Nod's
+                    # header (para_28) stands between para_25 and para_33.
+                    meta_blocks=[
+                        _block("para_32", "role_meta"),
+                        _block("para_25", "role_meta"),
+                    ],
+                    body_blocks=[],
+                ),
+            ],
+        )
+        llm_roles = [
+            LlmRole(header="Office manager, The Phone Company", bullets=["a"]),
+            LlmRole(header="Office manager, Nod Publishing", bullets=["b"]),
+            LlmRole(header="Office manager, Southridge Video", bullets=["c"]),
+        ]
+        roles = _rebuild_roles_from_classification(sec, cls_sec, llm_roles)
+        # para_25 released from role 3 and claimed by role 1 as its slot.
+        assert [m.para_id for m in roles[2].meta_lines] == ["para_32"]
+        assert [b.para_id for b in roles[0].bullets] == ["para_25"]
+        assert [b.para_id for b in roles[1].bullets] == ["para_30"]
+        assert [b.para_id for b in roles[2].bullets] == ["para_35"]
+
     def test_meta_outside_territory_not_promoted(self):
         # Sample 6: another role's placeholder (BEFORE this role's header) is
         # misfiled into this role's meta — it must not become a bullet slot.
