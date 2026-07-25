@@ -593,6 +593,24 @@ def _is_education_intrusion_meta(pm: "ParaModel", recent_bullets: list["ParaMode
     )
 
 
+# Company-line signals: corporate suffixes ("Lopelski Builders, Inc.",
+# "Giggling Platypus Co.") and trailing city-state codes ("Pineapple
+# Enterprises Santa Monica, CA").  Company lines must never enter a role's
+# bullet-slot list — an update pass would overwrite them with bullet text.
+_CORP_SUFFIX_RE = re.compile(
+    r"\b(?:Inc|Co|Ltd|Corp|LLC|GmbH|Enterprises|Company)\b\.?\s*$",
+    re.IGNORECASE,
+)
+_CITY_STATE_RE = re.compile(r",\s*[A-Z]{2}\s*$")
+
+
+def _is_company_like_line(text: str) -> bool:
+    t = text.strip()
+    if not t or len(t) > 60:
+        return False
+    return bool(_CORP_SUFFIX_RE.search(t)) or bool(_CITY_STATE_RE.search(t))
+
+
 def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
     roles: list[RoleEntry] = []
     header: ParaModel | None = None
@@ -664,6 +682,20 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                     pm.semantic = "role_meta"
                     meta.append(pm)
                     state = "meta"
+                elif (
+                    len(_txt) > 70 or _txt.endswith((".", "!", "?"))
+                ) and not _is_company_like_line(_txt):
+                    # A long or sentence-ending paragraph right after the
+                    # header is role CONTENT, not a wrapped header line.
+                    # Collecting it as header_extra hid the role's bullets and
+                    # let the next Pattern-B boundary be absorbed as meta
+                    # (sample 16: the combined "2023 Ginyard International Co.
+                    # Junior software developer" header is followed directly
+                    # by description paragraphs).  Company lines are exempt —
+                    # "Lopelski Builders, Inc." ends with a period but is a
+                    # header line, not content (samples 23/30).
+                    bullets.append(pm)
+                    state = "bullets"
                 else:
                     # Multi-line role header: Word can wrap long headers across
                     # two paragraphs.  Collect as header_extra; do not render.
@@ -676,8 +708,19 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             if s == "role_meta":
                 meta.append(pm)
             elif s in ("bullet", "paragraph"):
-                bullets.append(pm)
-                state = "bullets"
+                # A company line directly after the date must not become the
+                # first bullet slot — once LLM roles match, slot #1 would be
+                # overwritten with bullet text (sample 39: "Pineapple
+                # Enterprises Santa Monica, CA").
+                if (
+                    s == "paragraph"
+                    and not bullets
+                    and _is_company_like_line(pm.text)
+                ):
+                    header_extra.append(pm)
+                else:
+                    bullets.append(pm)
+                    state = "bullets"
             elif s == "empty":
                 pass
             else:
@@ -702,6 +745,21 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 # a two-column table layout (e.g. "Your University May 2020").
                 if s == "role_meta" and _is_education_intrusion_meta(pm, bullets):
                     pass  # drop — do not add to this role's bullets
+                elif (
+                    s == "paragraph"
+                    and len(pm.text.strip()) <= 40
+                    and not pm.text.strip().endswith((".", "!", "?"))
+                    and (
+                        set(re.split(r"\W+", pm.text.strip().lower()))
+                        & _JOB_TITLE_WORDS
+                    )
+                ):
+                    # Bare job-title line inside the bullet stream — usually
+                    # the NEXT role's title para (sample 17: 'Mechanical
+                    # Engineer' precedes the 'DURAFAME INC. | …' header).
+                    # Keep it out of the slot list so it is never overwritten
+                    # with bullet text; as header_extra it renders verbatim.
+                    header_extra.append(pm)
                 else:
                     bullets.append(pm)
             # role_header handled at top; ignore empty/other

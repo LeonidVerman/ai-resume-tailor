@@ -256,15 +256,19 @@ class TestClsTrustGuards:
         roles = _rebuild_roles_from_classification(
             sec, self._cls_sec(), self._llm_roles()
         )
-        assert len(roles) == 1
         # The next role's bullets (beyond the unclaimed "Project Engineer"
-        # header line) are dropped; the manager's description-like meta paras
-        # are promoted to its bullet slots instead.
+        # header line) are dropped from the manager role; the manager's
+        # description-like meta paras are promoted to its bullet slots.
         assert [b.para_id for b in roles[0].bullets] == [
             "para_35", "para_38", "para_41",
         ]
         # The company line stays meta (no sentence-ending punctuation).
         assert [m.para_id for m in roles[0].meta_lines] == ["para_44"]
+        # A second role is SYNTHESIZED at the unclaimed boundary and hands
+        # the dropped paras to the Project Engineer's LLM role as slots.
+        assert len(roles) == 2
+        assert roles[1].header.para_id == "para_46"
+        assert [b.para_id for b in roles[1].bullets] == ["para_48", "para_51"]
 
     def test_drop_requires_fallback_content(self):
         # Word-wrap fragment headers (sample 25): when there is NOTHING of the

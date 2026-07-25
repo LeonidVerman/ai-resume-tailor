@@ -506,6 +506,40 @@ class TestTitleBeforeDateBoundary:
 
 
 # ---------------------------------------------------------------------------
+# 17b: Slash-separated month/year dates (sample 39 format)
+# ---------------------------------------------------------------------------
+
+class TestSlashDateBoundaries:
+    _BODY_LINES = [
+        "Backend Developer",
+        "Jan / 2021-Ongoing",
+        "Pineapple Enterprises  Santa Monica, CA",
+        "Designed and implemented a scalable database architecture for web applications.",
+        "Created efficient stored procedures to optimize data retrieval processes.",
+        "Backend Developer",
+        "Jan / 2018-Jan / 2021",
+        "Silver Lake Enterprises  Seattle, WA",
+        "Managed the backend development for over 350 websites.",
+    ]
+
+    def test_slash_dates_are_boundaries(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert len(roles) == 2
+        assert roles[0].header == "Backend Developer"
+        assert roles[1].header == "Backend Developer"
+
+    def test_company_line_goes_to_meta_not_bullets(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert "Pineapple Enterprises  Santa Monica, CA" in roles[0].meta_lines
+        assert len(roles[0].bullets) == 2
+        assert not any("Pineapple" in b for b in roles[0].bullets)
+        assert "Silver Lake Enterprises  Seattle, WA" in roles[1].meta_lines
+        assert roles[1].bullets == [
+            "Managed the backend development for over 350 websites.",
+        ]
+
+
+# ---------------------------------------------------------------------------
 # 18: Paren-date role headers — "Title (YYYY - Present)" (sample 24 format)
 # ---------------------------------------------------------------------------
 

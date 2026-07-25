@@ -1529,7 +1529,11 @@ _MONTH_PAT = (
 )
 _YEAR_SLOT_PAT = r"(?:19\d{2}|20\d{2}|19[Xx]{2}|20[Xx]{2})"  # real or XX placeholder
 _DATE_WORD_PAT = r"(?:Present|Current|Now|Ongoing)"
-_SINGLE_DATE_PAT = rf"(?:{_MONTH_PAT}\.?\s+{_YEAR_SLOT_PAT}|{_YEAR_SLOT_PAT})"
+# "Jan 2021", "Jan. 2021", and slash-separated "Jan / 2021" / "Jan/2021"
+# (sample 39's "Jan / 2021-Ongoing" date lines).
+_SINGLE_DATE_PAT = (
+    rf"(?:{_MONTH_PAT}\.?\s*(?:/\s*|\s){_YEAR_SLOT_PAT}|{_YEAR_SLOT_PAT})"
+)
 _DATE_SEP_LOOSE_PAT = r"(?:\s*[-–—‒]\s*|\s+to\s+|\s+through\s+)"
 _DATE_RANGE_PAT = (
     rf"(?:{_SINGLE_DATE_PAT}"
@@ -1722,6 +1726,7 @@ def _roles_from_date_boundaries(
             meta = pre[1:] + [date_text]
             saw_header = True
 
+        first_content = True
         for line in body_lines[boundary_i + 1: end_i]:
             stripped = line.strip()
             if not stripped:
@@ -1731,8 +1736,20 @@ def _roles_from_date_boundaries(
             if not saw_header:
                 header = clean if clean else stripped
                 saw_header = True
+            elif (
+                pre_h
+                and first_content
+                and len(stripped) <= 60
+                and not stripped.endswith((".", "!", "?"))
+            ):
+                # Title-before-date layout: a short non-sentence line directly
+                # after the date is the company/location line ("Pineapple
+                # Enterprises  Santa Monica, CA", sample 39), not a bullet.
+                meta.append(stripped)
+                first_content = False
             else:
                 bullets.append(clean if clean else stripped)
+                first_content = False
 
         roles.append(LlmRole(header=header, meta_lines=meta, bullets=bullets))
     return roles
@@ -2485,6 +2502,7 @@ def _rebuild_roles_from_classification(
     # _split_cls_mega_role handles.
     if _llm_headers:
         _pos = {id(p): i for i, p in enumerate(section.body_paras)}
+        _synth_roles: list[RoleEntry] = []
         for r in roles:
             if not r.bullets:
                 continue
@@ -2517,6 +2535,32 @@ def _rebuild_roles_from_classification(
                 r.role_id, len(r.bullets),
                 section.body_paras[cut].text.strip()[:40],
             )
+            # The boundary para is a role header classification missed
+            # entirely (sample 24: one cls role for two template roles).
+            # Synthesize an IR role there and hand it the dropped paras as
+            # its bullet slots — they lie beyond the boundary and ARE that
+            # role's content region; without this the matching LLM role has
+            # no IR counterpart and its bullets are dropped.
+            _boundary = section.body_paras[cut]
+            _all_hdr_ids = {id(x.header) for x in roles} | {
+                id(x.header) for x in _synth_roles
+            }
+            if id(_boundary) not in _all_hdr_ids:
+                _synth_roles.append(RoleEntry(
+                    header=_boundary,
+                    header_extra=[],
+                    meta_lines=[],
+                    bullets=sorted(
+                        r.bullets, key=lambda p: _pos.get(id(p), 1 << 30)
+                    ),
+                    role_id=_boundary.text.strip(),
+                    role_id_stable=_boundary.para_id or _boundary.text.strip(),
+                ))
+                _log.debug(
+                    "cls-rebuild: synthesized role %r at unclaimed boundary "
+                    "with %d reclaimed slot(s)",
+                    _boundary.text.strip()[:40], len(r.bullets),
+                )
             r.bullets = []
             # Meta blocks beyond the cut are misassigned too — keeping them
             # would push the span fallback's start past the next role's
@@ -2529,6 +2573,7 @@ def _rebuild_roles_from_classification(
                     r.role_id, len(r.meta_lines) - len(kept_meta),
                 )
                 r.meta_lines = kept_meta
+        roles.extend(_synth_roles)
 
     # Trust guard: classification sometimes marks a role's content slots as
     # meta_blocks/preserve (sample 24: the manager's three description paras
@@ -4550,6 +4595,18 @@ def apply_tailored(
                 rebuilt: list[RoleEntry] = []
                 for _r in rebuilt_raw:
                     rebuilt.extend(_split_cls_mega_role(_r, llm_section.roles or None))
+                # Classification under-detection: when the parser found MORE
+                # roles than the classification rebuild (sample 16: one cls
+                # role whose body_blocks point into the second role's region
+                # vs two correctly grouped parser roles), the parser structure
+                # is the better boundary source.
+                if len(orig_section.roles) > len(rebuilt):
+                    _log.debug(
+                        "date-first: using %d parser roles over %d cls-rebuilt "
+                        "roles (classification under-detected)",
+                        len(orig_section.roles), len(rebuilt),
+                    )
+                    rebuilt = orig_section.roles
             else:
                 rebuilt = _rebuild_date_first_roles(orig_section)
             return _update_experience_date_first(orig_section, llm_section, rebuilt)
