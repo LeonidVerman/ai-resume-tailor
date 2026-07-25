@@ -1,0 +1,1415 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Professional Experience",
+        "paragraphs": [
+          {
+            "para_id": "para_18",
+            "text": "SOFTWARE ENGINEER",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_19",
+            "text": "2023",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_8",
+            "text": "Collaborated with a dynamic team to create cutting- edge software products.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_9",
+            "text": "Led the development of a customer-facing web application, resulting in a 30% increase in user engagement.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_25",
+            "text": "JUNIOR SOFTWARE ENGINEER",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_26",
+            "text": "202",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_27",
+            "text": "1",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_13",
+            "text": "Assisted senior engineers in developing and testing software components.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_14",
+            "text": "Collaborated on front-end development tasks, including UI enhancements and responsive design.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_33",
+            "text": "PROGRAMMER",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_34",
+            "text": "2019",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_17",
+            "text": "Assisted in the development of unit tests and documentation for various software components.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_18"
+            ],
+            "meta_para_ids": [
+              "para_19"
+            ],
+            "bullet_para_ids": [
+              "para_8",
+              "para_9"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_25"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": [
+              "para_26",
+              "para_27",
+              "para_13",
+              "para_14"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_33"
+            ],
+            "meta_para_ids": [
+              "para_34"
+            ],
+            "bullet_para_ids": [
+              "para_17"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Certifications",
+        "paragraphs": [
+          {
+            "para_id": "para_38",
+            "text": "Certified Developer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_39",
+            "text": "Certified Practitioner",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_40",
+            "text": "UI/UX Developer",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Contact Information",
+        "paragraphs": [],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Education",
+        "paragraphs": [
+          {
+            "para_id": "para_43",
+            "text": "BACHELOR  OF SCIENCE  IN COMPUTER",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_44",
+            "text": "SCIENCE",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_45",
+            "text": "Your University",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_46",
+            "text": "SCIENCE",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_47",
+            "text": "Your University",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_48",
+            "text": "May 2020",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_49",
+            "text": "MASTER  OF SCIENCE  IN COMPUTER",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_50",
+            "text": "May 2022",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_51",
+            "text": "Proficiency",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_52",
+            "text": "Programming Languages",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_53",
+            "text": "Web Technologies",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_54",
+            "text": "Database Management",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_55",
+            "text": "Version Control",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_56",
+            "text": "Agile Development",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_57",
+            "text": "Problem Solving and Algorithm Design",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_58",
+            "text": "Strong Communication and Team Collaboration",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Language",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_60",
+            "text": "English",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_61",
+            "text": "Spanish",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_62",
+            "text": "German",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_63",
+            "text": "+123-456-7890",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_64",
+            "text": "www.techguruplus.com",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_65",
+            "text": "hello@techguruplus.com",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Professional Experience",
+        "paragraphs": [
+          {
+            "para_id": "para_5",
+            "text": "Professional Experience",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_18",
+            "text": "SOFTWARE ENGINEER",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_19",
+            "text": "2023",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_8",
+            "text": "Collaborated with a dynamic team to create cutting- edge software products.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_9",
+            "text": "Led the development of a customer-facing web application, resulting in a 30% increase in user engagement.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_25",
+            "text": "JUNIOR SOFTWARE ENGINEER",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_26",
+            "text": "202",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_27",
+            "text": "1",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_13",
+            "text": "Assisted senior engineers in developing and testing software components.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_14",
+            "text": "Collaborated on front-end development tasks, including UI enhancements and responsive design.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_33",
+            "text": "PROGRAMMER",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_34",
+            "text": "2019",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_17",
+            "text": "Assisted in the development of unit tests and documentation for various software components.",
+            "parser_semantic": "bullet"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_18"
+            ],
+            "meta_para_ids": [
+              "para_19"
+            ],
+            "bullet_para_ids": [
+              "para_8",
+              "para_9"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_25"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": [
+              "para_26",
+              "para_27",
+              "para_13",
+              "para_14"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_33"
+            ],
+            "meta_para_ids": [
+              "para_34"
+            ],
+            "bullet_para_ids": [
+              "para_17"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Certifications",
+        "paragraphs": [
+          {
+            "para_id": "para_37",
+            "text": "Certifications",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_38",
+            "text": "Certified Developer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_39",
+            "text": "Certified Practitioner",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_40",
+            "text": "UI/UX Developer",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Contact Information",
+        "paragraphs": [
+          {
+            "para_id": "para_41",
+            "text": "Contact Information",
+            "parser_semantic": "section_heading"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Education",
+        "paragraphs": [
+          {
+            "para_id": "para_42",
+            "text": "Education",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_43",
+            "text": "BACHELOR  OF SCIENCE  IN COMPUTER",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_44",
+            "text": "SCIENCE",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_45",
+            "text": "Your University",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_46",
+            "text": "SCIENCE",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_47",
+            "text": "Your University",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_48",
+            "text": "May 2020",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_49",
+            "text": "MASTER  OF SCIENCE  IN COMPUTER",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_50",
+            "text": "May 2022",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_51",
+            "text": "Proficiency",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_52",
+            "text": "Programming Languages",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_53",
+            "text": "Web Technologies",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_54",
+            "text": "Database Management",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_55",
+            "text": "Version Control",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_56",
+            "text": "Agile Development",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_57",
+            "text": "Problem Solving and Algorithm Design",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_58",
+            "text": "Strong Communication and Team Collaboration",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Language",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_60",
+            "text": "English",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_61",
+            "text": "Spanish",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_62",
+            "text": "German",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_63",
+            "text": "+123-456-7890",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_64",
+            "text": "www.techguruplus.com",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_65",
+            "text": "hello@techguruplus.com",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_5",
+        "text_preview": "Professional Experience"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_37",
+        "text_preview": "Certifications"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_41",
+        "text_preview": "Contact Information"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_42",
+        "text_preview": "Education"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 7
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Professional Experience",
+        "display_title": "Professional Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_1",
+                "para_id": "para_18",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_2",
+                "para_id": "para_19",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_3",
+                "para_id": "para_8",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_4",
+                "para_id": "para_9",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_5",
+                "para_id": "para_25",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_6",
+                "para_id": "para_26",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_7",
+                "para_id": "para_27",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_8",
+                "para_id": "para_13",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_9",
+                "para_id": "para_14",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_10",
+                "para_id": "para_33",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_11",
+                "para_id": "para_34",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_12",
+                "para_id": "para_17",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Certifications",
+        "display_title": "Certifications",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_13",
+            "para_id": "para_38",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_14",
+            "para_id": "para_39",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_15",
+            "para_id": "para_40",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Contact Information",
+        "display_title": "Contact Information",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Education",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_16",
+            "para_id": "para_43",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_17",
+            "para_id": "para_44",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_18",
+            "para_id": "para_45",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_19",
+            "para_id": "para_46",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_20",
+            "para_id": "para_47",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_21",
+            "para_id": "para_48",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_22",
+            "para_id": "para_49",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_23",
+            "para_id": "para_50",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_24",
+            "para_id": "para_51",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_25",
+            "para_id": "para_52",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_26",
+            "para_id": "para_53",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_27",
+            "para_id": "para_54",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_28",
+            "para_id": "para_55",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_29",
+            "para_id": "para_56",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_30",
+            "para_id": "para_57",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_31",
+            "para_id": "para_58",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_32",
+            "para_id": "para_59",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_33",
+            "para_id": "para_60",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_34",
+            "para_id": "para_61",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_35",
+            "para_id": "para_62",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_36",
+            "para_id": "para_63",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_37",
+            "para_id": "para_64",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_38",
+            "para_id": "para_65",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "OTHER_BLOCKS_EMPTY",
+        "section_id": "sec_3",
+        "detail": "blocks[] must be non-empty"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": false,
+        "error_codes": [
+          "OTHER_BLOCKS_EMPTY"
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "repair_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "invalid_sections": [
+      {
+        "parser_section": {
+          "section_id": "sec_3",
+          "raw_title": "Contact Information",
+          "paragraphs": [],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_3",
+          "raw_title": "Contact Information",
+          "display_title": "Contact Information",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "OTHER_BLOCKS_EMPTY",
+            "section_id": "sec_3",
+            "detail": "blocks[] must be non-empty"
+          }
+        ]
+      }
+    ]
+  },
+  "repair_response": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_3",
+        "raw_title": "Contact Information",
+        "display_title": "Contact Information",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_1",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "validation_after_repair": {
+    "document_id": "0",
+    "is_valid": true,
+    "errors": [],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Professional Experience",
+        "display_title": "Professional Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_1",
+                "para_id": "para_18",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_2",
+                "para_id": "para_19",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_3",
+                "para_id": "para_8",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_4",
+                "para_id": "para_9",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_5",
+                "para_id": "para_25",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_6",
+                "para_id": "para_26",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_7",
+                "para_id": "para_27",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_8",
+                "para_id": "para_13",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_9",
+                "para_id": "para_14",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_10",
+                "para_id": "para_33",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_11",
+                "para_id": "para_34",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_12",
+                "para_id": "para_17",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Certifications",
+        "display_title": "Certifications",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_13",
+            "para_id": "para_38",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_14",
+            "para_id": "para_39",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_15",
+            "para_id": "para_40",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Contact Information",
+        "display_title": "Contact Information",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_1",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Education",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_16",
+            "para_id": "para_43",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_17",
+            "para_id": "para_44",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_18",
+            "para_id": "para_45",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_19",
+            "para_id": "para_46",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_20",
+            "para_id": "para_47",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_21",
+            "para_id": "para_48",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_22",
+            "para_id": "para_49",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_23",
+            "para_id": "para_50",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_24",
+            "para_id": "para_51",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_25",
+            "para_id": "para_52",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_26",
+            "para_id": "para_53",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_27",
+            "para_id": "para_54",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_28",
+            "para_id": "para_55",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_29",
+            "para_id": "para_56",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_30",
+            "para_id": "para_57",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_31",
+            "para_id": "para_58",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_32",
+            "para_id": "para_59",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_33",
+            "para_id": "para_60",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_34",
+            "para_id": "para_61",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_35",
+            "para_id": "para_62",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_36",
+            "para_id": "para_63",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_37",
+            "para_id": "para_64",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_38",
+            "para_id": "para_65",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "status": "repaired",
+  "validation_error_count": 1,
+  "invalid_section_count_before_repair": 1,
+  "invalid_section_count_after_repair": 0,
+  "repaired_section_count": 1,
+  "downgraded_section_count": 0,
+  "invalid_section_ids": [],
+  "recovery_applied": false
+}

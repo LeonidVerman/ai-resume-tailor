@@ -1,0 +1,2734 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Senior Software Engineer",
+        "paragraphs": [
+          {
+            "para_id": "para_5",
+            "text": "Senior Software Engineer with 12 years of experience designing and optimizing large-scale applications. Skilled in full-stack development, cloud architecture, and microservices design. Recognized for leading teams that deliver high-performing software products, reduce technical debt, and improve system reliability. Adept at mentoring junior engineers and driving engineering best practices to support organizational growth.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_6",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_7",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_8",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_9",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "KEY SKILLS",
+        "paragraphs": [
+          {
+            "para_id": "para_11",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_12",
+            "text": "Agile development",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_13",
+            "text": "API design and integration",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_14",
+            "text": "PROFESSIONAL EXPERIENCE",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_16",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_17",
+            "text": "Senior Software Engineer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_18",
+            "text": "Brightline Technologies | San Francisco, CA,",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_19",
+            "text": "Cloud computing (AWS, Azure)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_20",
+            "text": "Microservices architecture",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_21",
+            "text": "Programming languages (Java, Python, JavaScript)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_22",
+            "text": "Software performance optimization",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_23",
+            "text": "Team leadership and mentoring",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_24",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_25",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_26",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_28",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_29",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_30",
+            "text": "Bachelor of Science in Computer Science | University of California, Berkeley",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_31",
+            "text": "May 2013",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_32",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_33",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "CERTIFICATIONS",
+        "paragraphs": [
+          {
+            "para_id": "para_35",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_36",
+            "text": "AWS Certified Solutions Architect – Associate | 2019",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_37",
+            "text": "Oracle Certified Professional, Java SE Programmer | 2016",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_38",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_39",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_40",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_41",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_42",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_43",
+            "text": "| May 2017 – Present",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_44",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_45",
+            "text": "Spearheaded the migration of a legacy monolithic system to a microservices-based architecture, reducing downtime incidents by 40% and",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_46",
+            "text": "increasing scalability to handle 3x traffic",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_47",
+            "text": "Directed development of a customer-facing web application that improved user engagement by 25% and generated $5M in additional annual revenue",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_48",
+            "text": "Introduced automated testing frameworks that improved code quality and reduced production defects by 30% across the engineering team",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_49",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_50",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_51",
+            "text": "Software Engineer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_52",
+            "text": "Apex Systems | San Jose, CA, | June 2013 – May 2017",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_53",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_54",
+            "text": "Built backend services using Java and Spring, improving API response times by 18% and supporting 200K+ daily active users",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_55",
+            "text": "Collaborated with product and UX teams to launch a mobile app feature that boosted retention rates by 22% within six months",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_56",
+            "text": "Optimized database queries and indexing strategies, reducing average query time from 3.2 seconds to under 1 second",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_57",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Senior Software Engineer",
+        "paragraphs": [
+          {
+            "para_id": "para_4",
+            "text": "Senior Software Engineer",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_5",
+            "text": "Senior Software Engineer with 12 years of experience designing and optimizing large-scale applications. Skilled in full-stack development, cloud architecture, and microservices design. Recognized for leading teams that deliver high-performing software products, reduce technical debt, and improve system reliability. Adept at mentoring junior engineers and driving engineering best practices to support organizational growth.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_6",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_7",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_8",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_9",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "KEY SKILLS",
+        "paragraphs": [
+          {
+            "para_id": "para_10",
+            "text": "KEY SKILLS",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_11",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_12",
+            "text": "Agile development",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_13",
+            "text": "API design and integration",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_14",
+            "text": "PROFESSIONAL EXPERIENCE",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_16",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_17",
+            "text": "Senior Software Engineer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_18",
+            "text": "Brightline Technologies | San Francisco, CA,",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_19",
+            "text": "Cloud computing (AWS, Azure)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_20",
+            "text": "Microservices architecture",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_21",
+            "text": "Programming languages (Java, Python, JavaScript)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_22",
+            "text": "Software performance optimization",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_23",
+            "text": "Team leadership and mentoring",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_24",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_25",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_26",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_27",
+            "text": "EDUCATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_28",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_29",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_30",
+            "text": "Bachelor of Science in Computer Science | University of California, Berkeley",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_31",
+            "text": "May 2013",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_32",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_33",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "CERTIFICATIONS",
+        "paragraphs": [
+          {
+            "para_id": "para_34",
+            "text": "CERTIFICATIONS",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_35",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_36",
+            "text": "AWS Certified Solutions Architect – Associate | 2019",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_37",
+            "text": "Oracle Certified Professional, Java SE Programmer | 2016",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_38",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_39",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_40",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_41",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_42",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_43",
+            "text": "| May 2017 – Present",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_44",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_45",
+            "text": "Spearheaded the migration of a legacy monolithic system to a microservices-based architecture, reducing downtime incidents by 40% and",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_46",
+            "text": "increasing scalability to handle 3x traffic",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_47",
+            "text": "Directed development of a customer-facing web application that improved user engagement by 25% and generated $5M in additional annual revenue",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_48",
+            "text": "Introduced automated testing frameworks that improved code quality and reduced production defects by 30% across the engineering team",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_49",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_50",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_51",
+            "text": "Software Engineer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_52",
+            "text": "Apex Systems | San Jose, CA, | June 2013 – May 2017",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_53",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_54",
+            "text": "Built backend services using Java and Spring, improving API response times by 18% and supporting 200K+ daily active users",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_55",
+            "text": "Collaborated with product and UX teams to launch a mobile app feature that boosted retention rates by 22% within six months",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_56",
+            "text": "Optimized database queries and indexing strategies, reducing average query time from 3.2 seconds to under 1 second",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_57",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_4",
+        "text_preview": "Senior Software Engineer"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_10",
+        "text_preview": "KEY SKILLS"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_27",
+        "text_preview": "EDUCATION"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_34",
+        "text_preview": "CERTIFICATIONS"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 13
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Senior Software Engineer",
+        "display_title": "Senior Software Engineer",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "para_17",
+                "para_id": "para_17",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_18",
+                "para_id": "para_18",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "para_19",
+                "para_id": "para_19",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_20",
+                "para_id": "para_20",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_21",
+                "para_id": "para_21",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_22",
+                "para_id": "para_22",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_23",
+                "para_id": "para_23",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_24",
+                "para_id": "para_24",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_25",
+                "para_id": "para_25",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_26",
+                "para_id": "para_26",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "KEY SKILLS",
+        "display_title": "Key Skills",
+        "semantic_type": "skills",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_11",
+            "para_id": "para_11",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_12",
+            "para_id": "para_12",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_13",
+            "para_id": "para_13",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_14",
+            "para_id": "para_14",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_28",
+            "para_id": "para_28",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_29",
+            "para_id": "para_29",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_30",
+            "para_id": "para_30",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_31",
+            "para_id": "para_31",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_32",
+            "para_id": "para_32",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_33",
+            "para_id": "para_33",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "CERTIFICATIONS",
+        "display_title": "Certifications",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_35",
+            "para_id": "para_35",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_36",
+            "para_id": "para_36",
+            "semantic_type": "role_header",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_37",
+            "para_id": "para_37",
+            "semantic_type": "role_header",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_38",
+            "para_id": "para_38",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_39",
+            "para_id": "para_39",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_40",
+            "para_id": "para_40",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_41",
+            "para_id": "para_41",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_42",
+            "para_id": "para_42",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_43",
+            "para_id": "para_43",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_44",
+            "para_id": "para_44",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_45",
+            "para_id": "para_45",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_46",
+            "para_id": "para_46",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_47",
+            "para_id": "para_47",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_48",
+            "para_id": "para_48",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_49",
+            "para_id": "para_49",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_50",
+            "para_id": "para_50",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_51",
+            "para_id": "para_51",
+            "semantic_type": "role_intro",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_52",
+            "para_id": "para_52",
+            "semantic_type": "role_header",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_53",
+            "para_id": "para_53",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_54",
+            "para_id": "para_54",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_55",
+            "para_id": "para_55",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_56",
+            "para_id": "para_56",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_57",
+            "para_id": "para_57",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SKILLS_REWRITE_POLICY",
+        "section_id": "sec_2",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "SKILLS_BLOCK_TYPE",
+        "section_id": "sec_2",
+        "detail": "block_id=para_11 semantic_type='other_paragraph'"
+      },
+      {
+        "code": "SKILLS_BLOCK_TYPE",
+        "section_id": "sec_2",
+        "detail": "block_id=para_14 semantic_type='other_paragraph'"
+      },
+      {
+        "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_3",
+        "detail": "must be true"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_36 semantic_type='role_header'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_37 semantic_type='role_header'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_45 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=para_45 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_47 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=para_47 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_48 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=para_48 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_51 semantic_type='role_intro'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_52 semantic_type='role_header'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_54 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=para_54 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_55 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=para_55 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_56 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=para_56 rewrite_policy='rewrite_text'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": false,
+        "error_codes": [
+          "SKILLS_REWRITE_POLICY",
+          "SKILLS_BLOCK_TYPE",
+          "SKILLS_BLOCK_TYPE"
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": false,
+        "error_codes": [
+          "EDUCATION_PRESERVE_BODY_STRUCTURE"
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": false,
+        "error_codes": [
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY"
+        ]
+      }
+    ]
+  },
+  "repair_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "invalid_sections": [
+      {
+        "parser_section": {
+          "section_id": "sec_4",
+          "raw_title": "CERTIFICATIONS",
+          "paragraphs": [
+            {
+              "para_id": "para_35",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_36",
+              "text": "AWS Certified Solutions Architect – Associate | 2019",
+              "parser_semantic": "role_header"
+            },
+            {
+              "para_id": "para_37",
+              "text": "Oracle Certified Professional, Java SE Programmer | 2016",
+              "parser_semantic": "role_header"
+            },
+            {
+              "para_id": "para_38",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_39",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_40",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_41",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_42",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_43",
+              "text": "| May 2017 – Present",
+              "parser_semantic": "role_header"
+            },
+            {
+              "para_id": "para_44",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_45",
+              "text": "Spearheaded the migration of a legacy monolithic system to a microservices-based architecture, reducing downtime incidents by 40% and",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_46",
+              "text": "increasing scalability to handle 3x traffic",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_47",
+              "text": "Directed development of a customer-facing web application that improved user engagement by 25% and generated $5M in additional annual revenue",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_48",
+              "text": "Introduced automated testing frameworks that improved code quality and reduced production defects by 30% across the engineering team",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_49",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_50",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_51",
+              "text": "Software Engineer",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_52",
+              "text": "Apex Systems | San Jose, CA, | June 2013 – May 2017",
+              "parser_semantic": "role_header"
+            },
+            {
+              "para_id": "para_53",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_54",
+              "text": "Built backend services using Java and Spring, improving API response times by 18% and supporting 200K+ daily active users",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_55",
+              "text": "Collaborated with product and UX teams to launch a mobile app feature that boosted retention rates by 22% within six months",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_56",
+              "text": "Optimized database queries and indexing strategies, reducing average query time from 3.2 seconds to under 1 second",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_57",
+              "text": "",
+              "parser_semantic": "empty"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_4",
+          "raw_title": "CERTIFICATIONS",
+          "display_title": "Certifications",
+          "semantic_type": "additional",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "para_35",
+              "para_id": "para_35",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_36",
+              "para_id": "para_36",
+              "semantic_type": "role_header",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_37",
+              "para_id": "para_37",
+              "semantic_type": "role_header",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_38",
+              "para_id": "para_38",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_39",
+              "para_id": "para_39",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_40",
+              "para_id": "para_40",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_41",
+              "para_id": "para_41",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_42",
+              "para_id": "para_42",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_43",
+              "para_id": "para_43",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_44",
+              "para_id": "para_44",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_45",
+              "para_id": "para_45",
+              "semantic_type": "role_achievement_bullet",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "para_46",
+              "para_id": "para_46",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_47",
+              "para_id": "para_47",
+              "semantic_type": "role_achievement_bullet",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "para_48",
+              "para_id": "para_48",
+              "semantic_type": "role_achievement_bullet",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "para_49",
+              "para_id": "para_49",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_50",
+              "para_id": "para_50",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_51",
+              "para_id": "para_51",
+              "semantic_type": "role_intro",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_52",
+              "para_id": "para_52",
+              "semantic_type": "role_header",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_53",
+              "para_id": "para_53",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_54",
+              "para_id": "para_54",
+              "semantic_type": "role_achievement_bullet",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "para_55",
+              "para_id": "para_55",
+              "semantic_type": "role_achievement_bullet",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "para_56",
+              "para_id": "para_56",
+              "semantic_type": "role_achievement_bullet",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "para_57",
+              "para_id": "para_57",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_4",
+            "detail": "block_id=para_36 semantic_type='role_header'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_4",
+            "detail": "block_id=para_37 semantic_type='role_header'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_4",
+            "detail": "block_id=para_45 semantic_type='role_achievement_bullet'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=para_45 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_4",
+            "detail": "block_id=para_47 semantic_type='role_achievement_bullet'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=para_47 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_4",
+            "detail": "block_id=para_48 semantic_type='role_achievement_bullet'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=para_48 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_4",
+            "detail": "block_id=para_51 semantic_type='role_intro'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_4",
+            "detail": "block_id=para_52 semantic_type='role_header'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_4",
+            "detail": "block_id=para_54 semantic_type='role_achievement_bullet'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=para_54 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_4",
+            "detail": "block_id=para_55 semantic_type='role_achievement_bullet'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=para_55 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_4",
+            "detail": "block_id=para_56 semantic_type='role_achievement_bullet'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=para_56 rewrite_policy='rewrite_text'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_2",
+          "raw_title": "KEY SKILLS",
+          "paragraphs": [
+            {
+              "para_id": "para_11",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_12",
+              "text": "Agile development",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_13",
+              "text": "API design and integration",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_14",
+              "text": "PROFESSIONAL EXPERIENCE",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_15",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_16",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_17",
+              "text": "Senior Software Engineer",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_18",
+              "text": "Brightline Technologies | San Francisco, CA,",
+              "parser_semantic": "role_header"
+            },
+            {
+              "para_id": "para_19",
+              "text": "Cloud computing (AWS, Azure)",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_20",
+              "text": "Microservices architecture",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_21",
+              "text": "Programming languages (Java, Python, JavaScript)",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_22",
+              "text": "Software performance optimization",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_23",
+              "text": "Team leadership and mentoring",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_24",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_25",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_26",
+              "text": "",
+              "parser_semantic": "empty"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_2",
+          "raw_title": "KEY SKILLS",
+          "display_title": "Key Skills",
+          "semantic_type": "skills",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "para_11",
+              "para_id": "para_11",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_12",
+              "para_id": "para_12",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_13",
+              "para_id": "para_13",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_14",
+              "para_id": "para_14",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SKILLS_REWRITE_POLICY",
+            "section_id": "sec_2",
+            "detail": "got 'preserve'"
+          },
+          {
+            "code": "SKILLS_BLOCK_TYPE",
+            "section_id": "sec_2",
+            "detail": "block_id=para_11 semantic_type='other_paragraph'"
+          },
+          {
+            "code": "SKILLS_BLOCK_TYPE",
+            "section_id": "sec_2",
+            "detail": "block_id=para_14 semantic_type='other_paragraph'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_3",
+          "raw_title": "EDUCATION",
+          "paragraphs": [
+            {
+              "para_id": "para_28",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_29",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_30",
+              "text": "Bachelor of Science in Computer Science | University of California, Berkeley",
+              "parser_semantic": "role_header"
+            },
+            {
+              "para_id": "para_31",
+              "text": "May 2013",
+              "parser_semantic": "role_meta"
+            },
+            {
+              "para_id": "para_32",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_33",
+              "text": "",
+              "parser_semantic": "empty"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_3",
+          "raw_title": "EDUCATION",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "para_28",
+              "para_id": "para_28",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_29",
+              "para_id": "para_29",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_30",
+              "para_id": "para_30",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_31",
+              "para_id": "para_31",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_32",
+              "para_id": "para_32",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_33",
+              "para_id": "para_33",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+            "section_id": "sec_3",
+            "detail": "must be true"
+          }
+        ]
+      }
+    ]
+  },
+  "repair_response": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_4",
+        "raw_title": "CERTIFICATIONS",
+        "display_title": "Certifications",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_35",
+            "para_id": "para_35",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_36",
+            "para_id": "para_36",
+            "semantic_type": "role_header",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_37",
+            "para_id": "para_37",
+            "semantic_type": "role_header",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_38",
+            "para_id": "para_38",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_39",
+            "para_id": "para_39",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_40",
+            "para_id": "para_40",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_41",
+            "para_id": "para_41",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_42",
+            "para_id": "para_42",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_43",
+            "para_id": "para_43",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_44",
+            "para_id": "para_44",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_45",
+            "para_id": "para_45",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_46",
+            "para_id": "para_46",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_47",
+            "para_id": "para_47",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_48",
+            "para_id": "para_48",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_49",
+            "para_id": "para_49",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_50",
+            "para_id": "para_50",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_51",
+            "para_id": "para_51",
+            "semantic_type": "role_intro",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_52",
+            "para_id": "para_52",
+            "semantic_type": "role_header",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_53",
+            "para_id": "para_53",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_54",
+            "para_id": "para_54",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_55",
+            "para_id": "para_55",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_56",
+            "para_id": "para_56",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_57",
+            "para_id": "para_57",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "para_36",
+                "para_id": "para_36",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_37",
+                "para_id": "para_37",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_43",
+                "para_id": "para_43",
+                "semantic_type": "other_paragraph",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "para_45",
+                "para_id": "para_45",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_46",
+                "para_id": "para_46",
+                "semantic_type": "other_paragraph",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_47",
+                "para_id": "para_47",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_48",
+                "para_id": "para_48",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "para_51",
+                "para_id": "para_51",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_52",
+                "para_id": "para_52",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "para_52",
+                "para_id": "para_52",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_54",
+                "para_id": "para_54",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_55",
+                "para_id": "para_55",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_56",
+                "para_id": "para_56",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "KEY SKILLS",
+        "display_title": "Key Skills",
+        "semantic_type": "skills",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_11",
+            "para_id": "para_11",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_12",
+            "para_id": "para_12",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_13",
+            "para_id": "para_13",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_14",
+            "para_id": "para_14",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_28",
+            "para_id": "para_28",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_29",
+            "para_id": "para_29",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_30",
+            "para_id": "para_30",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_31",
+            "para_id": "para_31",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_32",
+            "para_id": "para_32",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_33",
+            "para_id": "para_33",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "validation_after_repair": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SKILLS_REWRITE_POLICY",
+        "section_id": "sec_2",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "SKILLS_BLOCK_TYPE",
+        "section_id": "sec_2",
+        "detail": "block_id=para_11 semantic_type='other_paragraph'"
+      },
+      {
+        "code": "SKILLS_BLOCK_TYPE",
+        "section_id": "sec_2",
+        "detail": "block_id=para_14 semantic_type='other_paragraph'"
+      },
+      {
+        "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_3",
+        "detail": "must be true"
+      },
+      {
+        "code": "ADDITIONAL_ROLES_PRESENT",
+        "section_id": "sec_4",
+        "detail": "roles[] must be empty for this section type"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_36 semantic_type='role_header'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_37 semantic_type='role_header'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_45 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=para_45 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_47 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=para_47 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_48 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=para_48 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_51 semantic_type='role_intro'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_52 semantic_type='role_header'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_54 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=para_54 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_55 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=para_55 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=para_56 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=para_56 rewrite_policy='rewrite_text'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": false,
+        "error_codes": [
+          "SKILLS_REWRITE_POLICY",
+          "SKILLS_BLOCK_TYPE",
+          "SKILLS_BLOCK_TYPE"
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": false,
+        "error_codes": [
+          "EDUCATION_PRESERVE_BODY_STRUCTURE"
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": false,
+        "error_codes": [
+          "ADDITIONAL_ROLES_PRESENT",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY"
+        ]
+      }
+    ]
+  },
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Senior Software Engineer",
+        "display_title": "Senior Software Engineer",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "para_17",
+                "para_id": "para_17",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_18",
+                "para_id": "para_18",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "para_19",
+                "para_id": "para_19",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_20",
+                "para_id": "para_20",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_21",
+                "para_id": "para_21",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_22",
+                "para_id": "para_22",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_23",
+                "para_id": "para_23",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_24",
+                "para_id": "para_24",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_25",
+                "para_id": "para_25",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_26",
+                "para_id": "para_26",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "KEY SKILLS",
+        "display_title": "Key Skills",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "para_11",
+            "para_id": "para_11",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_12",
+            "para_id": "para_12",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_13",
+            "para_id": "para_13",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_14",
+            "para_id": "para_14",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "para_28",
+            "para_id": "para_28",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_29",
+            "para_id": "para_29",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_30",
+            "para_id": "para_30",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_31",
+            "para_id": "para_31",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_32",
+            "para_id": "para_32",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_33",
+            "para_id": "para_33",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "CERTIFICATIONS",
+        "display_title": "Certifications",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "para_35",
+            "para_id": "para_35",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_36",
+            "para_id": "para_36",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_37",
+            "para_id": "para_37",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_38",
+            "para_id": "para_38",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_39",
+            "para_id": "para_39",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_40",
+            "para_id": "para_40",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_41",
+            "para_id": "para_41",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_42",
+            "para_id": "para_42",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_43",
+            "para_id": "para_43",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_44",
+            "para_id": "para_44",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_45",
+            "para_id": "para_45",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_46",
+            "para_id": "para_46",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_47",
+            "para_id": "para_47",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_48",
+            "para_id": "para_48",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_49",
+            "para_id": "para_49",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_50",
+            "para_id": "para_50",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_51",
+            "para_id": "para_51",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_52",
+            "para_id": "para_52",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_53",
+            "para_id": "para_53",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_54",
+            "para_id": "para_54",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_55",
+            "para_id": "para_55",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_56",
+            "para_id": "para_56",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_57",
+            "para_id": "para_57",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "status": "repaired_and_downgraded",
+  "validation_error_count": 20,
+  "invalid_section_count_before_repair": 3,
+  "invalid_section_count_after_repair": 3,
+  "repaired_section_count": 0,
+  "downgraded_section_count": 3,
+  "invalid_section_ids": [
+    "sec_2",
+    "sec_3",
+    "sec_4"
+  ],
+  "recovery_applied": true
+}

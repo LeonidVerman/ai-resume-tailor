@@ -1,0 +1,5084 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SUMMARY",
+        "paragraphs": [
+          {
+            "para_id": "para_6",
+            "text": "Software engineer with 7 years of experience in development of complex software",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_7",
+            "text": "applications and a master's degree in Computer Science. Certified AWS developer.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_8",
+            "text": "As a Senior Engineer, I drive the full development lifecycle — including planning, design,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_9",
+            "text": "implementation, testing, and deployment.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_108",
+            "text": "T-Systems Iberia – Reus, Catalonia, Spain",
+            "parser_semantic": "specialization_header",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_109",
+            "text": "Senior Software Engineer (September 2023 – Present)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_13",
+            "text": " Develop high-loaded applications for the network monitoring systems, using Java applications",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_112",
+            "text": " Design and implement microservice architecture",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_113",
+            "text": " Increase throughput using concurrent applications",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_16",
+            "text": " Using asynchronous programming tools: event-based flows, reactive programming, task queues, message queue (Kafka)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_116",
+            "text": " Cloudification of legacy Java applications",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_117",
+            "text": " Integrations with external systems",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_118",
+            "text": " Implementation of UI",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_119",
+            "text": " Creating and configuring databases",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_120",
+            "text": " Deploy applications to cloud using GitOps approach",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_121",
+            "text": " Containerization and orchestration of applications using Kubernetes and Helm",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_122",
+            "text": " Writing API documentation",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_123",
+            "text": "Key technologies: Java 21, Spring Boot,Project Reactor, Node.js, PrimeVue.js, TypeScript,",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_25",
+            "text": "Prometheus, GitLab, Kafka, Docker, Kubernetes, Helm, Rancher, Flux, SOPS, cloud systems.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_126",
+            "text": "GlobalLogic – Krakow, Poland",
+            "parser_semantic": "paragraph",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_127",
+            "text": "Full Stack Software Engineer (January 2022 – September 2023)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_128",
+            "text": "Developed Java applications, based on event-driven microservices architecture (SAGA).",
+            "parser_semantic": "role_intro"
+          },
+          {
+            "para_id": "para_129",
+            "text": "OTA project",
+            "parser_semantic": "project_header"
+          },
+          {
+            "para_id": "para_130",
+            "text": "Application level: Java 11, Spring Boot",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_131",
+            "text": "Persistence level: Postresql, Hibernate, JPA, Spring Data",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_132",
+            "text": " Containers: Amazon Elastic Kubernetes Service (EKS), Kubernetes, Docker",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_133",
+            "text": " Storage of large files: AWS S3",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_134",
+            "text": " DevOps: GitLab, Jenkins",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_135",
+            "text": " ELK Stack - log monitoring",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_136",
+            "text": " Kafka - asynchronous communication between internal services (Amazon MSK)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_137",
+            "text": " Redis Streams - asynchronous communication between internal services (Spring",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_138",
+            "text": "Data Redis)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_139",
+            "text": " Integration with other service via GraphQL API and REST API",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_140",
+            "text": " Mqtt - send messages (notifications) to vehicles (eclipse paho library)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_141",
+            "text": " Mqtt - receive messages from vehicles (eclipse paho library)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_142",
+            "text": " Security - Keycloak, SSO, OAuth2 (Spring Security)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_143",
+            "text": "Vehicle simulation project",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_144",
+            "text": "Application level: Java 11, Spring Boot",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_145",
+            "text": "Containers: Amazon Elastic Kubernetes Service (EKS), Kubernetes, Docker",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_146",
+            "text": " Persistence level: Spring Data, AWS RDS",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_147",
+            "text": " Storage of large files AWS S3 (AWS SDK library)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_148",
+            "text": " ELK Stack - log monitoring",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_149",
+            "text": " DevOps: GitLab, Jenkins",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_150",
+            "text": " LWM2M client (implementation based on open source Leshan project)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_151",
+            "text": " Integration with other service ( REST, FeignClient)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_152",
+            "text": " Mqtt client - producer (eclipse paho library)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_53",
+            "text": " Implementation of encoder library (message encoder according to given protocol specification)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_155",
+            "text": " Kafka - asynchronous communication between internal services",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_156",
+            "text": " Security - Keycloak, SSO, OAuth2 (Spring Security)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_56",
+            "text": "Contribution to the internal project - a self service portal which holds the information on technical growth and helps manage it. Tech stack: Java 11, Spring Boot, Mongo DB, React.js,",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_159",
+            "text": "Jenkins.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_160",
+            "text": "Mentoring junior specialists.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_161",
+            "text": "Masterdata – Moscow, Russia",
+            "parser_semantic": "paragraph",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_162",
+            "text": "Full Stack Software Engineer (March 2021 – December 2021)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_163",
+            "text": "Developed retail management systems for e-commerce, using Java applications",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_164",
+            "text": "Used SpringBoot and domain-driven approach to build services",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_165",
+            "text": "Implemented REST APIs for communication between services",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_166",
+            "text": "Implemented concurrent tasks to handle huge amount of events",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_167",
+            "text": "Deploy applications on SAP Cloud",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_168",
+            "text": "Implemented frontend tasks",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_169",
+            "text": "Collaborations with different teams",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_170",
+            "text": " Writing API documentation",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_171",
+            "text": "Infrastructure: SAP Cloud",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_172",
+            "text": "DevOps tools: GitLab, Jenkins, Docker",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_173",
+            "text": "Application level: Java 8-11, Spring Boot, Kotlin, concurrency, REST services, Spring Security",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_174",
+            "text": "Persistence layer: Spring data, PostgreSql",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_175",
+            "text": "Monitoring and metrics: Prometheus, Grafana, Spring Cloud Eureka",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_176",
+            "text": "Rostelecom – St. Petersburg, Russia",
+            "parser_semantic": "paragraph",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_177",
+            "text": "Full Stack Software Engineer (August 2020 – March 2021)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_76",
+            "text": "Developed and maintained full-stack Java applications for online medical systems in public healthcare,",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_180",
+            "text": "Implemented monolithic architecture services and JavaScript-based frontend",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_181",
+            "text": "Configured MySQL database",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_182",
+            "text": "Implemented RESTful APIs for communication with frontend",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_183",
+            "text": "Implemented frontend tasks for UI",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_184",
+            "text": "Implemented Junit tests",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_185",
+            "text": "Key technologies: Java 11, Spring Boot, Hibernate, MySQL, Jenkins, Node.js",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_186",
+            "text": "IGA Technologies – Moscow, Russia",
+            "parser_semantic": "paragraph",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_187",
+            "text": "Java Developer (September 2019 – July 2020)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_188",
+            "text": "Developed backend applications for managing nuclear power plant components, ensuring",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_189",
+            "text": "accurate lifecycle management based on defined configurations:",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_190",
+            "text": "Implementation monolithic architecture based on Java EE and SpringBoot services",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_191",
+            "text": "Implementation of graph-type relationship entities in Java",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_192",
+            "text": "Implementation of REST APIs",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_193",
+            "text": "Integration with Oracle database",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_194",
+            "text": "Integration with UI",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_195",
+            "text": "Wrote Junit tests",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_196",
+            "text": "Implemented Swagger documentation",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_197",
+            "text": "Technologies: Java 8, Java EE, JUnit, Moc Spring Framework, JS, Hibernate, Oracle, REST,",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_198",
+            "text": "HTTP, SSL,  Linux",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_199",
+            "text": "Sberbank – Saint-Petersburg, Russia",
+            "parser_semantic": "paragraph",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_200",
+            "text": "Junior Java Developer (March 2019 – September 2019)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_201",
+            "text": "Developed and maintained backend services for banking applications",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_202",
+            "text": "Implemented Java services in monolithic architecture application",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_100",
+            "text": "Implementation of services for generation and processing Excel, PDF and archive files",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_205",
+            "text": "Implementation of REST services",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_206",
+            "text": "Integration with JavaScript UI",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_207",
+            "text": "Implementation of SQL tasks",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_208",
+            "text": "Configuration of Oracle database",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_209",
+            "text": "Implementation of JUnit tests",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_210",
+            "text": "Deployment applications to WebSphere",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_211",
+            "text": "Technologies: Java 8, Spring, Hibernate, REST API, Oracle SQL, Jenkins.",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_108"
+            ],
+            "meta_para_ids": [
+              "para_109"
+            ],
+            "bullet_para_ids": [
+              "para_13",
+              "para_112",
+              "para_113",
+              "para_16",
+              "para_116",
+              "para_117",
+              "para_118",
+              "para_119",
+              "para_120",
+              "para_121",
+              "para_122",
+              "para_123",
+              "para_25"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_126"
+            ],
+            "meta_para_ids": [
+              "para_127",
+              "para_128",
+              "para_129"
+            ],
+            "bullet_para_ids": [
+              "para_130",
+              "para_131",
+              "para_132",
+              "para_133",
+              "para_134",
+              "para_135",
+              "para_136",
+              "para_137",
+              "para_138",
+              "para_139",
+              "para_140",
+              "para_141",
+              "para_142",
+              "para_143",
+              "para_144",
+              "para_145",
+              "para_146",
+              "para_147",
+              "para_148",
+              "para_149",
+              "para_150",
+              "para_151",
+              "para_152",
+              "para_53",
+              "para_155",
+              "para_156",
+              "para_56",
+              "para_159",
+              "para_160"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_161"
+            ],
+            "meta_para_ids": [
+              "para_162"
+            ],
+            "bullet_para_ids": [
+              "para_163",
+              "para_164",
+              "para_165",
+              "para_166",
+              "para_167",
+              "para_168",
+              "para_169",
+              "para_170",
+              "para_171",
+              "para_172",
+              "para_173",
+              "para_174",
+              "para_175"
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_para_ids": [
+              "para_176"
+            ],
+            "meta_para_ids": [
+              "para_177"
+            ],
+            "bullet_para_ids": [
+              "para_76",
+              "para_180",
+              "para_181",
+              "para_182",
+              "para_183",
+              "para_184",
+              "para_185"
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_para_ids": [
+              "para_186"
+            ],
+            "meta_para_ids": [
+              "para_187",
+              "para_188",
+              "para_189"
+            ],
+            "bullet_para_ids": [
+              "para_190",
+              "para_191",
+              "para_192",
+              "para_193",
+              "para_194",
+              "para_195",
+              "para_196",
+              "para_197",
+              "para_198"
+            ]
+          },
+          {
+            "role_id": "role_6",
+            "header_para_ids": [
+              "para_199"
+            ],
+            "meta_para_ids": [
+              "para_200"
+            ],
+            "bullet_para_ids": [
+              "para_201",
+              "para_202",
+              "para_100",
+              "para_205",
+              "para_206",
+              "para_207",
+              "para_208",
+              "para_209",
+              "para_210",
+              "para_211"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_213",
+            "text": "Peter the Great St. Petersburg Polytechnic University",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_214",
+            "text": "Master's Degree, Computer Science",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_215",
+            "text": "September 2016 – January 2019",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_216",
+            "text": "St. Petersburg State University of Civil Aviation",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_217",
+            "text": "Bachelor’s Degree, Engineer of Air Navigation",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_218",
+            "text": "September 2009 – July 2014",
+            "parser_semantic": "role_meta"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "CERTIFICATIONS",
+        "paragraphs": [
+          {
+            "para_id": "para_220",
+            "text": "AWS Certified Developer – Associate",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_221",
+            "text": "Oracle Database SQL Certified Expert",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_222",
+            "text": "CORE SKILLS",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_223",
+            "text": "Java, Spring Boot, Spring Security, Spring Data, Spring Cloud, Hibernate,",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_224",
+            "text": "Maven, JUnit, Mockito",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_225",
+            "text": "Project Reactor (WebFlux)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_226",
+            "text": "SQL databases: PostgresSQL, Oracle",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_227",
+            "text": "NoSql databases: MongoDB, Redis",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_228",
+            "text": "CI/CD: Jenkins, SonarQube, Flux, SOPS",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_229",
+            "text": "Docker, Linux Oracle",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_230",
+            "text": "Kubernetes, Helm",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_231",
+            "text": "Kafka",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_232",
+            "text": "AWS services (EKS, MSK, S3, RDS, EC2)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_233",
+            "text": "ELK Stack",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_234",
+            "text": "Prometheus, Grafana",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_235",
+            "text": "Microservices, event-driven architecture, SAGA pattern",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_236",
+            "text": "REST API, HTTPS, WebSocket",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_237",
+            "text": "OAuth, TLS, LDAP",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "LANGUAGES",
+        "paragraphs": [
+          {
+            "para_id": "para_239",
+            "text": "English (professional)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_240",
+            "text": "Russian (native)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SUMMARY",
+        "paragraphs": [
+          {
+            "para_id": "para_5",
+            "text": "SUMMARY",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_6",
+            "text": "Software engineer with 7 years of experience in development of complex software",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_7",
+            "text": "applications and a master's degree in Computer Science. Certified AWS developer.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_8",
+            "text": "As a Senior Engineer, I drive the full development lifecycle — including planning, design,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_9",
+            "text": "implementation, testing, and deployment.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_10",
+            "text": "EXPERIENCE",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_108",
+            "text": "T-Systems Iberia – Reus, Catalonia, Spain",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_109",
+            "text": "Senior Software Engineer (September 2023 – Present)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_13",
+            "text": " Develop high-loaded applications for the network monitoring systems, using Java applications",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_112",
+            "text": " Design and implement microservice architecture",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_113",
+            "text": " Increase throughput using concurrent applications",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_16",
+            "text": " Using asynchronous programming tools: event-based flows, reactive programming, task queues, message queue (Kafka)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_116",
+            "text": " Cloudification of legacy Java applications",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_117",
+            "text": " Integrations with external systems",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_118",
+            "text": " Implementation of UI",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_119",
+            "text": " Creating and configuring databases",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_120",
+            "text": " Deploy applications to cloud using GitOps approach",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_121",
+            "text": " Containerization and orchestration of applications using Kubernetes and Helm",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_122",
+            "text": " Writing API documentation",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_123",
+            "text": "Key technologies: Java 21, Spring Boot,Project Reactor, Node.js, PrimeVue.js, TypeScript,",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_25",
+            "text": "Prometheus, GitLab, Kafka, Docker, Kubernetes, Helm, Rancher, Flux, SOPS, cloud systems.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_126",
+            "text": "GlobalLogic – Krakow, Poland",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_127",
+            "text": "Full Stack Software Engineer (January 2022 – September 2023)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_128",
+            "text": "Developed Java applications, based on event-driven microservices architecture (SAGA).",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_129",
+            "text": "OTA project",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_130",
+            "text": "Application level: Java 11, Spring Boot",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_131",
+            "text": "Persistence level: Postresql, Hibernate, JPA, Spring Data",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_132",
+            "text": " Containers: Amazon Elastic Kubernetes Service (EKS), Kubernetes, Docker",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_133",
+            "text": " Storage of large files: AWS S3",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_134",
+            "text": " DevOps: GitLab, Jenkins",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_135",
+            "text": " ELK Stack - log monitoring",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_136",
+            "text": " Kafka - asynchronous communication between internal services (Amazon MSK)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_137",
+            "text": " Redis Streams - asynchronous communication between internal services (Spring",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_138",
+            "text": "Data Redis)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_139",
+            "text": " Integration with other service via GraphQL API and REST API",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_140",
+            "text": " Mqtt - send messages (notifications) to vehicles (eclipse paho library)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_141",
+            "text": " Mqtt - receive messages from vehicles (eclipse paho library)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_142",
+            "text": " Security - Keycloak, SSO, OAuth2 (Spring Security)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_143",
+            "text": "Vehicle simulation project",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_144",
+            "text": "Application level: Java 11, Spring Boot",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_145",
+            "text": "Containers: Amazon Elastic Kubernetes Service (EKS), Kubernetes, Docker",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_146",
+            "text": " Persistence level: Spring Data, AWS RDS",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_147",
+            "text": " Storage of large files AWS S3 (AWS SDK library)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_148",
+            "text": " ELK Stack - log monitoring",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_149",
+            "text": " DevOps: GitLab, Jenkins",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_150",
+            "text": " LWM2M client (implementation based on open source Leshan project)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_151",
+            "text": " Integration with other service ( REST, FeignClient)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_152",
+            "text": " Mqtt client - producer (eclipse paho library)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_53",
+            "text": " Implementation of encoder library (message encoder according to given protocol specification)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_155",
+            "text": " Kafka - asynchronous communication between internal services",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_156",
+            "text": " Security - Keycloak, SSO, OAuth2 (Spring Security)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_56",
+            "text": "Contribution to the internal project - a self service portal which holds the information on technical growth and helps manage it. Tech stack: Java 11, Spring Boot, Mongo DB, React.js,",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_159",
+            "text": "Jenkins.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_160",
+            "text": "Mentoring junior specialists.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_161",
+            "text": "Masterdata – Moscow, Russia",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_162",
+            "text": "Full Stack Software Engineer (March 2021 – December 2021)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_163",
+            "text": "Developed retail management systems for e-commerce, using Java applications",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_164",
+            "text": "Used SpringBoot and domain-driven approach to build services",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_165",
+            "text": "Implemented REST APIs for communication between services",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_166",
+            "text": "Implemented concurrent tasks to handle huge amount of events",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_167",
+            "text": "Deploy applications on SAP Cloud",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_168",
+            "text": "Implemented frontend tasks",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_169",
+            "text": "Collaborations with different teams",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_170",
+            "text": " Writing API documentation",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_171",
+            "text": "Infrastructure: SAP Cloud",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_172",
+            "text": "DevOps tools: GitLab, Jenkins, Docker",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_173",
+            "text": "Application level: Java 8-11, Spring Boot, Kotlin, concurrency, REST services, Spring Security",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_174",
+            "text": "Persistence layer: Spring data, PostgreSql",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_175",
+            "text": "Monitoring and metrics: Prometheus, Grafana, Spring Cloud Eureka",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_176",
+            "text": "Rostelecom – St. Petersburg, Russia",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_177",
+            "text": "Full Stack Software Engineer (August 2020 – March 2021)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_76",
+            "text": "Developed and maintained full-stack Java applications for online medical systems in public healthcare,",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_180",
+            "text": "Implemented monolithic architecture services and JavaScript-based frontend",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_181",
+            "text": "Configured MySQL database",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_182",
+            "text": "Implemented RESTful APIs for communication with frontend",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_183",
+            "text": "Implemented frontend tasks for UI",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_184",
+            "text": "Implemented Junit tests",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_185",
+            "text": "Key technologies: Java 11, Spring Boot, Hibernate, MySQL, Jenkins, Node.js",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_186",
+            "text": "IGA Technologies – Moscow, Russia",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_187",
+            "text": "Java Developer (September 2019 – July 2020)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_188",
+            "text": "Developed backend applications for managing nuclear power plant components, ensuring",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_189",
+            "text": "accurate lifecycle management based on defined configurations:",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_190",
+            "text": "Implementation monolithic architecture based on Java EE and SpringBoot services",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_191",
+            "text": "Implementation of graph-type relationship entities in Java",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_192",
+            "text": "Implementation of REST APIs",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_193",
+            "text": "Integration with Oracle database",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_194",
+            "text": "Integration with UI",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_195",
+            "text": "Wrote Junit tests",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_196",
+            "text": "Implemented Swagger documentation",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_197",
+            "text": "Technologies: Java 8, Java EE, JUnit, Moc Spring Framework, JS, Hibernate, Oracle, REST,",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_198",
+            "text": "HTTP, SSL,  Linux",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_199",
+            "text": "Sberbank – Saint-Petersburg, Russia",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_200",
+            "text": "Junior Java Developer (March 2019 – September 2019)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_201",
+            "text": "Developed and maintained backend services for banking applications",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_202",
+            "text": "Implemented Java services in monolithic architecture application",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_100",
+            "text": "Implementation of services for generation and processing Excel, PDF and archive files",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_205",
+            "text": "Implementation of REST services",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_206",
+            "text": "Integration with JavaScript UI",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_207",
+            "text": "Implementation of SQL tasks",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_208",
+            "text": "Configuration of Oracle database",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_209",
+            "text": "Implementation of JUnit tests",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_210",
+            "text": "Deployment applications to WebSphere",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_211",
+            "text": "Technologies: Java 8, Spring, Hibernate, REST API, Oracle SQL, Jenkins.",
+            "parser_semantic": "bullet"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_108"
+            ],
+            "meta_para_ids": [
+              "para_109"
+            ],
+            "bullet_para_ids": [
+              "para_13",
+              "para_112",
+              "para_113",
+              "para_16",
+              "para_116",
+              "para_117",
+              "para_118",
+              "para_119",
+              "para_120",
+              "para_121",
+              "para_122",
+              "para_123",
+              "para_25"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_126"
+            ],
+            "meta_para_ids": [
+              "para_127",
+              "para_128",
+              "para_129"
+            ],
+            "bullet_para_ids": [
+              "para_130",
+              "para_131",
+              "para_132",
+              "para_133",
+              "para_134",
+              "para_135",
+              "para_136",
+              "para_137",
+              "para_138",
+              "para_139",
+              "para_140",
+              "para_141",
+              "para_142",
+              "para_143",
+              "para_144",
+              "para_145",
+              "para_146",
+              "para_147",
+              "para_148",
+              "para_149",
+              "para_150",
+              "para_151",
+              "para_152",
+              "para_53",
+              "para_155",
+              "para_156",
+              "para_56",
+              "para_159",
+              "para_160"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_161"
+            ],
+            "meta_para_ids": [
+              "para_162"
+            ],
+            "bullet_para_ids": [
+              "para_163",
+              "para_164",
+              "para_165",
+              "para_166",
+              "para_167",
+              "para_168",
+              "para_169",
+              "para_170",
+              "para_171",
+              "para_172",
+              "para_173",
+              "para_174",
+              "para_175"
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_para_ids": [
+              "para_176"
+            ],
+            "meta_para_ids": [
+              "para_177"
+            ],
+            "bullet_para_ids": [
+              "para_76",
+              "para_180",
+              "para_181",
+              "para_182",
+              "para_183",
+              "para_184",
+              "para_185"
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_para_ids": [
+              "para_186"
+            ],
+            "meta_para_ids": [
+              "para_187",
+              "para_188",
+              "para_189"
+            ],
+            "bullet_para_ids": [
+              "para_190",
+              "para_191",
+              "para_192",
+              "para_193",
+              "para_194",
+              "para_195",
+              "para_196",
+              "para_197",
+              "para_198"
+            ]
+          },
+          {
+            "role_id": "role_6",
+            "header_para_ids": [
+              "para_199"
+            ],
+            "meta_para_ids": [
+              "para_200"
+            ],
+            "bullet_para_ids": [
+              "para_201",
+              "para_202",
+              "para_100",
+              "para_205",
+              "para_206",
+              "para_207",
+              "para_208",
+              "para_209",
+              "para_210",
+              "para_211"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_212",
+            "text": "EDUCATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_213",
+            "text": "Peter the Great St. Petersburg Polytechnic University",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_214",
+            "text": "Master's Degree, Computer Science",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_215",
+            "text": "September 2016 – January 2019",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_216",
+            "text": "St. Petersburg State University of Civil Aviation",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_217",
+            "text": "Bachelor’s Degree, Engineer of Air Navigation",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_218",
+            "text": "September 2009 – July 2014",
+            "parser_semantic": "role_meta"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "CERTIFICATIONS",
+        "paragraphs": [
+          {
+            "para_id": "para_219",
+            "text": "CERTIFICATIONS",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_220",
+            "text": "AWS Certified Developer – Associate",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_221",
+            "text": "Oracle Database SQL Certified Expert",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_222",
+            "text": "CORE SKILLS",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_223",
+            "text": "Java, Spring Boot, Spring Security, Spring Data, Spring Cloud, Hibernate,",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_224",
+            "text": "Maven, JUnit, Mockito",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_225",
+            "text": "Project Reactor (WebFlux)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_226",
+            "text": "SQL databases: PostgresSQL, Oracle",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_227",
+            "text": "NoSql databases: MongoDB, Redis",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_228",
+            "text": "CI/CD: Jenkins, SonarQube, Flux, SOPS",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_229",
+            "text": "Docker, Linux Oracle",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_230",
+            "text": "Kubernetes, Helm",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_231",
+            "text": "Kafka",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_232",
+            "text": "AWS services (EKS, MSK, S3, RDS, EC2)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_233",
+            "text": "ELK Stack",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_234",
+            "text": "Prometheus, Grafana",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_235",
+            "text": "Microservices, event-driven architecture, SAGA pattern",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_236",
+            "text": "REST API, HTTPS, WebSocket",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_237",
+            "text": "OAuth, TLS, LDAP",
+            "parser_semantic": "bullet"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "LANGUAGES",
+        "paragraphs": [
+          {
+            "para_id": "para_238",
+            "text": "LANGUAGES",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_239",
+            "text": "English (professional)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_240",
+            "text": "Russian (native)",
+            "parser_semantic": "bullet"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_5",
+        "text_preview": "SUMMARY"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_10",
+        "text_preview": "EXPERIENCE"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_212",
+        "text_preview": "EDUCATION"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_219",
+        "text_preview": "CERTIFICATIONS"
+      },
+      {
+        "section_id": "sec_5",
+        "para_id": "para_238",
+        "text_preview": "LANGUAGES"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 105
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SUMMARY",
+        "display_title": "SUMMARY",
+        "semantic_type": "summary",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_6",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_7",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_8",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_9",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EXPERIENCE",
+        "display_title": "EXPERIENCE",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_5",
+                "para_id": "para_108",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_6",
+                "para_id": "para_109",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_7",
+                "para_id": "para_13",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_8",
+                "para_id": "para_112",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_9",
+                "para_id": "para_113",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_10",
+                "para_id": "para_16",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_11",
+                "para_id": "para_116",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_12",
+                "para_id": "para_117",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_13",
+                "para_id": "para_118",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_14",
+                "para_id": "para_119",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_15",
+                "para_id": "para_120",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_16",
+                "para_id": "para_121",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_17",
+                "para_id": "para_122",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_18",
+                "para_id": "para_123",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_19",
+                "para_id": "para_25",
+                "semantic_type": "role_tools",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_20",
+                "para_id": "para_126",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_21",
+                "para_id": "para_127",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_22",
+                "para_id": "para_128",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_23",
+                "para_id": "para_129",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_24",
+                "para_id": "para_130",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_25",
+                "para_id": "para_131",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_26",
+                "para_id": "para_132",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_27",
+                "para_id": "para_133",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_28",
+                "para_id": "para_134",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_29",
+                "para_id": "para_135",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_30",
+                "para_id": "para_136",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_31",
+                "para_id": "para_137",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_32",
+                "para_id": "para_138",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_33",
+                "para_id": "para_139",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_34",
+                "para_id": "para_140",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_35",
+                "para_id": "para_141",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_36",
+                "para_id": "para_142",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_37",
+                "para_id": "para_143",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_38",
+                "para_id": "para_144",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_39",
+                "para_id": "para_145",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_40",
+                "para_id": "para_146",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_41",
+                "para_id": "para_147",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_42",
+                "para_id": "para_148",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_43",
+                "para_id": "para_149",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_44",
+                "para_id": "para_150",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_45",
+                "para_id": "para_151",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_46",
+                "para_id": "para_152",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_47",
+                "para_id": "para_53",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_48",
+                "para_id": "para_155",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_49",
+                "para_id": "para_156",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_50",
+                "para_id": "para_56",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_51",
+                "para_id": "para_159",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_52",
+                "para_id": "para_160",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_53",
+                "para_id": "para_161",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_54",
+                "para_id": "para_162",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_55",
+                "para_id": "para_163",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_56",
+                "para_id": "para_164",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_57",
+                "para_id": "para_165",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_58",
+                "para_id": "para_166",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_59",
+                "para_id": "para_167",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_60",
+                "para_id": "para_168",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_61",
+                "para_id": "para_169",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_62",
+                "para_id": "para_170",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_63",
+                "para_id": "para_171",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_64",
+                "para_id": "para_172",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_65",
+                "para_id": "para_173",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_66",
+                "para_id": "para_174",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_67",
+                "para_id": "para_175",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_blocks": [
+              {
+                "block_id": "block_68",
+                "para_id": "para_176",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_69",
+                "para_id": "para_177",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_70",
+                "para_id": "para_76",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_71",
+                "para_id": "para_180",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_72",
+                "para_id": "para_181",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_73",
+                "para_id": "para_182",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_74",
+                "para_id": "para_183",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_75",
+                "para_id": "para_184",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_76",
+                "para_id": "para_185",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_blocks": [
+              {
+                "block_id": "block_77",
+                "para_id": "para_186",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_78",
+                "para_id": "para_187",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_79",
+                "para_id": "para_188",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_80",
+                "para_id": "para_189",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_81",
+                "para_id": "para_190",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_82",
+                "para_id": "para_191",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_83",
+                "para_id": "para_192",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_84",
+                "para_id": "para_193",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_85",
+                "para_id": "para_194",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_86",
+                "para_id": "para_195",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_87",
+                "para_id": "para_196",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_88",
+                "para_id": "para_197",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_89",
+                "para_id": "para_198",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_6",
+            "header_blocks": [
+              {
+                "block_id": "block_90",
+                "para_id": "para_199",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_91",
+                "para_id": "para_200",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_92",
+                "para_id": "para_201",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_93",
+                "para_id": "para_202",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_94",
+                "para_id": "para_100",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_95",
+                "para_id": "para_205",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_96",
+                "para_id": "para_206",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_97",
+                "para_id": "para_207",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_98",
+                "para_id": "para_208",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_99",
+                "para_id": "para_209",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_100",
+                "para_id": "para_210",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_101",
+                "para_id": "para_211",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "display_title": "EDUCATION",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_102",
+            "para_id": "para_213",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_103",
+            "para_id": "para_214",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_104",
+            "para_id": "para_215",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_105",
+            "para_id": "para_216",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_106",
+            "para_id": "para_217",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_107",
+            "para_id": "para_218",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "CERTIFICATIONS",
+        "display_title": "CERTIFICATIONS",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_108",
+            "para_id": "para_220",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_109",
+            "para_id": "para_221",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_110",
+            "para_id": "para_222",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_111",
+            "para_id": "para_223",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_112",
+            "para_id": "para_224",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_113",
+            "para_id": "para_225",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_114",
+            "para_id": "para_226",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_115",
+            "para_id": "para_227",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_116",
+            "para_id": "para_228",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_117",
+            "para_id": "para_229",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_118",
+            "para_id": "para_230",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_119",
+            "para_id": "para_231",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_120",
+            "para_id": "para_232",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_121",
+            "para_id": "para_233",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_122",
+            "para_id": "para_234",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_123",
+            "para_id": "para_235",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_124",
+            "para_id": "para_236",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_125",
+            "para_id": "para_237",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "LANGUAGES",
+        "display_title": "LANGUAGES",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_126",
+            "para_id": "para_239",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_127",
+            "para_id": "para_240",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_REWRITE_POLICY",
+        "section_id": "sec_1",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_HEADING",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_1 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_2 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_3 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_4 rewrite_policy='preserve'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_108 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_109 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_111 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_113 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_114 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_115 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_116 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_117 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_118 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_119 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_120 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_121 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_122 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_123 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_124 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_125 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_5",
+        "detail": "block_id=block_126 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_5",
+        "detail": "block_id=block_127 rewrite_policy='rewrite_text'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_REWRITE_POLICY",
+          "SUMMARY_PRESERVE_HEADING",
+          "SUMMARY_PRESERVE_BODY_STRUCTURE",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": false,
+        "error_codes": [
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_5",
+        "is_valid": false,
+        "error_codes": [
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY"
+        ]
+      }
+    ]
+  },
+  "repair_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "invalid_sections": [
+      {
+        "parser_section": {
+          "section_id": "sec_1",
+          "raw_title": "SUMMARY",
+          "paragraphs": [
+            {
+              "para_id": "para_6",
+              "text": "Software engineer with 7 years of experience in development of complex software",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_7",
+              "text": "applications and a master's degree in Computer Science. Certified AWS developer.",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_8",
+              "text": "As a Senior Engineer, I drive the full development lifecycle — including planning, design,",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_9",
+              "text": "implementation, testing, and deployment.",
+              "parser_semantic": "paragraph"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_1",
+          "raw_title": "SUMMARY",
+          "display_title": "SUMMARY",
+          "semantic_type": "summary",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "block_1",
+              "para_id": "para_6",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_2",
+              "para_id": "para_7",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_3",
+              "para_id": "para_8",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_4",
+              "para_id": "para_9",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SUMMARY_REWRITE_POLICY",
+            "section_id": "sec_1",
+            "detail": "got 'preserve'"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_HEADING",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_BODY_STRUCTURE",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_1 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_2 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_3 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_4 rewrite_policy='preserve'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_4",
+          "raw_title": "CERTIFICATIONS",
+          "paragraphs": [
+            {
+              "para_id": "para_220",
+              "text": "AWS Certified Developer – Associate",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_221",
+              "text": "Oracle Database SQL Certified Expert",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_222",
+              "text": "CORE SKILLS",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_223",
+              "text": "Java, Spring Boot, Spring Security, Spring Data, Spring Cloud, Hibernate,",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_224",
+              "text": "Maven, JUnit, Mockito",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_225",
+              "text": "Project Reactor (WebFlux)",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_226",
+              "text": "SQL databases: PostgresSQL, Oracle",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_227",
+              "text": "NoSql databases: MongoDB, Redis",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_228",
+              "text": "CI/CD: Jenkins, SonarQube, Flux, SOPS",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_229",
+              "text": "Docker, Linux Oracle",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_230",
+              "text": "Kubernetes, Helm",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_231",
+              "text": "Kafka",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_232",
+              "text": "AWS services (EKS, MSK, S3, RDS, EC2)",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_233",
+              "text": "ELK Stack",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_234",
+              "text": "Prometheus, Grafana",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_235",
+              "text": "Microservices, event-driven architecture, SAGA pattern",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_236",
+              "text": "REST API, HTTPS, WebSocket",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_237",
+              "text": "OAuth, TLS, LDAP",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_4",
+          "raw_title": "CERTIFICATIONS",
+          "display_title": "CERTIFICATIONS",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "block_108",
+              "para_id": "para_220",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_109",
+              "para_id": "para_221",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_110",
+              "para_id": "para_222",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_111",
+              "para_id": "para_223",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_112",
+              "para_id": "para_224",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_113",
+              "para_id": "para_225",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_114",
+              "para_id": "para_226",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_115",
+              "para_id": "para_227",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_116",
+              "para_id": "para_228",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_117",
+              "para_id": "para_229",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_118",
+              "para_id": "para_230",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_119",
+              "para_id": "para_231",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_120",
+              "para_id": "para_232",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_121",
+              "para_id": "para_233",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_122",
+              "para_id": "para_234",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_123",
+              "para_id": "para_235",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_124",
+              "para_id": "para_236",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_125",
+              "para_id": "para_237",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_108 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_109 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_111 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_113 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_114 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_115 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_116 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_117 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_118 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_119 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_120 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_121 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_122 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_123 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_124 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_4",
+            "detail": "block_id=block_125 rewrite_policy='rewrite_text'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_5",
+          "raw_title": "LANGUAGES",
+          "paragraphs": [
+            {
+              "para_id": "para_239",
+              "text": "English (professional)",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_240",
+              "text": "Russian (native)",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_5",
+          "raw_title": "LANGUAGES",
+          "display_title": "LANGUAGES",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "block_126",
+              "para_id": "para_239",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_127",
+              "para_id": "para_240",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_5",
+            "detail": "block_id=block_126 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "OTHER_BLOCK_POLICY",
+            "section_id": "sec_5",
+            "detail": "block_id=block_127 rewrite_policy='rewrite_text'"
+          }
+        ]
+      }
+    ]
+  },
+  "repair_response": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SUMMARY",
+        "display_title": "SUMMARY",
+        "semantic_type": "summary",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_6",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_7",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_8",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_9",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "role_header_1",
+                "para_id": "para_6",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "role_body_1",
+                "para_id": "para_8",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "role_body_2",
+                "para_id": "para_9",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "CERTIFICATIONS",
+        "display_title": "CERTIFICATIONS",
+        "semantic_type": "other",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_108",
+            "para_id": "para_220",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_109",
+            "para_id": "para_221",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_110",
+            "para_id": "para_222",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_111",
+            "para_id": "para_223",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_112",
+            "para_id": "para_224",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_113",
+            "para_id": "para_225",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_114",
+            "para_id": "para_226",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_115",
+            "para_id": "para_227",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_116",
+            "para_id": "para_228",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_117",
+            "para_id": "para_229",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_118",
+            "para_id": "para_230",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_119",
+            "para_id": "para_231",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_120",
+            "para_id": "para_232",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_121",
+            "para_id": "para_233",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_122",
+            "para_id": "para_234",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_123",
+            "para_id": "para_235",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_124",
+            "para_id": "para_236",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_125",
+            "para_id": "para_237",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "LANGUAGES",
+        "display_title": "LANGUAGES",
+        "semantic_type": "other",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_126",
+            "para_id": "para_239",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_127",
+            "para_id": "para_240",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "validation_after_repair": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_ROLES_PRESENT",
+        "section_id": "sec_1",
+        "detail": "roles[] must be empty for this section type"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_1 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_2 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_3 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_4 rewrite_policy='preserve'"
+      },
+      {
+        "code": "OTHER_REWRITE_POLICY",
+        "section_id": "sec_4",
+        "detail": "got 'rewrite_body'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_108 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_109 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_111 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_113 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_114 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_115 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_116 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_117 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_118 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_119 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_120 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_121 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_122 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_123 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_124 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_125 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_REWRITE_POLICY",
+        "section_id": "sec_5",
+        "detail": "got 'rewrite_body'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_5",
+        "detail": "block_id=block_126 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_5",
+        "detail": "block_id=block_127 rewrite_policy='rewrite_text'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_ROLES_PRESENT",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": false,
+        "error_codes": [
+          "OTHER_REWRITE_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_5",
+        "is_valid": false,
+        "error_codes": [
+          "OTHER_REWRITE_POLICY",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_POLICY"
+        ]
+      }
+    ]
+  },
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SUMMARY",
+        "display_title": "SUMMARY",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_6",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_7",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_8",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_9",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EXPERIENCE",
+        "display_title": "EXPERIENCE",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_5",
+                "para_id": "para_108",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_6",
+                "para_id": "para_109",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_7",
+                "para_id": "para_13",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_8",
+                "para_id": "para_112",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_9",
+                "para_id": "para_113",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_10",
+                "para_id": "para_16",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_11",
+                "para_id": "para_116",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_12",
+                "para_id": "para_117",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_13",
+                "para_id": "para_118",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_14",
+                "para_id": "para_119",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_15",
+                "para_id": "para_120",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_16",
+                "para_id": "para_121",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_17",
+                "para_id": "para_122",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_18",
+                "para_id": "para_123",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_19",
+                "para_id": "para_25",
+                "semantic_type": "role_tools",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_20",
+                "para_id": "para_126",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_21",
+                "para_id": "para_127",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_22",
+                "para_id": "para_128",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_23",
+                "para_id": "para_129",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_24",
+                "para_id": "para_130",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_25",
+                "para_id": "para_131",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_26",
+                "para_id": "para_132",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_27",
+                "para_id": "para_133",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_28",
+                "para_id": "para_134",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_29",
+                "para_id": "para_135",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_30",
+                "para_id": "para_136",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_31",
+                "para_id": "para_137",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_32",
+                "para_id": "para_138",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_33",
+                "para_id": "para_139",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_34",
+                "para_id": "para_140",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_35",
+                "para_id": "para_141",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_36",
+                "para_id": "para_142",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_37",
+                "para_id": "para_143",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_38",
+                "para_id": "para_144",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_39",
+                "para_id": "para_145",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_40",
+                "para_id": "para_146",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_41",
+                "para_id": "para_147",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_42",
+                "para_id": "para_148",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_43",
+                "para_id": "para_149",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_44",
+                "para_id": "para_150",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_45",
+                "para_id": "para_151",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_46",
+                "para_id": "para_152",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_47",
+                "para_id": "para_53",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_48",
+                "para_id": "para_155",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_49",
+                "para_id": "para_156",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_50",
+                "para_id": "para_56",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_51",
+                "para_id": "para_159",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_52",
+                "para_id": "para_160",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_53",
+                "para_id": "para_161",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_54",
+                "para_id": "para_162",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_55",
+                "para_id": "para_163",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_56",
+                "para_id": "para_164",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_57",
+                "para_id": "para_165",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_58",
+                "para_id": "para_166",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_59",
+                "para_id": "para_167",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_60",
+                "para_id": "para_168",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_61",
+                "para_id": "para_169",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_62",
+                "para_id": "para_170",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_63",
+                "para_id": "para_171",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_64",
+                "para_id": "para_172",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_65",
+                "para_id": "para_173",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_66",
+                "para_id": "para_174",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_67",
+                "para_id": "para_175",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_blocks": [
+              {
+                "block_id": "block_68",
+                "para_id": "para_176",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_69",
+                "para_id": "para_177",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_70",
+                "para_id": "para_76",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_71",
+                "para_id": "para_180",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_72",
+                "para_id": "para_181",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_73",
+                "para_id": "para_182",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_74",
+                "para_id": "para_183",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_75",
+                "para_id": "para_184",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_76",
+                "para_id": "para_185",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_blocks": [
+              {
+                "block_id": "block_77",
+                "para_id": "para_186",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_78",
+                "para_id": "para_187",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_79",
+                "para_id": "para_188",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_80",
+                "para_id": "para_189",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_81",
+                "para_id": "para_190",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_82",
+                "para_id": "para_191",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_83",
+                "para_id": "para_192",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_84",
+                "para_id": "para_193",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_85",
+                "para_id": "para_194",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_86",
+                "para_id": "para_195",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_87",
+                "para_id": "para_196",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_88",
+                "para_id": "para_197",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_89",
+                "para_id": "para_198",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_6",
+            "header_blocks": [
+              {
+                "block_id": "block_90",
+                "para_id": "para_199",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_91",
+                "para_id": "para_200",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_92",
+                "para_id": "para_201",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_93",
+                "para_id": "para_202",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_94",
+                "para_id": "para_100",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_95",
+                "para_id": "para_205",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_96",
+                "para_id": "para_206",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_97",
+                "para_id": "para_207",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_98",
+                "para_id": "para_208",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_99",
+                "para_id": "para_209",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_100",
+                "para_id": "para_210",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_101",
+                "para_id": "para_211",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "display_title": "EDUCATION",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_102",
+            "para_id": "para_213",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_103",
+            "para_id": "para_214",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_104",
+            "para_id": "para_215",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_105",
+            "para_id": "para_216",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_106",
+            "para_id": "para_217",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_107",
+            "para_id": "para_218",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "CERTIFICATIONS",
+        "display_title": "CERTIFICATIONS",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_108",
+            "para_id": "para_220",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_109",
+            "para_id": "para_221",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_110",
+            "para_id": "para_222",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_111",
+            "para_id": "para_223",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_112",
+            "para_id": "para_224",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_113",
+            "para_id": "para_225",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_114",
+            "para_id": "para_226",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_115",
+            "para_id": "para_227",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_116",
+            "para_id": "para_228",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_117",
+            "para_id": "para_229",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_118",
+            "para_id": "para_230",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_119",
+            "para_id": "para_231",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_120",
+            "para_id": "para_232",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_121",
+            "para_id": "para_233",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_122",
+            "para_id": "para_234",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_123",
+            "para_id": "para_235",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_124",
+            "para_id": "para_236",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_125",
+            "para_id": "para_237",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "LANGUAGES",
+        "display_title": "LANGUAGES",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_126",
+            "para_id": "para_239",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_127",
+            "para_id": "para_240",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "status": "repaired_and_downgraded",
+  "validation_error_count": 25,
+  "invalid_section_count_before_repair": 3,
+  "invalid_section_count_after_repair": 3,
+  "repaired_section_count": 0,
+  "downgraded_section_count": 3,
+  "invalid_section_ids": [
+    "sec_1",
+    "sec_4",
+    "sec_5"
+  ],
+  "recovery_applied": true
+}

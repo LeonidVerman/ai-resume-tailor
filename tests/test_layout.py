@@ -616,10 +616,11 @@ class TestCompactExperienceBullets:
         )
 
     def test_trims_to_orig_density_above_floor(self):
+        # orig=5 (+1 universal headroom) → cap 6.
         result = compact_experience_bullets(
             [self._llm_role(8)], self._container([5]), compact_template=True
         )
-        assert len(result[0].bullets) == 5
+        assert len(result[0].bullets) == 6
 
     def test_floor_protects_low_density_roles(self):
         # orig=1 is usually a placeholder para or a glued multi-line block

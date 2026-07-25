@@ -1,0 +1,4782 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFILE",
+        "paragraphs": [
+          {
+            "para_id": "para_6",
+            "text": "Backend and infrastructure engineer with deep expertise in Java and Spring/Spring Boot, specializing in",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_7",
+            "text": "high-performance financial systems, cryptocurrency platforms, and distributed applications. Strong track",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_8",
+            "text": "record building scalable microservices, optimizing JVM performance, and delivering reliable production",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_9",
+            "text": "infrastructure. Working knowledge of Kotlin and Go. Combines backend depth with DevOps capabilities",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_10",
+            "text": "to own features end-to-end from design through production deployment.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "CORE COMPETENCIES",
+        "paragraphs": [],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Backend Development",
+        "paragraphs": [
+          {
+            "para_id": "para_13",
+            "text": "Java (Core Java, legacy–modern, from 1.4); Kotlin; Spring/Spring Boot; REST APIs; GraphQL; Microser-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_14",
+            "text": "vices; JVM performance tuning; Multithreading; PostgreSQL/MySQL; Distributed systems; Blockchain in-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "tegration (BTC, ETH, SOL)",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_16",
+            "text": "DevOps & Infrastructure",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_17",
+            "text": "Kubernetes; Docker; AWS (EC2, RDS, S3, VPC); CI/CD (Jenkins); Ansible; Prometheus/Grafana; Linux ad-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_18",
+            "text": "ministration; Bash/Python scripting",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_19",
+            "text": "Full-Stack",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_20",
+            "text": "Flutter/Dart; Vue.js; AngularJS; GWT; JavaScript; HTML5/CSS3",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_21",
+            "text": "Additional",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_22",
+            "text": "root cause analysis, monitoring, alerting, capacity planning, remediation, high engagement, effective",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_23",
+            "text": "outcomes, container orchestration, infrastructure-as-code, CI/CD pipelines, debugging skills",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "PROFESSIONAL EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_147",
+            "text": "Software Engineer (Independent Contractor)",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_148",
+            "text": "Mercor; January 2026 – Present; Vancouver, Canada; Remote",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_149",
+            "text": "*Contract engineering for AI-related projects on behalf of Mercor clients.*",
+            "parser_semantic": "role_intro",
+            "semantic_hint": "intro_candidate"
+          },
+          {
+            "para_id": "para_150",
+            "text": "Contributing to AI-focused technical projects for Mercor clients across varying project scopes and re-",
+            "parser_semantic": "project_intro"
+          },
+          {
+            "para_id": "para_151",
+            "text": "quirements;",
+            "parser_semantic": "project_intro"
+          },
+          {
+            "para_id": "para_152",
+            "text": "Tech Stack: Java, Python, AI coding agents",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_153",
+            "text": "Senior Software Engineer (Independent Contractor)",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_154",
+            "text": "Toptal; February 2026 – Present; Vancouver, Canada; Remote",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_155",
+            "text": "*Senior engineering contractor for Toptal clients.*",
+            "parser_semantic": "role_intro",
+            "semantic_hint": "intro_candidate"
+          },
+          {
+            "para_id": "para_156",
+            "text": "Tech Stack: Java, Spring Boot, REST APIs, GraphQL, AWS, Docker, Microservices, PostgreSQL, Ansible,",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_157",
+            "text": "Jetty, Linux, Multithreading",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_158",
+            "text": "GMO-Z.com Fintech CA; April 2021 – September 2025; Vancouver, Canada",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_159",
+            "text": "*Platform engineering role focusing on infrastructure, CI/CD, and developer tooling for cryptocurrency",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_160",
+            "text": "trading platform (30+ engineers).*",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_161",
+            "text": "Reduced CI/CD pipeline runtime from 12 hours to 2 hours (83% improvement) by building custom test",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_162",
+            "text": "parallelization tool for 30,000-test suite across multiple Jenkins agents;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_163",
+            "text": "Designed and maintained 15+ Jenkins pipelines (Groovy DSL) for Java microservices: build automation,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_164",
+            "text": "unit/integration testing, deployment workflows, rollback procedures;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_165",
+            "text": "Built hybrid cloud infrastructure combining AWS, VMware ESXi, and Proxmox with OpenVPN network ar-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_166",
+            "text": "chitecture connecting multiple data centers, achieving 100% uptime;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_167",
+            "text": "Reduced server provisioning time from 4+ hours to under 20 minutes by implementing Infrastructure-as-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_168",
+            "text": "Code with Ansible across 30+ nodes spanning AWS and on-premises environments;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_169",
+            "text": "Deployed and maintained 3-node Kubernetes cluster hosting blockchain networks (public, test, private)",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_170",
+            "text": "for development and testing;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_171",
+            "text": "Built observability platform (Prometheus, Loki, Grafana) covering 20+ production services, reducing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_172",
+            "text": "mean time to detection from hours to under 5 minutes via automated Slack/email alerting;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_173",
+            "text": "Migrated 5 critical internal services (Bitbucket, Redmine, Jenkins, Nexus, Vault) to AWS and VMware",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_174",
+            "text": "with zero unplanned downtime, reducing hardware maintenance overhead by ~8 hours/month;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_175",
+            "text": "Implemented RBAC security model for CI/CD pipelines and infrastructure access across 50+ users;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_176",
+            "text": "Resolved complex production issues: Solana container failures due to CPU instruction incompatibilities,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_177",
+            "text": "Kubernetes cluster networking problems, build pipeline stability;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_178",
+            "text": "Mentored 2-3 junior engineers on Kubernetes, Docker workflows, testing practices, and debugging tech-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_179",
+            "text": "niques; established Docker Compose standards adopted across organization;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_180",
+            "text": "Tech Stack: AWS (EC2, RDS, S3), Kubernetes, Docker, Jenkins (Groovy DSL), Ansible, OpenVPN,",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_181",
+            "text": "Prometheus, Loki, Grafana, PostgreSQL, Python, Bash",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_182",
+            "text": "Backend Engineer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_183",
+            "text": "CardinalChain Software Inc.; April 2019 – March 2021; Vancouver, Canada",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_184",
+            "text": "*Acquired by GMO-Z.com in 2021*",
+            "parser_semantic": "role_meta",
+            "semantic_hint": "intro_candidate"
+          },
+          {
+            "para_id": "para_185",
+            "text": "*Cryptocurrency trading platform startup. Owned blockchain integration architecture and core trading",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_186",
+            "text": "infrastructure.*",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_187",
+            "text": "Architected and implemented cryptocurrency blockchain integrations for 7+ chains (BTC, ETH, BCH, SOL,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_188",
+            "text": "LTC, XRP, XLM) including transaction flows, wallet management, signing infrastructure, and reconcilia-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_189",
+            "text": "tion logic;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_190",
+            "text": "Built flexible multi-signature transaction signing system with configurable N-of-M threshold schemes us-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_191",
+            "text": "ing air-gapped signing nodes for enhanced security;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_192",
+            "text": "Developed Ethereum smart contracts in Solidity implementing multi-signature wallet with dynamic",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_193",
+            "text": "threshold configuration;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_194",
+            "text": "Reduced GC pause times by 60% and improved p99 transaction latency from 800ms to 120ms through",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_195",
+            "text": "JVM tuning: G1GC configuration, heap profiling, and thread pool rightsizing;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_196",
+            "text": "Fixed critical production issues in trading services: transaction boundary problems, database connection",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_197",
+            "text": "pool misconfigurations, memory leaks;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_198",
+            "text": "Developed REST APIs and backend services for cryptocurrency trading platform using Spring Boot;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_199",
+            "text": "Tech Stack: Java 8, Spring Boot, Hibernate, REST, Solidity, PostgreSQL",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_200",
+            "text": "Java Software Engineer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_201",
+            "text": "FitechSource Saint-Petersburg; August 2007 – March 2019; St. Petersburg, Russia",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_202",
+            "text": "*Full-stack development across multiple domains: distributed computing platforms, cryptocurrency ex-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_203",
+            "text": "changes, scientific applications, and enterprise systems.*",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_204",
+            "text": "*Grew into DevOps responsibilities (2015–2019) while maintaining development work.*",
+            "parser_semantic": "role_intro",
+            "semantic_hint": "intro_candidate"
+          },
+          {
+            "para_id": "para_205",
+            "text": "Backend & Full-Stack Development (2007–2019)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_206",
+            "text": "Delivered full backend rewrite of Stanford University lab management system (LabUser) for 100+ re-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_207",
+            "text": "searchers, cutting report generation time from 45 minutes to under 2 minutes vs. legacy PHP system:",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_208",
+            "text": "real-time inventory tracking, grant management, purchase request workflows, usage analytics;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_209",
+            "text": "Developed core features for commercial distributed computing products (Palette DB distributed caching,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_210",
+            "text": "xTier middleware platform): clustering logic, failover mechanisms, testing infrastructure, production de-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_211",
+            "text": "ployment support;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_212",
+            "text": "Implemented high-performance backend services for financial trading platforms and cryptocurrency ex-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_213",
+            "text": "changes: market data processing, order routing, session management, transaction handling;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_214",
+            "text": "Built full-stack features using AngularJS, Vue.js, and GWT: bioinformatics data visualization, real-time",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_215",
+            "text": "dashboards, complex forms, inventory management interfaces;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_216",
+            "text": "Developed REST APIs and microservices using Spring framework with PostgreSQL/MySQL databases;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_217",
+            "text": "Optimized database performance: query tuning, indexing strategies, connection pool configuration;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_218",
+            "text": "Designed distributed systems components: message routing, multi-node synchronization, fault toler-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_219",
+            "text": "ance, graceful degradation;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_220",
+            "text": "DevOps & Infrastructure (2015–2019)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_221",
+            "text": "Built and maintained CI/CD pipelines using Jenkins (Groovy DSL): automated builds, test execution, de-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_222",
+            "text": "ployment automation, artifact management;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_223",
+            "text": "Developed Ansible playbooks for infrastructure automation: server provisioning, configuration manage-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_224",
+            "text": "ment, application deployment;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_225",
+            "text": "Managed PostgreSQL and MySQL production databases: performance tuning, schema migrations, repli-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_226",
+            "text": "cation setup, backup/restore procedures;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_227",
+            "text": "Maintained Linux production servers with 24/7 on-call support: troubleshooting, log analysis, incident",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_228",
+            "text": "response;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_229",
+            "text": "Tech Stack: Java (Core Java, legacy–modern, from 1.4), Spring, JDBC, Hibernate, REST, AngularJS, Vue.js,",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_230",
+            "text": "GWT, PostgreSQL, MySQL, Jenkins (Groovy DSL), Ansible, Linux, Bash, Git",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_231",
+            "text": "Java Software Engineer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_232",
+            "text": "ZAO Eureca; June 2006 – July 2007; St. Petersburg, Russia",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_233",
+            "text": "Developed Java backend modules for automated logistics platform managing hospital food supply for",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_234",
+            "text": "Russian Ministry of Defence facilities;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_235",
+            "text": "Tech Stack: Java, JDBC, SQL",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_236",
+            "text": "TECHNICAL PROJECTS Independent Developer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_237",
+            "text": "Neru Plan – Smart Meal Planning App; January 2026 – Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_238",
+            "text": "*Solo iOS/iPad app designed, developed, and shipped to the App Store.*",
+            "parser_semantic": "role_intro",
+            "semantic_hint": "intro_candidate"
+          },
+          {
+            "para_id": "para_239",
+            "text": "Built on-device AI recipe import using Apple Foundation Models: photo capture and URL parsing fully",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_240",
+            "text": "offline, no data leaves the device;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_241",
+            "text": "Engineered custom \"Atoms\" ingredient matching system for automatic cross-recipe deduplication and",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_242",
+            "text": "shopping list aggregation with unit conversion (cups, tablespoons, metric);",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_243",
+            "text": "Implemented dynamic serving size scaling with live shopping list recalculation, infinite-scroll drag-and-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_244",
+            "text": "drop meal calendar, 10+ website recipe parser, and iCloud sync;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_245",
+            "text": "Tech Stack: Swift, SwiftUI, Apple Foundation Models, Apple Intelligence, iCloud, iOS, iPadOS",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_246",
+            "text": "Independent Developer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_247",
+            "text": "Renzu Yui – Photography Workflow Ecosystem; November 2025 – Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_248",
+            "text": "*Privacy-first photography toolset for professionals. Renzu Select shipped to App Store; distributed",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_249",
+            "text": "backend and additional apps in development.*",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_250",
+            "text": "Renzu Select (macOS photo culling app):",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_251",
+            "text": "Implemented instant RAW preview loading from embedded JPEGs (NEF, RAF, CR2/CR3, ARW, DNG) elim-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_252",
+            "text": "inating editor launch wait time for large shoots;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_253",
+            "text": "Built custom on-device AI pipeline (vector embeddings, visual-similarity clustering) for smart shot stack-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_254",
+            "text": "ing—all ML processing runs locally, no cloud dependency, fully offline;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_255",
+            "text": "Designed non-blocking import pipeline with background caching, isolated processing threads, and auto-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_256",
+            "text": "matic session recovery keeping UI responsive across thousands of files;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_257",
+            "text": "Delivered 5-star XMP rating system, professional export with naming and metadata templates, and dy-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_258",
+            "text": "namic viewing themes;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_259",
+            "text": "Renzu Flow (AI-assisted RAW photo styling app):",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_260",
+            "text": "Built Apple Silicon optimized RAW-to-JPEG styling pipeline using CIRAWFilter, Core Image, Metal-backed",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_261",
+            "text": "rendering, and reusable XCFramework libraries for macOS/iPad integration;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_262",
+            "text": "Designed training system that learns a photographer’s edit style from paired RAW+JPEG sets by extract-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_263",
+            "text": "ing a global tone curve and per-image 3D color LUTs, then applies the style to new RAW files;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_264",
+            "text": "Implemented style application modes for clean RAW conversion, tone mapping only, color LUT only, and",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_265",
+            "text": "combined tone+color rendering to support both debugging and production workflows;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_266",
+            "text": "Architected reusable core and training modules with command-line tooling, model export/import, and",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_267",
+            "text": "dynamic framework packaging for integration into desktop, kiosk, and tablet products;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_268",
+            "text": "Tech Stack: Swift, SwiftUI, Core ML, Vision, Dart, Flutter, macOS",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_147"
+            ],
+            "meta_para_ids": [
+              "para_148",
+              "para_149",
+              "para_150",
+              "para_151",
+              "para_152"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_153"
+            ],
+            "meta_para_ids": [
+              "para_154",
+              "para_155",
+              "para_156",
+              "para_157",
+              "para_158",
+              "para_159",
+              "para_160",
+              "para_161",
+              "para_162",
+              "para_163",
+              "para_164",
+              "para_165",
+              "para_166",
+              "para_167",
+              "para_168",
+              "para_169",
+              "para_170",
+              "para_171",
+              "para_172",
+              "para_173",
+              "para_174",
+              "para_175",
+              "para_176",
+              "para_177",
+              "para_178",
+              "para_179",
+              "para_180",
+              "para_181"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_182"
+            ],
+            "meta_para_ids": [
+              "para_183",
+              "para_184",
+              "para_185",
+              "para_186",
+              "para_187",
+              "para_188",
+              "para_189",
+              "para_190",
+              "para_191",
+              "para_192",
+              "para_193",
+              "para_194",
+              "para_195",
+              "para_196",
+              "para_197",
+              "para_198",
+              "para_199"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_4",
+            "header_para_ids": [
+              "para_200"
+            ],
+            "meta_para_ids": [
+              "para_201",
+              "para_202",
+              "para_203",
+              "para_204",
+              "para_205",
+              "para_206",
+              "para_207",
+              "para_208",
+              "para_209",
+              "para_210",
+              "para_211",
+              "para_212",
+              "para_213",
+              "para_214",
+              "para_215",
+              "para_216",
+              "para_217",
+              "para_218",
+              "para_219",
+              "para_220",
+              "para_221",
+              "para_222",
+              "para_223",
+              "para_224",
+              "para_225",
+              "para_226",
+              "para_227",
+              "para_228",
+              "para_229",
+              "para_230"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_5",
+            "header_para_ids": [
+              "para_231"
+            ],
+            "meta_para_ids": [
+              "para_232",
+              "para_233",
+              "para_234",
+              "para_235"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_6",
+            "header_para_ids": [
+              "para_236"
+            ],
+            "meta_para_ids": [
+              "para_237",
+              "para_238",
+              "para_239",
+              "para_240",
+              "para_241",
+              "para_242",
+              "para_243",
+              "para_244",
+              "para_245"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_7",
+            "header_para_ids": [
+              "para_246"
+            ],
+            "meta_para_ids": [
+              "para_247",
+              "para_248",
+              "para_249",
+              "para_250",
+              "para_251",
+              "para_252",
+              "para_253",
+              "para_254",
+              "para_255",
+              "para_256",
+              "para_257",
+              "para_258",
+              "para_259",
+              "para_260",
+              "para_261",
+              "para_262",
+              "para_263",
+              "para_264",
+              "para_265",
+              "para_266",
+              "para_267",
+              "para_268"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_270",
+            "text": "Saint Petersburg State University (2002 – 2007)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_271",
+            "text": "Coursework in Mathematics and System Software Development",
+            "parser_semantic": "specialization_header"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_6",
+        "raw_title": "ADDITIONAL INFORMATION",
+        "paragraphs": [
+          {
+            "para_id": "para_273",
+            "text": "Availability: Open to Remote positions (preferred); also available for Hybrid or On-site roles in Vancou-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_274",
+            "text": "ver",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_275",
+            "text": "Work Authorization: Canadian Permanent Resident; Canadian Citizenship effective April 17, 2026 (citi-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_276",
+            "text": "zenship ceremony scheduled)",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_277",
+            "text": "Languages: English (fluent), Russian (native)",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_278",
+            "text": "AI-Assisted Development: Experienced with Claude, ChatGPT, Gemini for code generation, automation",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_279",
+            "text": "of engineering tasks including code coverage tests, and technical research",
+            "parser_semantic": "specialization_header"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFILE",
+        "paragraphs": [
+          {
+            "para_id": "para_5",
+            "text": "PROFILE",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_6",
+            "text": "Backend and infrastructure engineer with deep expertise in Java and Spring/Spring Boot, specializing in",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_7",
+            "text": "high-performance financial systems, cryptocurrency platforms, and distributed applications. Strong track",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_8",
+            "text": "record building scalable microservices, optimizing JVM performance, and delivering reliable production",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_9",
+            "text": "infrastructure. Working knowledge of Kotlin and Go. Combines backend depth with DevOps capabilities",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_10",
+            "text": "to own features end-to-end from design through production deployment.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "CORE COMPETENCIES",
+        "paragraphs": [
+          {
+            "para_id": "para_11",
+            "text": "CORE COMPETENCIES",
+            "parser_semantic": "section_heading"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Backend Development",
+        "paragraphs": [
+          {
+            "para_id": "para_12",
+            "text": "Backend Development",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_13",
+            "text": "Java (Core Java, legacy–modern, from 1.4); Kotlin; Spring/Spring Boot; REST APIs; GraphQL; Microser-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_14",
+            "text": "vices; JVM performance tuning; Multithreading; PostgreSQL/MySQL; Distributed systems; Blockchain in-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "tegration (BTC, ETH, SOL)",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_16",
+            "text": "DevOps & Infrastructure",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_17",
+            "text": "Kubernetes; Docker; AWS (EC2, RDS, S3, VPC); CI/CD (Jenkins); Ansible; Prometheus/Grafana; Linux ad-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_18",
+            "text": "ministration; Bash/Python scripting",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_19",
+            "text": "Full-Stack",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_20",
+            "text": "Flutter/Dart; Vue.js; AngularJS; GWT; JavaScript; HTML5/CSS3",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_21",
+            "text": "Additional",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_22",
+            "text": "root cause analysis, monitoring, alerting, capacity planning, remediation, high engagement, effective",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_23",
+            "text": "outcomes, container orchestration, infrastructure-as-code, CI/CD pipelines, debugging skills",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "PROFESSIONAL EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_24",
+            "text": "PROFESSIONAL EXPERIENCE",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_147",
+            "text": "Software Engineer (Independent Contractor)",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_148",
+            "text": "Mercor; January 2026 – Present; Vancouver, Canada; Remote",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_149",
+            "text": "*Contract engineering for AI-related projects on behalf of Mercor clients.*",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_150",
+            "text": "Contributing to AI-focused technical projects for Mercor clients across varying project scopes and re-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_151",
+            "text": "quirements;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_152",
+            "text": "Tech Stack: Java, Python, AI coding agents",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_153",
+            "text": "Senior Software Engineer (Independent Contractor)",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_154",
+            "text": "Toptal; February 2026 – Present; Vancouver, Canada; Remote",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_155",
+            "text": "*Senior engineering contractor for Toptal clients.*",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_156",
+            "text": "Tech Stack: Java, Spring Boot, REST APIs, GraphQL, AWS, Docker, Microservices, PostgreSQL, Ansible,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_157",
+            "text": "Jetty, Linux, Multithreading",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_158",
+            "text": "GMO-Z.com Fintech CA; April 2021 – September 2025; Vancouver, Canada",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_159",
+            "text": "*Platform engineering role focusing on infrastructure, CI/CD, and developer tooling for cryptocurrency",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_160",
+            "text": "trading platform (30+ engineers).*",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_161",
+            "text": "Reduced CI/CD pipeline runtime from 12 hours to 2 hours (83% improvement) by building custom test",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_162",
+            "text": "parallelization tool for 30,000-test suite across multiple Jenkins agents;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_163",
+            "text": "Designed and maintained 15+ Jenkins pipelines (Groovy DSL) for Java microservices: build automation,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_164",
+            "text": "unit/integration testing, deployment workflows, rollback procedures;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_165",
+            "text": "Built hybrid cloud infrastructure combining AWS, VMware ESXi, and Proxmox with OpenVPN network ar-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_166",
+            "text": "chitecture connecting multiple data centers, achieving 100% uptime;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_167",
+            "text": "Reduced server provisioning time from 4+ hours to under 20 minutes by implementing Infrastructure-as-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_168",
+            "text": "Code with Ansible across 30+ nodes spanning AWS and on-premises environments;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_169",
+            "text": "Deployed and maintained 3-node Kubernetes cluster hosting blockchain networks (public, test, private)",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_170",
+            "text": "for development and testing;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_171",
+            "text": "Built observability platform (Prometheus, Loki, Grafana) covering 20+ production services, reducing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_172",
+            "text": "mean time to detection from hours to under 5 minutes via automated Slack/email alerting;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_173",
+            "text": "Migrated 5 critical internal services (Bitbucket, Redmine, Jenkins, Nexus, Vault) to AWS and VMware",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_174",
+            "text": "with zero unplanned downtime, reducing hardware maintenance overhead by ~8 hours/month;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_175",
+            "text": "Implemented RBAC security model for CI/CD pipelines and infrastructure access across 50+ users;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_176",
+            "text": "Resolved complex production issues: Solana container failures due to CPU instruction incompatibilities,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_177",
+            "text": "Kubernetes cluster networking problems, build pipeline stability;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_178",
+            "text": "Mentored 2-3 junior engineers on Kubernetes, Docker workflows, testing practices, and debugging tech-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_179",
+            "text": "niques; established Docker Compose standards adopted across organization;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_180",
+            "text": "Tech Stack: AWS (EC2, RDS, S3), Kubernetes, Docker, Jenkins (Groovy DSL), Ansible, OpenVPN,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_181",
+            "text": "Prometheus, Loki, Grafana, PostgreSQL, Python, Bash",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_182",
+            "text": "Backend Engineer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_183",
+            "text": "CardinalChain Software Inc.; April 2019 – March 2021; Vancouver, Canada",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_184",
+            "text": "*Acquired by GMO-Z.com in 2021*",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_185",
+            "text": "*Cryptocurrency trading platform startup. Owned blockchain integration architecture and core trading",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_186",
+            "text": "infrastructure.*",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_187",
+            "text": "Architected and implemented cryptocurrency blockchain integrations for 7+ chains (BTC, ETH, BCH, SOL,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_188",
+            "text": "LTC, XRP, XLM) including transaction flows, wallet management, signing infrastructure, and reconcilia-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_189",
+            "text": "tion logic;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_190",
+            "text": "Built flexible multi-signature transaction signing system with configurable N-of-M threshold schemes us-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_191",
+            "text": "ing air-gapped signing nodes for enhanced security;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_192",
+            "text": "Developed Ethereum smart contracts in Solidity implementing multi-signature wallet with dynamic",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_193",
+            "text": "threshold configuration;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_194",
+            "text": "Reduced GC pause times by 60% and improved p99 transaction latency from 800ms to 120ms through",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_195",
+            "text": "JVM tuning: G1GC configuration, heap profiling, and thread pool rightsizing;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_196",
+            "text": "Fixed critical production issues in trading services: transaction boundary problems, database connection",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_197",
+            "text": "pool misconfigurations, memory leaks;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_198",
+            "text": "Developed REST APIs and backend services for cryptocurrency trading platform using Spring Boot;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_199",
+            "text": "Tech Stack: Java 8, Spring Boot, Hibernate, REST, Solidity, PostgreSQL",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_200",
+            "text": "Java Software Engineer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_201",
+            "text": "FitechSource Saint-Petersburg; August 2007 – March 2019; St. Petersburg, Russia",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_202",
+            "text": "*Full-stack development across multiple domains: distributed computing platforms, cryptocurrency ex-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_203",
+            "text": "changes, scientific applications, and enterprise systems.*",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_204",
+            "text": "*Grew into DevOps responsibilities (2015–2019) while maintaining development work.*",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_205",
+            "text": "Backend & Full-Stack Development (2007–2019)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_206",
+            "text": "Delivered full backend rewrite of Stanford University lab management system (LabUser) for 100+ re-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_207",
+            "text": "searchers, cutting report generation time from 45 minutes to under 2 minutes vs. legacy PHP system:",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_208",
+            "text": "real-time inventory tracking, grant management, purchase request workflows, usage analytics;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_209",
+            "text": "Developed core features for commercial distributed computing products (Palette DB distributed caching,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_210",
+            "text": "xTier middleware platform): clustering logic, failover mechanisms, testing infrastructure, production de-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_211",
+            "text": "ployment support;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_212",
+            "text": "Implemented high-performance backend services for financial trading platforms and cryptocurrency ex-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_213",
+            "text": "changes: market data processing, order routing, session management, transaction handling;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_214",
+            "text": "Built full-stack features using AngularJS, Vue.js, and GWT: bioinformatics data visualization, real-time",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_215",
+            "text": "dashboards, complex forms, inventory management interfaces;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_216",
+            "text": "Developed REST APIs and microservices using Spring framework with PostgreSQL/MySQL databases;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_217",
+            "text": "Optimized database performance: query tuning, indexing strategies, connection pool configuration;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_218",
+            "text": "Designed distributed systems components: message routing, multi-node synchronization, fault toler-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_219",
+            "text": "ance, graceful degradation;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_220",
+            "text": "DevOps & Infrastructure (2015–2019)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_221",
+            "text": "Built and maintained CI/CD pipelines using Jenkins (Groovy DSL): automated builds, test execution, de-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_222",
+            "text": "ployment automation, artifact management;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_223",
+            "text": "Developed Ansible playbooks for infrastructure automation: server provisioning, configuration manage-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_224",
+            "text": "ment, application deployment;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_225",
+            "text": "Managed PostgreSQL and MySQL production databases: performance tuning, schema migrations, repli-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_226",
+            "text": "cation setup, backup/restore procedures;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_227",
+            "text": "Maintained Linux production servers with 24/7 on-call support: troubleshooting, log analysis, incident",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_228",
+            "text": "response;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_229",
+            "text": "Tech Stack: Java (Core Java, legacy–modern, from 1.4), Spring, JDBC, Hibernate, REST, AngularJS, Vue.js,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_230",
+            "text": "GWT, PostgreSQL, MySQL, Jenkins (Groovy DSL), Ansible, Linux, Bash, Git",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_231",
+            "text": "Java Software Engineer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_232",
+            "text": "ZAO Eureca; June 2006 – July 2007; St. Petersburg, Russia",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_233",
+            "text": "Developed Java backend modules for automated logistics platform managing hospital food supply for",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_234",
+            "text": "Russian Ministry of Defence facilities;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_235",
+            "text": "Tech Stack: Java, JDBC, SQL",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_236",
+            "text": "TECHNICAL PROJECTS Independent Developer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_237",
+            "text": "Neru Plan – Smart Meal Planning App; January 2026 – Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_238",
+            "text": "*Solo iOS/iPad app designed, developed, and shipped to the App Store.*",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_239",
+            "text": "Built on-device AI recipe import using Apple Foundation Models: photo capture and URL parsing fully",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_240",
+            "text": "offline, no data leaves the device;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_241",
+            "text": "Engineered custom \"Atoms\" ingredient matching system for automatic cross-recipe deduplication and",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_242",
+            "text": "shopping list aggregation with unit conversion (cups, tablespoons, metric);",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_243",
+            "text": "Implemented dynamic serving size scaling with live shopping list recalculation, infinite-scroll drag-and-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_244",
+            "text": "drop meal calendar, 10+ website recipe parser, and iCloud sync;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_245",
+            "text": "Tech Stack: Swift, SwiftUI, Apple Foundation Models, Apple Intelligence, iCloud, iOS, iPadOS",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_246",
+            "text": "Independent Developer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_247",
+            "text": "Renzu Yui – Photography Workflow Ecosystem; November 2025 – Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_248",
+            "text": "*Privacy-first photography toolset for professionals. Renzu Select shipped to App Store; distributed",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_249",
+            "text": "backend and additional apps in development.*",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_250",
+            "text": "Renzu Select (macOS photo culling app):",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_251",
+            "text": "Implemented instant RAW preview loading from embedded JPEGs (NEF, RAF, CR2/CR3, ARW, DNG) elim-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_252",
+            "text": "inating editor launch wait time for large shoots;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_253",
+            "text": "Built custom on-device AI pipeline (vector embeddings, visual-similarity clustering) for smart shot stack-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_254",
+            "text": "ing—all ML processing runs locally, no cloud dependency, fully offline;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_255",
+            "text": "Designed non-blocking import pipeline with background caching, isolated processing threads, and auto-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_256",
+            "text": "matic session recovery keeping UI responsive across thousands of files;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_257",
+            "text": "Delivered 5-star XMP rating system, professional export with naming and metadata templates, and dy-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_258",
+            "text": "namic viewing themes;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_259",
+            "text": "Renzu Flow (AI-assisted RAW photo styling app):",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_260",
+            "text": "Built Apple Silicon optimized RAW-to-JPEG styling pipeline using CIRAWFilter, Core Image, Metal-backed",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_261",
+            "text": "rendering, and reusable XCFramework libraries for macOS/iPad integration;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_262",
+            "text": "Designed training system that learns a photographer’s edit style from paired RAW+JPEG sets by extract-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_263",
+            "text": "ing a global tone curve and per-image 3D color LUTs, then applies the style to new RAW files;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_264",
+            "text": "Implemented style application modes for clean RAW conversion, tone mapping only, color LUT only, and",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_265",
+            "text": "combined tone+color rendering to support both debugging and production workflows;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_266",
+            "text": "Architected reusable core and training modules with command-line tooling, model export/import, and",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_267",
+            "text": "dynamic framework packaging for integration into desktop, kiosk, and tablet products;",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_268",
+            "text": "Tech Stack: Swift, SwiftUI, Core ML, Vision, Dart, Flutter, macOS",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_147"
+            ],
+            "meta_para_ids": [
+              "para_148",
+              "para_149",
+              "para_150",
+              "para_151",
+              "para_152"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_153"
+            ],
+            "meta_para_ids": [
+              "para_154",
+              "para_155",
+              "para_156",
+              "para_157",
+              "para_158",
+              "para_159",
+              "para_160",
+              "para_161",
+              "para_162",
+              "para_163",
+              "para_164",
+              "para_165",
+              "para_166",
+              "para_167",
+              "para_168",
+              "para_169",
+              "para_170",
+              "para_171",
+              "para_172",
+              "para_173",
+              "para_174",
+              "para_175",
+              "para_176",
+              "para_177",
+              "para_178",
+              "para_179",
+              "para_180",
+              "para_181"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_182"
+            ],
+            "meta_para_ids": [
+              "para_183",
+              "para_184",
+              "para_185",
+              "para_186",
+              "para_187",
+              "para_188",
+              "para_189",
+              "para_190",
+              "para_191",
+              "para_192",
+              "para_193",
+              "para_194",
+              "para_195",
+              "para_196",
+              "para_197",
+              "para_198",
+              "para_199"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_4",
+            "header_para_ids": [
+              "para_200"
+            ],
+            "meta_para_ids": [
+              "para_201",
+              "para_202",
+              "para_203",
+              "para_204",
+              "para_205",
+              "para_206",
+              "para_207",
+              "para_208",
+              "para_209",
+              "para_210",
+              "para_211",
+              "para_212",
+              "para_213",
+              "para_214",
+              "para_215",
+              "para_216",
+              "para_217",
+              "para_218",
+              "para_219",
+              "para_220",
+              "para_221",
+              "para_222",
+              "para_223",
+              "para_224",
+              "para_225",
+              "para_226",
+              "para_227",
+              "para_228",
+              "para_229",
+              "para_230"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_5",
+            "header_para_ids": [
+              "para_231"
+            ],
+            "meta_para_ids": [
+              "para_232",
+              "para_233",
+              "para_234",
+              "para_235"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_6",
+            "header_para_ids": [
+              "para_236"
+            ],
+            "meta_para_ids": [
+              "para_237",
+              "para_238",
+              "para_239",
+              "para_240",
+              "para_241",
+              "para_242",
+              "para_243",
+              "para_244",
+              "para_245"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_7",
+            "header_para_ids": [
+              "para_246"
+            ],
+            "meta_para_ids": [
+              "para_247",
+              "para_248",
+              "para_249",
+              "para_250",
+              "para_251",
+              "para_252",
+              "para_253",
+              "para_254",
+              "para_255",
+              "para_256",
+              "para_257",
+              "para_258",
+              "para_259",
+              "para_260",
+              "para_261",
+              "para_262",
+              "para_263",
+              "para_264",
+              "para_265",
+              "para_266",
+              "para_267",
+              "para_268"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_269",
+            "text": "EDUCATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_270",
+            "text": "Saint Petersburg State University (2002 – 2007)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_271",
+            "text": "Coursework in Mathematics and System Software Development",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_6",
+        "raw_title": "ADDITIONAL INFORMATION",
+        "paragraphs": [
+          {
+            "para_id": "para_272",
+            "text": "ADDITIONAL INFORMATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_273",
+            "text": "Availability: Open to Remote positions (preferred); also available for Hybrid or On-site roles in Vancou-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_274",
+            "text": "ver",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_275",
+            "text": "Work Authorization: Canadian Permanent Resident; Canadian Citizenship effective April 17, 2026 (citi-",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_276",
+            "text": "zenship ceremony scheduled)",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_277",
+            "text": "Languages: English (fluent), Russian (native)",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_278",
+            "text": "AI-Assisted Development: Experienced with Claude, ChatGPT, Gemini for code generation, automation",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_279",
+            "text": "of engineering tasks including code coverage tests, and technical research",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_5",
+        "text_preview": "PROFILE"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_11",
+        "text_preview": "CORE COMPETENCIES"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_12",
+        "text_preview": "Backend Development"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_24",
+        "text_preview": "PROFESSIONAL EXPERIENCE"
+      },
+      {
+        "section_id": "sec_5",
+        "para_id": "para_269",
+        "text_preview": "EDUCATION"
+      },
+      {
+        "section_id": "sec_6",
+        "para_id": "para_272",
+        "text_preview": "ADDITIONAL INFORMATION"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 14
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFILE",
+        "display_title": "Profile",
+        "semantic_type": "summary",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_6",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_7",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_8",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_9",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_10",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "CORE COMPETENCIES",
+        "display_title": "Core Competencies",
+        "semantic_type": "skills",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Backend Development",
+        "display_title": "Backend Development",
+        "semantic_type": "skills",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_6",
+            "para_id": "para_13",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_7",
+            "para_id": "para_14",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_8",
+            "para_id": "para_15",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_9",
+            "para_id": "para_16",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_10",
+            "para_id": "para_17",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_11",
+            "para_id": "para_19",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_12",
+            "para_id": "para_20",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_13",
+            "para_id": "para_21",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_14",
+            "para_id": "para_22",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_15",
+            "para_id": "para_23",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "PROFESSIONAL EXPERIENCE",
+        "display_title": "Professional Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_147",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_17",
+                "para_id": "para_148",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_18",
+                "para_id": "para_149",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_19",
+                "para_id": "para_150",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_20",
+                "para_id": "para_151",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_21",
+                "para_id": "para_152",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_22",
+                "para_id": "para_153",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_23",
+                "para_id": "para_154",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_24",
+                "para_id": "para_155",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_25",
+                "para_id": "para_156",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_26",
+                "para_id": "para_157",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_27",
+                "para_id": "para_158",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_28",
+                "para_id": "para_159",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_29",
+                "para_id": "para_160",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_30",
+                "para_id": "para_161",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_31",
+                "para_id": "para_162",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_32",
+                "para_id": "para_163",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_33",
+                "para_id": "para_164",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_34",
+                "para_id": "para_165",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_35",
+                "para_id": "para_166",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_36",
+                "para_id": "para_167",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_37",
+                "para_id": "para_168",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_38",
+                "para_id": "para_169",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_39",
+                "para_id": "para_170",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_40",
+                "para_id": "para_171",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_41",
+                "para_id": "para_172",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_42",
+                "para_id": "para_173",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_43",
+                "para_id": "para_174",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_44",
+                "para_id": "para_175",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_45",
+                "para_id": "para_176",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_46",
+                "para_id": "para_177",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_47",
+                "para_id": "para_178",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_48",
+                "para_id": "para_179",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_49",
+                "para_id": "para_180",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_50",
+                "para_id": "para_181",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_51",
+                "para_id": "para_182",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_52",
+                "para_id": "para_183",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_53",
+                "para_id": "para_184",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_54",
+                "para_id": "para_185",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_55",
+                "para_id": "para_186",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_56",
+                "para_id": "para_187",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_57",
+                "para_id": "para_188",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_58",
+                "para_id": "para_189",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_59",
+                "para_id": "para_190",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_60",
+                "para_id": "para_191",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_61",
+                "para_id": "para_192",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_62",
+                "para_id": "para_193",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_63",
+                "para_id": "para_194",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_64",
+                "para_id": "para_195",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_65",
+                "para_id": "para_196",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_66",
+                "para_id": "para_197",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_67",
+                "para_id": "para_198",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_68",
+                "para_id": "para_199",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_4",
+            "header_blocks": [
+              {
+                "block_id": "block_69",
+                "para_id": "para_200",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_70",
+                "para_id": "para_201",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_71",
+                "para_id": "para_202",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_72",
+                "para_id": "para_203",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_73",
+                "para_id": "para_204",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_74",
+                "para_id": "para_205",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_75",
+                "para_id": "para_206",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_76",
+                "para_id": "para_207",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_77",
+                "para_id": "para_208",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_78",
+                "para_id": "para_209",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_79",
+                "para_id": "para_210",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_80",
+                "para_id": "para_211",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_81",
+                "para_id": "para_212",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_82",
+                "para_id": "para_213",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_83",
+                "para_id": "para_214",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_84",
+                "para_id": "para_215",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_85",
+                "para_id": "para_216",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_86",
+                "para_id": "para_217",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_87",
+                "para_id": "para_218",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_88",
+                "para_id": "para_219",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_89",
+                "para_id": "para_220",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_90",
+                "para_id": "para_221",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_91",
+                "para_id": "para_222",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_92",
+                "para_id": "para_223",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_93",
+                "para_id": "para_224",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_94",
+                "para_id": "para_225",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_95",
+                "para_id": "para_226",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_96",
+                "para_id": "para_227",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_97",
+                "para_id": "para_228",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_98",
+                "para_id": "para_229",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_99",
+                "para_id": "para_230",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_5",
+            "header_blocks": [
+              {
+                "block_id": "block_100",
+                "para_id": "para_231",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_101",
+                "para_id": "para_232",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_102",
+                "para_id": "para_233",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_103",
+                "para_id": "para_234",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_104",
+                "para_id": "para_235",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_6",
+            "header_blocks": [
+              {
+                "block_id": "block_105",
+                "para_id": "para_236",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_106",
+                "para_id": "para_237",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_107",
+                "para_id": "para_238",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_108",
+                "para_id": "para_239",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_109",
+                "para_id": "para_240",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_110",
+                "para_id": "para_241",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_111",
+                "para_id": "para_242",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_112",
+                "para_id": "para_243",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_113",
+                "para_id": "para_244",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_114",
+                "para_id": "para_245",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_7",
+            "header_blocks": [
+              {
+                "block_id": "block_115",
+                "para_id": "para_246",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_116",
+                "para_id": "para_247",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_117",
+                "para_id": "para_248",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_118",
+                "para_id": "para_249",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_119",
+                "para_id": "para_250",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_120",
+                "para_id": "para_251",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_121",
+                "para_id": "para_252",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_122",
+                "para_id": "para_253",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_123",
+                "para_id": "para_254",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_124",
+                "para_id": "para_255",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_125",
+                "para_id": "para_256",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_126",
+                "para_id": "para_257",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_127",
+                "para_id": "para_258",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_128",
+                "para_id": "para_259",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_129",
+                "para_id": "para_260",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_130",
+                "para_id": "para_261",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_131",
+                "para_id": "para_262",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_132",
+                "para_id": "para_263",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_133",
+                "para_id": "para_264",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_134",
+                "para_id": "para_265",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_135",
+                "para_id": "para_266",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_136",
+                "para_id": "para_267",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_137",
+                "para_id": "para_268",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          }
+        ]
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_REWRITE_POLICY",
+        "section_id": "sec_1",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_HEADING",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_1 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_2 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_3 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_4 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_5 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SKILLS_REWRITE_POLICY",
+        "section_id": "sec_2",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "SKILLS_REWRITE_POLICY",
+        "section_id": "sec_3",
+        "detail": "got 'preserve'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_REWRITE_POLICY",
+          "SUMMARY_PRESERVE_HEADING",
+          "SUMMARY_PRESERVE_BODY_STRUCTURE",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": false,
+        "error_codes": [
+          "SKILLS_REWRITE_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": false,
+        "error_codes": [
+          "SKILLS_REWRITE_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "repair_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "invalid_sections": [
+      {
+        "parser_section": {
+          "section_id": "sec_1",
+          "raw_title": "PROFILE",
+          "paragraphs": [
+            {
+              "para_id": "para_6",
+              "text": "Backend and infrastructure engineer with deep expertise in Java and Spring/Spring Boot, specializing in",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_7",
+              "text": "high-performance financial systems, cryptocurrency platforms, and distributed applications. Strong track",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_8",
+              "text": "record building scalable microservices, optimizing JVM performance, and delivering reliable production",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_9",
+              "text": "infrastructure. Working knowledge of Kotlin and Go. Combines backend depth with DevOps capabilities",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_10",
+              "text": "to own features end-to-end from design through production deployment.",
+              "parser_semantic": "paragraph"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_1",
+          "raw_title": "PROFILE",
+          "display_title": "Profile",
+          "semantic_type": "summary",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "block_1",
+              "para_id": "para_6",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_2",
+              "para_id": "para_7",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_3",
+              "para_id": "para_8",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_4",
+              "para_id": "para_9",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_5",
+              "para_id": "para_10",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SUMMARY_REWRITE_POLICY",
+            "section_id": "sec_1",
+            "detail": "got 'preserve'"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_HEADING",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_BODY_STRUCTURE",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_1 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_2 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_3 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_4 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_5 rewrite_policy='preserve'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_2",
+          "raw_title": "CORE COMPETENCIES",
+          "paragraphs": [],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_2",
+          "raw_title": "CORE COMPETENCIES",
+          "display_title": "Core Competencies",
+          "semantic_type": "skills",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SKILLS_REWRITE_POLICY",
+            "section_id": "sec_2",
+            "detail": "got 'preserve'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_3",
+          "raw_title": "Backend Development",
+          "paragraphs": [
+            {
+              "para_id": "para_13",
+              "text": "Java (Core Java, legacy–modern, from 1.4); Kotlin; Spring/Spring Boot; REST APIs; GraphQL; Microser-",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_14",
+              "text": "vices; JVM performance tuning; Multithreading; PostgreSQL/MySQL; Distributed systems; Blockchain in-",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_15",
+              "text": "tegration (BTC, ETH, SOL)",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_16",
+              "text": "DevOps & Infrastructure",
+              "parser_semantic": "specialization_header"
+            },
+            {
+              "para_id": "para_17",
+              "text": "Kubernetes; Docker; AWS (EC2, RDS, S3, VPC); CI/CD (Jenkins); Ansible; Prometheus/Grafana; Linux ad-",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_18",
+              "text": "ministration; Bash/Python scripting",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_19",
+              "text": "Full-Stack",
+              "parser_semantic": "specialization_header"
+            },
+            {
+              "para_id": "para_20",
+              "text": "Flutter/Dart; Vue.js; AngularJS; GWT; JavaScript; HTML5/CSS3",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_21",
+              "text": "Additional",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_22",
+              "text": "root cause analysis, monitoring, alerting, capacity planning, remediation, high engagement, effective",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_23",
+              "text": "outcomes, container orchestration, infrastructure-as-code, CI/CD pipelines, debugging skills",
+              "parser_semantic": "paragraph"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_3",
+          "raw_title": "Backend Development",
+          "display_title": "Backend Development",
+          "semantic_type": "skills",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "block_6",
+              "para_id": "para_13",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_7",
+              "para_id": "para_14",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_8",
+              "para_id": "para_15",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_9",
+              "para_id": "para_16",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_10",
+              "para_id": "para_17",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_11",
+              "para_id": "para_19",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_12",
+              "para_id": "para_20",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_13",
+              "para_id": "para_21",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_14",
+              "para_id": "para_22",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_15",
+              "para_id": "para_23",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SKILLS_REWRITE_POLICY",
+            "section_id": "sec_3",
+            "detail": "got 'preserve'"
+          }
+        ]
+      }
+    ]
+  },
+  "repair_response": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFILE",
+        "display_title": "Profile",
+        "semantic_type": "summary",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_6",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_7",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_8",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_9",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_10",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_1",
+                "para_id": "para_6",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_2",
+                "para_id": "para_7",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_3",
+                "para_id": "para_8",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_4",
+                "para_id": "para_9",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_5",
+                "para_id": "para_10",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "CORE COMPETENCIES",
+        "display_title": "Core Competencies",
+        "semantic_type": "skills",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Backend Development",
+        "display_title": "Backend Development",
+        "semantic_type": "skills",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_6",
+            "para_id": "para_13",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_7",
+            "para_id": "para_14",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_8",
+            "para_id": "para_15",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_9",
+            "para_id": "para_16",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_10",
+            "para_id": "para_17",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_11",
+            "para_id": "para_19",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_12",
+            "para_id": "para_20",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_13",
+            "para_id": "para_21",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_14",
+            "para_id": "para_22",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_15",
+            "para_id": "para_23",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "validation_after_repair": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_ROLES_PRESENT",
+        "section_id": "sec_1",
+        "detail": "roles[] must be empty for this section type"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_ROLES_PRESENT"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFILE",
+        "display_title": "Profile",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_6",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_7",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_8",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_9",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_10",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "CORE COMPETENCIES",
+        "display_title": "Core Competencies",
+        "semantic_type": "skills",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Backend Development",
+        "display_title": "Backend Development",
+        "semantic_type": "skills",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_6",
+            "para_id": "para_13",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_7",
+            "para_id": "para_14",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_8",
+            "para_id": "para_15",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_9",
+            "para_id": "para_16",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_10",
+            "para_id": "para_17",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_11",
+            "para_id": "para_19",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_12",
+            "para_id": "para_20",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_13",
+            "para_id": "para_21",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_14",
+            "para_id": "para_22",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_15",
+            "para_id": "para_23",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "PROFESSIONAL EXPERIENCE",
+        "display_title": "Professional Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_147",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_17",
+                "para_id": "para_148",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_18",
+                "para_id": "para_149",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_19",
+                "para_id": "para_150",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_20",
+                "para_id": "para_151",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_21",
+                "para_id": "para_152",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_22",
+                "para_id": "para_153",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_23",
+                "para_id": "para_154",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_24",
+                "para_id": "para_155",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_25",
+                "para_id": "para_156",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_26",
+                "para_id": "para_157",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_27",
+                "para_id": "para_158",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_28",
+                "para_id": "para_159",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_29",
+                "para_id": "para_160",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_30",
+                "para_id": "para_161",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_31",
+                "para_id": "para_162",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_32",
+                "para_id": "para_163",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_33",
+                "para_id": "para_164",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_34",
+                "para_id": "para_165",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_35",
+                "para_id": "para_166",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_36",
+                "para_id": "para_167",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_37",
+                "para_id": "para_168",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_38",
+                "para_id": "para_169",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_39",
+                "para_id": "para_170",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_40",
+                "para_id": "para_171",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_41",
+                "para_id": "para_172",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_42",
+                "para_id": "para_173",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_43",
+                "para_id": "para_174",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_44",
+                "para_id": "para_175",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_45",
+                "para_id": "para_176",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_46",
+                "para_id": "para_177",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_47",
+                "para_id": "para_178",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_48",
+                "para_id": "para_179",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_49",
+                "para_id": "para_180",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_50",
+                "para_id": "para_181",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_51",
+                "para_id": "para_182",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_52",
+                "para_id": "para_183",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_53",
+                "para_id": "para_184",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_54",
+                "para_id": "para_185",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_55",
+                "para_id": "para_186",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_56",
+                "para_id": "para_187",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_57",
+                "para_id": "para_188",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_58",
+                "para_id": "para_189",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_59",
+                "para_id": "para_190",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_60",
+                "para_id": "para_191",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_61",
+                "para_id": "para_192",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_62",
+                "para_id": "para_193",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_63",
+                "para_id": "para_194",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_64",
+                "para_id": "para_195",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_65",
+                "para_id": "para_196",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_66",
+                "para_id": "para_197",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_67",
+                "para_id": "para_198",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_68",
+                "para_id": "para_199",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_4",
+            "header_blocks": [
+              {
+                "block_id": "block_69",
+                "para_id": "para_200",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_70",
+                "para_id": "para_201",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_71",
+                "para_id": "para_202",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_72",
+                "para_id": "para_203",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_73",
+                "para_id": "para_204",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_74",
+                "para_id": "para_205",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_75",
+                "para_id": "para_206",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_76",
+                "para_id": "para_207",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_77",
+                "para_id": "para_208",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_78",
+                "para_id": "para_209",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_79",
+                "para_id": "para_210",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_80",
+                "para_id": "para_211",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_81",
+                "para_id": "para_212",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_82",
+                "para_id": "para_213",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_83",
+                "para_id": "para_214",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_84",
+                "para_id": "para_215",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_85",
+                "para_id": "para_216",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_86",
+                "para_id": "para_217",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_87",
+                "para_id": "para_218",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_88",
+                "para_id": "para_219",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_89",
+                "para_id": "para_220",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_90",
+                "para_id": "para_221",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_91",
+                "para_id": "para_222",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_92",
+                "para_id": "para_223",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_93",
+                "para_id": "para_224",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_94",
+                "para_id": "para_225",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_95",
+                "para_id": "para_226",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_96",
+                "para_id": "para_227",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_97",
+                "para_id": "para_228",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_98",
+                "para_id": "para_229",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_99",
+                "para_id": "para_230",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_5",
+            "header_blocks": [
+              {
+                "block_id": "block_100",
+                "para_id": "para_231",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_101",
+                "para_id": "para_232",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_102",
+                "para_id": "para_233",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_103",
+                "para_id": "para_234",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_104",
+                "para_id": "para_235",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_6",
+            "header_blocks": [
+              {
+                "block_id": "block_105",
+                "para_id": "para_236",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_106",
+                "para_id": "para_237",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_107",
+                "para_id": "para_238",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_108",
+                "para_id": "para_239",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_109",
+                "para_id": "para_240",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_110",
+                "para_id": "para_241",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_111",
+                "para_id": "para_242",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_112",
+                "para_id": "para_243",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_113",
+                "para_id": "para_244",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_114",
+                "para_id": "para_245",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_7",
+            "header_blocks": [
+              {
+                "block_id": "block_115",
+                "para_id": "para_246",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_116",
+                "para_id": "para_247",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_117",
+                "para_id": "para_248",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_118",
+                "para_id": "para_249",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_119",
+                "para_id": "para_250",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_120",
+                "para_id": "para_251",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_121",
+                "para_id": "para_252",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_122",
+                "para_id": "para_253",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_123",
+                "para_id": "para_254",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_124",
+                "para_id": "para_255",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_125",
+                "para_id": "para_256",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_126",
+                "para_id": "para_257",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_127",
+                "para_id": "para_258",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_128",
+                "para_id": "para_259",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_129",
+                "para_id": "para_260",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_130",
+                "para_id": "para_261",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_131",
+                "para_id": "para_262",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_132",
+                "para_id": "para_263",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_133",
+                "para_id": "para_264",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_134",
+                "para_id": "para_265",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_135",
+                "para_id": "para_266",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_136",
+                "para_id": "para_267",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_137",
+                "para_id": "para_268",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          }
+        ]
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "status": "repaired_and_downgraded",
+  "validation_error_count": 10,
+  "invalid_section_count_before_repair": 3,
+  "invalid_section_count_after_repair": 1,
+  "repaired_section_count": 2,
+  "downgraded_section_count": 1,
+  "invalid_section_ids": [
+    "sec_1"
+  ],
+  "recovery_applied": true
+}

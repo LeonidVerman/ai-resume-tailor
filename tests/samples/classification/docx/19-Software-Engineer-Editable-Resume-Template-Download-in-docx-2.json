@@ -1,0 +1,2344 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SOFTWARE ENGINEER",
+        "paragraphs": [
+          {
+            "para_id": "para_6",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_7",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_8",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_9",
+            "text": "LICENSE NO.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_10",
+            "text": "0123456",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_11",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_12",
+            "text": "0123 456 7890",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_13",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_14",
+            "text": "123 G. Silang St., Kalayaan City 1234",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_16",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_17",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_18",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_19",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_20",
+            "text": "hello@techguruplus.com",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_21",
+            "text": "linkedin.com/in/name",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_22",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_23",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_24",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_25",
+            "text": "I have experience in developing and maintaining software applications for various industries in the Philippines. Skilled in working with databases, APIs, and software development tools. My experience also includes collaborating with cross-functional teams to deliver high-quality software solutions on time and within budget.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_26",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_27",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_28",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_29",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_30",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_31",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_32",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_49",
+            "text": "Software Engineer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_51",
+            "text": "Tropang True Po",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_53",
+            "text": "January 2020 - Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_55",
+            "text": "Created an automated testing framework that reduced testing time by 50% Collaborated with cross-functional teams to troubleshoot and resolve technical issues, resulting in improved customer satisfaction",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_57",
+            "text": "Back-End Developer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Truesdays",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_61",
+            "text": "March 2014 - December 2020",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_63",
+            "text": "Designed and implemented new features on a cloud-based platform that increased user engagement by 25%",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_66",
+            "text": "DevOps Engineer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_67",
+            "text": "Conducted testing and analysis for a new product launch",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_69",
+            "text": "Kalayaan National Bank",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_71",
+            "text": "June 2012 - March 2014",
+            "parser_semantic": "role_meta",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_73",
+            "text": "Conducted research and development to improve product performance and efficiency by 20%",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_75",
+            "text": "Created technical documentation and provided training for end-users",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_49"
+            ],
+            "meta_para_ids": [
+              "para_51",
+              "para_53"
+            ],
+            "bullet_para_ids": [
+              "para_55"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_57"
+            ],
+            "meta_para_ids": [
+              "para_59",
+              "para_61"
+            ],
+            "bullet_para_ids": [
+              "para_63"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_66"
+            ],
+            "meta_para_ids": [
+              "para_67"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_3__split_1",
+            "header_para_ids": [
+              "para_71"
+            ],
+            "meta_para_ids": [
+              "para_69"
+            ],
+            "bullet_para_ids": [
+              "para_73",
+              "para_75"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "RELEVANT SKILLS",
+        "paragraphs": [
+          {
+            "para_id": "para_83",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_84",
+            "text": "Proficiency in Java, Python, C++ Data Structures and Algorithms Development Methogology Testing and debugging techniques Database and SQL",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_85",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_86",
+            "text": "Adaptability and continuous learning",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_87",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_88",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "EDUCATIONAL HISTORY",
+        "paragraphs": [
+          {
+            "para_id": "para_90",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_91",
+            "text": "Masters in Computer Science Las Felipinas University, 2019 - 2021",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_92",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_93",
+            "text": "Bachelor of Computer Science Las Felipinas University, 2008 - 2012",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_94",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "AFFILIATIONS",
+        "paragraphs": [
+          {
+            "para_id": "para_95",
+            "text": "AFFILIATIONS",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_96",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_97",
+            "text": "Yellow Tree Organization",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_98",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_99",
+            "text": "Non-profit",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_100",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_101",
+            "text": "Provided technical assistance for their database system",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_102",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_103",
+            "text": "Life Tech Pro 2011",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_104",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_105",
+            "text": "Hackathon",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_106",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_107",
+            "text": "Participated in a 24hr hackathon",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SOFTWARE ENGINEER",
+        "paragraphs": [
+          {
+            "para_id": "para_5",
+            "text": "SOFTWARE ENGINEER",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_6",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_7",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_8",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_9",
+            "text": "LICENSE NO.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_10",
+            "text": "0123456",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_11",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_12",
+            "text": "0123 456 7890",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_13",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_14",
+            "text": "123 G. Silang St., Kalayaan City 1234",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_16",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_17",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_18",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_19",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_20",
+            "text": "hello@techguruplus.com",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_21",
+            "text": "linkedin.com/in/name",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_22",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_23",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_24",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_25",
+            "text": "I have experience in developing and maintaining software applications for various industries in the Philippines. Skilled in working with databases, APIs, and software development tools. My experience also includes collaborating with cross-functional teams to deliver high-quality software solutions on time and within budget.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_26",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_27",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_28",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_29",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_30",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_31",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_32",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_33",
+            "text": "WORK EXPERIENCE",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_49",
+            "text": "Software Engineer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_51",
+            "text": "Tropang True Po",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_53",
+            "text": "January 2020 - Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_55",
+            "text": "Created an automated testing framework that reduced testing time by 50% Collaborated with cross-functional teams to troubleshoot and resolve technical issues, resulting in improved customer satisfaction",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_57",
+            "text": "Back-End Developer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Truesdays",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_61",
+            "text": "March 2014 - December 2020",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_63",
+            "text": "Designed and implemented new features on a cloud-based platform that increased user engagement by 25%",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_66",
+            "text": "DevOps Engineer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_67",
+            "text": "Conducted testing and analysis for a new product launch",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_69",
+            "text": "Kalayaan National Bank",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_71",
+            "text": "June 2012 - March 2014",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_73",
+            "text": "Conducted research and development to improve product performance and efficiency by 20%",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_75",
+            "text": "Created technical documentation and provided training for end-users",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_49"
+            ],
+            "meta_para_ids": [
+              "para_51",
+              "para_53"
+            ],
+            "bullet_para_ids": [
+              "para_55"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_57"
+            ],
+            "meta_para_ids": [
+              "para_59",
+              "para_61"
+            ],
+            "bullet_para_ids": [
+              "para_63"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_66"
+            ],
+            "meta_para_ids": [
+              "para_67"
+            ],
+            "bullet_para_ids": [
+              "para_69",
+              "para_71",
+              "para_73",
+              "para_75"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "RELEVANT SKILLS",
+        "paragraphs": [
+          {
+            "para_id": "para_82",
+            "text": "RELEVANT SKILLS",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_83",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_84",
+            "text": "Proficiency in Java, Python, C++ Data Structures and Algorithms Development Methogology Testing and debugging techniques Database and SQL",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_85",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_86",
+            "text": "Adaptability and continuous learning",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_87",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_88",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "EDUCATIONAL HISTORY",
+        "paragraphs": [
+          {
+            "para_id": "para_89",
+            "text": "EDUCATIONAL HISTORY",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_90",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_91",
+            "text": "Masters in Computer Science Las Felipinas University, 2019 - 2021",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_92",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_93",
+            "text": "Bachelor of Computer Science Las Felipinas University, 2008 - 2012",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_94",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "AFFILIATIONS",
+        "paragraphs": [
+          {
+            "para_id": "para_95",
+            "text": "AFFILIATIONS",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_96",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_97",
+            "text": "Yellow Tree Organization",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_98",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_99",
+            "text": "Non-profit",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_100",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_101",
+            "text": "Provided technical assistance for their database system",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_102",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_103",
+            "text": "Life Tech Pro 2011",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_104",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_105",
+            "text": "Hackathon",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_106",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_107",
+            "text": "Participated in a 24hr hackathon",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "sec_5_role_1",
+            "header_para_ids": [
+              "para_95"
+            ],
+            "meta_para_ids": [
+              "para_103"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_5",
+        "text_preview": "SOFTWARE ENGINEER"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_33",
+        "text_preview": "WORK EXPERIENCE"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_82",
+        "text_preview": "RELEVANT SKILLS"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_89",
+        "text_preview": "EDUCATIONAL HISTORY"
+      }
+    ],
+    "roles_cleared": [
+      {
+        "section_id": "sec_5",
+        "raw_title": "AFFILIATIONS",
+        "role_count": 1
+      }
+    ],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [
+      {
+        "section_id": "sec_2",
+        "original_role_id": "role_3",
+        "split_into": [
+          "role_3",
+          "role_3__split_1"
+        ],
+        "split_count": 2
+      }
+    ],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 1
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SOFTWARE ENGINEER",
+        "display_title": "SOFTWARE ENGINEER",
+        "semantic_type": "summary",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_25",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK EXPERIENCE",
+        "display_title": "WORK EXPERIENCE",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_2",
+                "para_id": "para_49",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_3",
+                "para_id": "para_51",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_4",
+                "para_id": "para_53",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_5",
+                "para_id": "para_55",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_6",
+                "para_id": "para_57",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_7",
+                "para_id": "para_59",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_8",
+                "para_id": "para_61",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_9",
+                "para_id": "para_63",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_10",
+                "para_id": "para_66",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_11",
+                "para_id": "para_67",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_3__split_1",
+            "header_blocks": [
+              {
+                "block_id": "block_13",
+                "para_id": "para_71",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_12",
+                "para_id": "para_69",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_14",
+                "para_id": "para_73",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_15",
+                "para_id": "para_75",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "RELEVANT SKILLS",
+        "display_title": "RELEVANT SKILLS",
+        "semantic_type": "skills",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_16",
+            "para_id": "para_84",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_17",
+            "para_id": "para_86",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "EDUCATIONAL HISTORY",
+        "display_title": "EDUCATIONAL HISTORY",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_18",
+            "para_id": "para_91",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_19",
+            "para_id": "para_93",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "AFFILIATIONS",
+        "display_title": "AFFILIATIONS",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_20",
+            "para_id": "para_95",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_21",
+            "para_id": "para_97",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_22",
+            "para_id": "para_99",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_23",
+            "para_id": "para_101",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_24",
+            "para_id": "para_103",
+            "semantic_type": "role_meta",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_25",
+            "para_id": "para_105",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_26",
+            "para_id": "para_107",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_REWRITE_POLICY",
+        "section_id": "sec_1",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_HEADING",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_1 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SKILLS_REWRITE_POLICY",
+        "section_id": "sec_3",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_4",
+        "detail": "must be true"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_5",
+        "detail": "block_id=block_24 semantic_type='role_meta'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_REWRITE_POLICY",
+          "SUMMARY_PRESERVE_HEADING",
+          "SUMMARY_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": false,
+        "error_codes": [
+          "SKILLS_REWRITE_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": false,
+        "error_codes": [
+          "EDUCATION_PRESERVE_BODY_STRUCTURE"
+        ]
+      },
+      {
+        "section_id": "sec_5",
+        "is_valid": false,
+        "error_codes": [
+          "ADDITIONAL_BLOCK_TYPE"
+        ]
+      }
+    ]
+  },
+  "repair_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "invalid_sections": [
+      {
+        "parser_section": {
+          "section_id": "sec_1",
+          "raw_title": "SOFTWARE ENGINEER",
+          "paragraphs": [
+            {
+              "para_id": "para_6",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_7",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_8",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_9",
+              "text": "LICENSE NO.",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_10",
+              "text": "0123456",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_11",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_12",
+              "text": "0123 456 7890",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_13",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_14",
+              "text": "123 G. Silang St., Kalayaan City 1234",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_15",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_16",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_17",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_18",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_19",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_20",
+              "text": "hello@techguruplus.com",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_21",
+              "text": "linkedin.com/in/name",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_22",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_23",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_24",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_25",
+              "text": "I have experience in developing and maintaining software applications for various industries in the Philippines. Skilled in working with databases, APIs, and software development tools. My experience also includes collaborating with cross-functional teams to deliver high-quality software solutions on time and within budget.",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_26",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_27",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_28",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_29",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_30",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_31",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_32",
+              "text": "",
+              "parser_semantic": "empty"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_1",
+          "raw_title": "SOFTWARE ENGINEER",
+          "display_title": "SOFTWARE ENGINEER",
+          "semantic_type": "summary",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "block_1",
+              "para_id": "para_25",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SUMMARY_REWRITE_POLICY",
+            "section_id": "sec_1",
+            "detail": "got 'preserve'"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_HEADING",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_1 rewrite_policy='preserve'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_4",
+          "raw_title": "EDUCATIONAL HISTORY",
+          "paragraphs": [
+            {
+              "para_id": "para_90",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_91",
+              "text": "Masters in Computer Science Las Felipinas University, 2019 - 2021",
+              "parser_semantic": "role_meta"
+            },
+            {
+              "para_id": "para_92",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_93",
+              "text": "Bachelor of Computer Science Las Felipinas University, 2008 - 2012",
+              "parser_semantic": "role_meta"
+            },
+            {
+              "para_id": "para_94",
+              "text": "",
+              "parser_semantic": "empty"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_4",
+          "raw_title": "EDUCATIONAL HISTORY",
+          "display_title": "EDUCATIONAL HISTORY",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "block_18",
+              "para_id": "para_91",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_19",
+              "para_id": "para_93",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+            "section_id": "sec_4",
+            "detail": "must be true"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_5",
+          "raw_title": "AFFILIATIONS",
+          "paragraphs": [
+            {
+              "para_id": "para_95",
+              "text": "AFFILIATIONS",
+              "parser_semantic": "section_heading"
+            },
+            {
+              "para_id": "para_96",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_97",
+              "text": "Yellow Tree Organization",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_98",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_99",
+              "text": "Non-profit",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_100",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_101",
+              "text": "Provided technical assistance for their database system",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_102",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_103",
+              "text": "Life Tech Pro 2011",
+              "parser_semantic": "role_meta"
+            },
+            {
+              "para_id": "para_104",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_105",
+              "text": "Hackathon",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_106",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_107",
+              "text": "Participated in a 24hr hackathon",
+              "parser_semantic": "paragraph"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_5",
+          "raw_title": "AFFILIATIONS",
+          "display_title": "AFFILIATIONS",
+          "semantic_type": "additional",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "block_20",
+              "para_id": "para_95",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_21",
+              "para_id": "para_97",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_22",
+              "para_id": "para_99",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_23",
+              "para_id": "para_101",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_24",
+              "para_id": "para_103",
+              "semantic_type": "role_meta",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_25",
+              "para_id": "para_105",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_26",
+              "para_id": "para_107",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_5",
+            "detail": "block_id=block_24 semantic_type='role_meta'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_3",
+          "raw_title": "RELEVANT SKILLS",
+          "paragraphs": [
+            {
+              "para_id": "para_83",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_84",
+              "text": "Proficiency in Java, Python, C++ Data Structures and Algorithms Development Methogology Testing and debugging techniques Database and SQL",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_85",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_86",
+              "text": "Adaptability and continuous learning",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_87",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_88",
+              "text": "",
+              "parser_semantic": "empty"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_3",
+          "raw_title": "RELEVANT SKILLS",
+          "display_title": "RELEVANT SKILLS",
+          "semantic_type": "skills",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "block_16",
+              "para_id": "para_84",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_17",
+              "para_id": "para_86",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SKILLS_REWRITE_POLICY",
+            "section_id": "sec_3",
+            "detail": "got 'preserve'"
+          }
+        ]
+      }
+    ]
+  },
+  "repair_response": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SOFTWARE ENGINEER",
+        "display_title": "SOFTWARE ENGINEER",
+        "semantic_type": "summary",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_25",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_2",
+                "para_id": "para_6",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_3",
+                "para_id": "para_7",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_4",
+                "para_id": "para_8",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_5",
+                "para_id": "para_9",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_6",
+                "para_id": "para_10",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_7",
+                "para_id": "para_12",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_8",
+                "para_id": "para_14",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_9",
+                "para_id": "para_20",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_10",
+                "para_id": "para_21",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_11",
+                "para_id": "para_25",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "EDUCATIONAL HISTORY",
+        "display_title": "EDUCATIONAL HISTORY",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_18",
+            "para_id": "para_91",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_19",
+            "para_id": "para_93",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "AFFILIATIONS",
+        "display_title": "AFFILIATIONS",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_20",
+            "para_id": "para_95",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_21",
+            "para_id": "para_97",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_22",
+            "para_id": "para_99",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_23",
+            "para_id": "para_101",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_24",
+            "para_id": "para_103",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_25",
+            "para_id": "para_105",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_26",
+            "para_id": "para_107",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "RELEVANT SKILLS",
+        "display_title": "RELEVANT SKILLS",
+        "semantic_type": "skills",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_16",
+            "para_id": "para_84",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_17",
+            "para_id": "para_86",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "validation_after_repair": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_ROLES_PRESENT",
+        "section_id": "sec_1",
+        "detail": "roles[] must be empty for this section type"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_ROLES_PRESENT"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_5",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SOFTWARE ENGINEER",
+        "display_title": "SOFTWARE ENGINEER",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_25",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_6",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_7",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_8",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_9",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_6",
+            "para_id": "para_10",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_7",
+            "para_id": "para_12",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_8",
+            "para_id": "para_14",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_9",
+            "para_id": "para_20",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_10",
+            "para_id": "para_21",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK EXPERIENCE",
+        "display_title": "WORK EXPERIENCE",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_2",
+                "para_id": "para_49",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_3",
+                "para_id": "para_51",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_4",
+                "para_id": "para_53",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_5",
+                "para_id": "para_55",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_6",
+                "para_id": "para_57",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_7",
+                "para_id": "para_59",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_8",
+                "para_id": "para_61",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_9",
+                "para_id": "para_63",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_10",
+                "para_id": "para_66",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_11",
+                "para_id": "para_67",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_3__split_1",
+            "header_blocks": [
+              {
+                "block_id": "block_13",
+                "para_id": "para_71",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_12",
+                "para_id": "para_69",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_14",
+                "para_id": "para_73",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_15",
+                "para_id": "para_75",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "RELEVANT SKILLS",
+        "display_title": "RELEVANT SKILLS",
+        "semantic_type": "skills",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_16",
+            "para_id": "para_84",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_17",
+            "para_id": "para_86",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "EDUCATIONAL HISTORY",
+        "display_title": "EDUCATIONAL HISTORY",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_18",
+            "para_id": "para_91",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_19",
+            "para_id": "para_93",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "AFFILIATIONS",
+        "display_title": "AFFILIATIONS",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_20",
+            "para_id": "para_95",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_21",
+            "para_id": "para_97",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_22",
+            "para_id": "para_99",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_23",
+            "para_id": "para_101",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_24",
+            "para_id": "para_103",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_25",
+            "para_id": "para_105",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_26",
+            "para_id": "para_107",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "status": "repaired_and_downgraded",
+  "validation_error_count": 6,
+  "invalid_section_count_before_repair": 4,
+  "invalid_section_count_after_repair": 1,
+  "repaired_section_count": 3,
+  "downgraded_section_count": 1,
+  "invalid_section_ids": [
+    "sec_1"
+  ],
+  "recovery_applied": true
+}

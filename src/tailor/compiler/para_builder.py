@@ -259,6 +259,10 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
                 if pp.text_color:
                     clr = etree.SubElement(rPr, f"{{{_W}}}color")
                     clr.set(f"{{{_W}}}val", pp.text_color)
+                    # Explicitly disable theme-color inheritance so LibreOffice uses
+                    # the val directly instead of falling back to the paragraph
+                    # style's w:themeColor (e.g. "text1" = black in many templates).
+                    clr.set(f"{{{_W}}}themeColor", "none")
 
             t = etree.SubElement(r, f"{{{_W}}}t")
             t.text = run_text

@@ -881,8 +881,11 @@ def pdf_to_docx(pdf_path, method="subprocess", docker_image=DOCKER_IMAGE_DEFAULT
         Path to the generated .docx file (next to the source PDF).
     """
     if method == "subprocess":
-        return _pdf_to_docx_subprocess(pdf_path)
+        docx_path = _pdf_to_docx_subprocess(pdf_path)
     elif method == "docker":
-        return _pdf_to_docx_docker(pdf_path, docker_image=docker_image)
+        docx_path = _pdf_to_docx_docker(pdf_path, docker_image=docker_image)
     else:
         raise ValueError(f"Unknown method {method!r}.  Use 'subprocess' or 'docker'.")
+
+    from tailor.docx.artifact_sanitizer import sanitize_docx_artifacts
+    return sanitize_docx_artifacts(docx_path)

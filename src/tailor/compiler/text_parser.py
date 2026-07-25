@@ -186,8 +186,8 @@ def _normalize_letter_spaced(s: str) -> str:
 
 _EXPERIENCE_NAMES: frozenset[str] = frozenset({
     "experience", "experiences", "work experience", "professional experience",
-    "employment history", "employment", "career history",
-    "work history", "professional background", "employment summary",
+    "employment history", "employment", "employment summary", "career history",
+    "work history", "professional background",
 })
 _SUMMARY_NAMES: frozenset[str] = frozenset({
     "professional summary", "summary", "objective", "career objective",
@@ -205,7 +205,7 @@ _SKILLS_NAMES: frozenset[str] = frozenset({
 })
 _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
-    "educational background", "degrees", "educational history",
+    "educational background", "educational history", "degrees",
 })
 _CERTIFICATIONS_NAMES: frozenset[str] = frozenset({
     "certifications", "certification", "licenses", "license",
@@ -434,29 +434,16 @@ def parse_llm_output(text: str) -> list[LlmSection]:
                 and cur_role is None
                 and bool(current.body_lines)
             )
-            # Inside an experience role that already has meta_lines, suppress the
-            # title-case fallback.  Sub-titles like "Software Engineer" (a role
-            # promotion within a company) have 2 title-case words but are NOT
-            # new section headings — they are meta content for the current role.
-            in_experience_role_with_meta = (
+            # Inside any active experience role, suppress the title-case fallback.
+            # Company names like "Lamna Healthcare" or "Wholeness Healthcare" are
+            # 2 title-case words that appear immediately after a role header line;
+            # they are company names (meta content), not new section headings.
+            # Known headings in _ALL_KNOWN are still recognised via the restricted
+            # check below, so real sections are not missed.
+            in_experience_role = (
                 cur_role is not None
-                and bool(cur_role.meta_lines)
             )
-            # Immediately after a fresh pipe role-header ("Jan 20XX — present |
-            # Phlebotomist"), the next line is usually the company name.  A
-            # 2-word company ("Lamna Healthcare") must not be misdetected as a
-            # new section heading via the title-case fallback.
-            in_experience_role_fresh = (
-                cur_role is not None
-                and not cur_role.meta_lines
-                and not cur_role.bullets
-            )
-            if (
-                in_roleless_experience
-                or in_section_with_body
-                or in_experience_role_with_meta
-                or in_experience_role_fresh
-            ):
+            if in_roleless_experience or in_section_with_body or in_experience_role:
                 is_heading = bool(stripped) and (
                     stripped.lower() in _ALL_KNOWN
                     or _normalize_letter_spaced(stripped) in _ALL_KNOWN

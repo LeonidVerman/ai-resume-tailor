@@ -544,13 +544,15 @@ class TestSlashDateBoundaries:
 # ---------------------------------------------------------------------------
 
 class TestParenDateHeaders:
+    # Mixed-case company pre-lines: the ALL-CAPS variant is handled by
+    # Strategy 3 (caps_company); this exercises Strategy 4 (paren_date).
     _BODY_LINES = [
-        "TIMMERMAN INDUSTRIES - 123 Anywhere St., Any City",
+        "Timmerman Industries, Any City",
         "Project Manager (2023 - Present)",
         "Prepared project worksheets and managed work estimates.",
         "Prepared administrative documents and proposals.",
         "Coordinated with other divisions.",
-        "TIMMERMAN INDUSTRIES - 123 Anywhere St., Any City",
+        "Timmerman Industries, Any City",
         "Project Engineer (2021 - 2023)",
         "Controlled project progress according to the plan.",
         "Supported the engineering department.",
@@ -563,7 +565,7 @@ class TestParenDateHeaders:
     def test_company_preline_and_dates_in_meta(self):
         roles = _reparse_body_lines_as_roles(self._BODY_LINES)
         assert roles[0].meta_lines == [
-            "TIMMERMAN INDUSTRIES - 123 Anywhere St., Any City",
+            "Timmerman Industries, Any City",
             "2023 - Present",
         ]
         assert roles[1].meta_lines[-1] == "2021 - 2023"

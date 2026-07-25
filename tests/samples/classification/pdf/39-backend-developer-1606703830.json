@@ -1,0 +1,1917 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFESSIONAL SUMMARY",
+        "paragraphs": [
+          {
+            "para_id": "para_12",
+            "text": "Innovative Backend Developer with 7 years of experience in crafting robust server-side applications and optimizing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_13",
+            "text": "databases. Proficient in leveraging modern technologies to enhance system performance and streamline development",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_14",
+            "text": "processes. Committed to driving efficiency through collaboration and continuous improvement, ensuring high-quality",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "outputs that align with business objectives.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_34",
+            "text": "Pineapple Enterprises",
+            "parser_semantic": "paragraph",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_33",
+            "text": "Backend Developer",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_35",
+            "text": "1. Designed and implemented a scalable database architecture for web applications.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_36",
+            "text": "2. Created efficient stored procedures to optimize data retrieval processes.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_37",
+            "text": "3. Developed user registration and management systems using PHP and MySQL.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_38",
+            "text": "4. Conducted unit testing and debugging to ensure application reliability.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_39",
+            "text": "5. Utilized phpMyAdmin for database management and optimization.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_40",
+            "text": "6. Automated data cleaning processes to eliminate duplication and inconsistencies.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_41",
+            "text": "7. Collaborated with front-end teams to integrate APIs seamlessly.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_42",
+            "text": "Backend Developer",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_43",
+            "text": "Silver Lake Enterprises",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_44",
+            "text": "1. Managed the backend development for over 350 websites in the ACES college at UIUC.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_45",
+            "text": "2. Developed a Magento extension to track customer interactions on e-commerce platforms.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_46",
+            "text": "3. Integrated REST APIs for real-time data analysis and reporting.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_47",
+            "text": "4. Led the backend restructuring for purchase orders and vendor management.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_48",
+            "text": "5. Modified Oracle database procedures to enhance data processing efficiency.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_34"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": [
+              "para_33",
+              "para_35",
+              "para_36",
+              "para_37",
+              "para_38",
+              "para_39",
+              "para_40",
+              "para_41",
+              "para_42",
+              "para_43",
+              "para_44",
+              "para_45",
+              "para_46",
+              "para_47",
+              "para_48"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_56",
+            "text": "Bachelor of Science in Computer Science",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_57",
+            "text": "University of Illinois",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_58",
+            "text": "Focused on software development, database management, and web technologies.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_59",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_60",
+            "text": "Denver, CO",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_61",
+            "text": "Jan / 2015-Jan / 2018",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "SKILLS",
+        "paragraphs": [
+          {
+            "para_id": "para_63",
+            "text": "Ruby On Rails",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_64",
+            "text": "Api Development",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_65",
+            "text": "Database Management",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_66",
+            "text": "7",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_67",
+            "text": "7",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_68",
+            "text": "Restful Services",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_69",
+            "text": "10",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_70",
+            "text": "7",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "ACHIEVEMENTS",
+        "paragraphs": [
+          {
+            "para_id": "para_72",
+            "text": "Increased application performance by 30% through efficient database optimization.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_73",
+            "text": "Implemented a CI/CD pipeline that reduced deployment time by 50%.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_74",
+            "text": "Developed a REST API that improved data retrieval speed, enhancing user experience.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_75",
+            "text": "Powered by",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_76",
+            "text": "Qwikresume",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_77",
+            "text": "www.qwikresume.com",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFESSIONAL SUMMARY",
+        "paragraphs": [
+          {
+            "para_id": "para_11",
+            "text": "PROFESSIONAL SUMMARY",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_12",
+            "text": "Innovative Backend Developer with 7 years of experience in crafting robust server-side applications and optimizing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_13",
+            "text": "databases. Proficient in leveraging modern technologies to enhance system performance and streamline development",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_14",
+            "text": "processes. Committed to driving efficiency through collaboration and continuous improvement, ensuring high-quality",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "outputs that align with business objectives.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_16",
+            "text": "WORK EXPERIENCE",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_34",
+            "text": "Pineapple Enterprises",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_33",
+            "text": "Backend Developer",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_35",
+            "text": "1. Designed and implemented a scalable database architecture for web applications.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_36",
+            "text": "2. Created efficient stored procedures to optimize data retrieval processes.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_37",
+            "text": "3. Developed user registration and management systems using PHP and MySQL.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_38",
+            "text": "4. Conducted unit testing and debugging to ensure application reliability.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_39",
+            "text": "5. Utilized phpMyAdmin for database management and optimization.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_40",
+            "text": "6. Automated data cleaning processes to eliminate duplication and inconsistencies.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_41",
+            "text": "7. Collaborated with front-end teams to integrate APIs seamlessly.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_42",
+            "text": "Backend Developer",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_43",
+            "text": "Silver Lake Enterprises",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_44",
+            "text": "1. Managed the backend development for over 350 websites in the ACES college at UIUC.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_45",
+            "text": "2. Developed a Magento extension to track customer interactions on e-commerce platforms.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_46",
+            "text": "3. Integrated REST APIs for real-time data analysis and reporting.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_47",
+            "text": "4. Led the backend restructuring for purchase orders and vendor management.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_48",
+            "text": "5. Modified Oracle database procedures to enhance data processing efficiency.",
+            "parser_semantic": "bullet"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_34"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": [
+              "para_33",
+              "para_35",
+              "para_36",
+              "para_37",
+              "para_38",
+              "para_39",
+              "para_40",
+              "para_41",
+              "para_42",
+              "para_43",
+              "para_44",
+              "para_45",
+              "para_46",
+              "para_47",
+              "para_48"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_55",
+            "text": "EDUCATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_56",
+            "text": "Bachelor of Science in Computer Science",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_57",
+            "text": "University of Illinois",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_58",
+            "text": "Focused on software development, database management, and web technologies.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_59",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_60",
+            "text": "Denver, CO",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_61",
+            "text": "Jan / 2015-Jan / 2018",
+            "parser_semantic": "bullet"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "SKILLS",
+        "paragraphs": [
+          {
+            "para_id": "para_62",
+            "text": "SKILLS",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_63",
+            "text": "Ruby On Rails",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_64",
+            "text": "Api Development",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_65",
+            "text": "Database Management",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_66",
+            "text": "7",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_67",
+            "text": "7",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_68",
+            "text": "Restful Services",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_69",
+            "text": "10",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_70",
+            "text": "7",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "ACHIEVEMENTS",
+        "paragraphs": [
+          {
+            "para_id": "para_71",
+            "text": "ACHIEVEMENTS",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_72",
+            "text": "Increased application performance by 30% through efficient database optimization.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_73",
+            "text": "Implemented a CI/CD pipeline that reduced deployment time by 50%.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_74",
+            "text": "Developed a REST API that improved data retrieval speed, enhancing user experience.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_75",
+            "text": "Powered by",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_76",
+            "text": "Qwikresume",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_77",
+            "text": "www.qwikresume.com",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_11",
+        "text_preview": "PROFESSIONAL SUMMARY"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_16",
+        "text_preview": "WORK EXPERIENCE"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_55",
+        "text_preview": "EDUCATION"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_62",
+        "text_preview": "SKILLS"
+      },
+      {
+        "section_id": "sec_5",
+        "para_id": "para_71",
+        "text_preview": "ACHIEVEMENTS"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 17
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFESSIONAL SUMMARY",
+        "display_title": "Professional Summary",
+        "semantic_type": "summary",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_12",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_13",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_14",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_15",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK EXPERIENCE",
+        "display_title": "Work Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_5",
+                "para_id": "para_34",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_6",
+                "para_id": "para_33",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_7",
+                "para_id": "para_35",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_8",
+                "para_id": "para_36",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_9",
+                "para_id": "para_37",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_10",
+                "para_id": "para_38",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_11",
+                "para_id": "para_39",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_12",
+                "para_id": "para_40",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_13",
+                "para_id": "para_41",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_14",
+                "para_id": "para_42",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_15",
+                "para_id": "para_43",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_16",
+                "para_id": "para_44",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_17",
+                "para_id": "para_45",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_18",
+                "para_id": "para_46",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_19",
+                "para_id": "para_47",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_20",
+                "para_id": "para_48",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_21",
+            "para_id": "para_56",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_22",
+            "para_id": "para_57",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_23",
+            "para_id": "para_58",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_24",
+            "para_id": "para_60",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_25",
+            "para_id": "para_61",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "SKILLS",
+        "display_title": "Skills",
+        "semantic_type": "skills",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_26",
+            "para_id": "para_63",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_27",
+            "para_id": "para_64",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_28",
+            "para_id": "para_65",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_29",
+            "para_id": "para_66",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_30",
+            "para_id": "para_67",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_31",
+            "para_id": "para_68",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_32",
+            "para_id": "para_69",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_33",
+            "para_id": "para_70",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "ACHIEVEMENTS",
+        "display_title": "Achievements",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_34",
+            "para_id": "para_72",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_35",
+            "para_id": "para_73",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_36",
+            "para_id": "para_74",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_37",
+            "para_id": "para_75",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_38",
+            "para_id": "para_76",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_39",
+            "para_id": "para_77",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_REWRITE_POLICY",
+        "section_id": "sec_1",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_HEADING",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_1 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_2 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_3 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_4 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SKILLS_REWRITE_POLICY",
+        "section_id": "sec_4",
+        "detail": "got 'preserve'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_REWRITE_POLICY",
+          "SUMMARY_PRESERVE_HEADING",
+          "SUMMARY_PRESERVE_BODY_STRUCTURE",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": false,
+        "error_codes": [
+          "SKILLS_REWRITE_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_5",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "repair_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "invalid_sections": [
+      {
+        "parser_section": {
+          "section_id": "sec_1",
+          "raw_title": "PROFESSIONAL SUMMARY",
+          "paragraphs": [
+            {
+              "para_id": "para_12",
+              "text": "Innovative Backend Developer with 7 years of experience in crafting robust server-side applications and optimizing",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_13",
+              "text": "databases. Proficient in leveraging modern technologies to enhance system performance and streamline development",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_14",
+              "text": "processes. Committed to driving efficiency through collaboration and continuous improvement, ensuring high-quality",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_15",
+              "text": "outputs that align with business objectives.",
+              "parser_semantic": "paragraph"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_1",
+          "raw_title": "PROFESSIONAL SUMMARY",
+          "display_title": "Professional Summary",
+          "semantic_type": "summary",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "block_1",
+              "para_id": "para_12",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_2",
+              "para_id": "para_13",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_3",
+              "para_id": "para_14",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_4",
+              "para_id": "para_15",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SUMMARY_REWRITE_POLICY",
+            "section_id": "sec_1",
+            "detail": "got 'preserve'"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_HEADING",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_BODY_STRUCTURE",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_1 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_2 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_3 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_4 rewrite_policy='preserve'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_4",
+          "raw_title": "SKILLS",
+          "paragraphs": [
+            {
+              "para_id": "para_63",
+              "text": "Ruby On Rails",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_64",
+              "text": "Api Development",
+              "parser_semantic": "specialization_header"
+            },
+            {
+              "para_id": "para_65",
+              "text": "Database Management",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_66",
+              "text": "7",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_67",
+              "text": "7",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_68",
+              "text": "Restful Services",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_69",
+              "text": "10",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_70",
+              "text": "7",
+              "parser_semantic": "paragraph"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_4",
+          "raw_title": "SKILLS",
+          "display_title": "Skills",
+          "semantic_type": "skills",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "block_26",
+              "para_id": "para_63",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_27",
+              "para_id": "para_64",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_28",
+              "para_id": "para_65",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_29",
+              "para_id": "para_66",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_30",
+              "para_id": "para_67",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_31",
+              "para_id": "para_68",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_32",
+              "para_id": "para_69",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_33",
+              "para_id": "para_70",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SKILLS_REWRITE_POLICY",
+            "section_id": "sec_4",
+            "detail": "got 'preserve'"
+          }
+        ]
+      }
+    ]
+  },
+  "repair_response": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFESSIONAL SUMMARY",
+        "display_title": "Professional Summary",
+        "semantic_type": "summary",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_12",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_13",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_14",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_15",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_1",
+                "para_id": "para_12",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_2",
+                "para_id": "para_13",
+                "semantic_type": "summary_paragraph",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_3",
+                "para_id": "para_14",
+                "semantic_type": "summary_paragraph",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_4",
+                "para_id": "para_15",
+                "semantic_type": "summary_paragraph",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "SKILLS",
+        "display_title": "Skills",
+        "semantic_type": "skills",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_26",
+            "para_id": "para_63",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_27",
+            "para_id": "para_64",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_28",
+            "para_id": "para_65",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_29",
+            "para_id": "para_66",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_30",
+            "para_id": "para_67",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_31",
+            "para_id": "para_68",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_32",
+            "para_id": "para_69",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_33",
+            "para_id": "para_70",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_26",
+                "para_id": "para_63",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_27",
+                "para_id": "para_64",
+                "semantic_type": "skills_paragraph",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_28",
+                "para_id": "para_65",
+                "semantic_type": "skills_paragraph",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_29",
+                "para_id": "para_66",
+                "semantic_type": "skills_paragraph",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_30",
+                "para_id": "para_67",
+                "semantic_type": "skills_paragraph",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_31",
+                "para_id": "para_68",
+                "semantic_type": "skills_paragraph",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_32",
+                "para_id": "para_69",
+                "semantic_type": "skills_paragraph",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_33",
+                "para_id": "para_70",
+                "semantic_type": "skills_paragraph",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "validation_after_repair": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_ROLES_PRESENT",
+        "section_id": "sec_1",
+        "detail": "roles[] must be empty for this section type"
+      },
+      {
+        "code": "SKILLS_ROLES_PRESENT",
+        "section_id": "sec_4",
+        "detail": "roles[] must be empty for this section type"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_ROLES_PRESENT"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": false,
+        "error_codes": [
+          "SKILLS_ROLES_PRESENT"
+        ]
+      },
+      {
+        "section_id": "sec_5",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFESSIONAL SUMMARY",
+        "display_title": "Professional Summary",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_12",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_13",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_14",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_15",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK EXPERIENCE",
+        "display_title": "Work Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_5",
+                "para_id": "para_34",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_6",
+                "para_id": "para_33",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_7",
+                "para_id": "para_35",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_8",
+                "para_id": "para_36",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_9",
+                "para_id": "para_37",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_10",
+                "para_id": "para_38",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_11",
+                "para_id": "para_39",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_12",
+                "para_id": "para_40",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_13",
+                "para_id": "para_41",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_14",
+                "para_id": "para_42",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_15",
+                "para_id": "para_43",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_16",
+                "para_id": "para_44",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_17",
+                "para_id": "para_45",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_18",
+                "para_id": "para_46",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_19",
+                "para_id": "para_47",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_20",
+                "para_id": "para_48",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_21",
+            "para_id": "para_56",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_22",
+            "para_id": "para_57",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_23",
+            "para_id": "para_58",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_24",
+            "para_id": "para_60",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_25",
+            "para_id": "para_61",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "SKILLS",
+        "display_title": "Skills",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_26",
+            "para_id": "para_63",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_27",
+            "para_id": "para_64",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_28",
+            "para_id": "para_65",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_29",
+            "para_id": "para_66",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_30",
+            "para_id": "para_67",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_31",
+            "para_id": "para_68",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_32",
+            "para_id": "para_69",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_33",
+            "para_id": "para_70",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "ACHIEVEMENTS",
+        "display_title": "Achievements",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_34",
+            "para_id": "para_72",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_35",
+            "para_id": "para_73",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_36",
+            "para_id": "para_74",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_37",
+            "para_id": "para_75",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_38",
+            "para_id": "para_76",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_39",
+            "para_id": "para_77",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "status": "repaired_and_downgraded",
+  "validation_error_count": 8,
+  "invalid_section_count_before_repair": 2,
+  "invalid_section_count_after_repair": 2,
+  "repaired_section_count": 0,
+  "downgraded_section_count": 2,
+  "invalid_section_ids": [
+    "sec_1",
+    "sec_4"
+  ],
+  "recovery_applied": true
+}

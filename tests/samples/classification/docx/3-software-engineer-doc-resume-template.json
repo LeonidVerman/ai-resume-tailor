@@ -1,0 +1,767 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Experience",
+        "paragraphs": [
+          {
+            "para_id": "para_24",
+            "text": "Software Engineer",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_45",
+            "text": "Embark",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_46",
+            "text": "January 2022 - current / New York, NY",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_47",
+            "text": "Architected backend services supporting vehicle logistics workflows, enabling dispatch systems to process ~12k shipment events per day with reliable status synchronization.",
+            "parser_semantic": "role_intro"
+          },
+          {
+            "para_id": "para_48",
+            "text": "Optimized route-planning queries in a microservices environment using Python and PostgreSQL, reducing average API response time by 38% during peak operations.",
+            "parser_semantic": "role_intro"
+          },
+          {
+            "para_id": "para_49",
+            "text": "Implemented automated validation checks across shipment ingestion pipelines, improving operational data accuracy across 5 core internal systems used by dispatch teams.",
+            "parser_semantic": "role_intro"
+          },
+          {
+            "para_id": "para_50",
+            "text": "Partnered with product and operations stakeholders to ship incremental platform releases on a bi-weekly cadence, accelerating delivery of new carrier integration features.",
+            "parser_semantic": "role_intro"
+          },
+          {
+            "para_id": "para_31",
+            "text": "Software Engineer",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_52",
+            "text": "MarketSmart",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_53",
+            "text": "April 2019 - January 2022 / Washington, DC",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_54",
+            "text": "Developed new lead-scoring features for a marketing analytics platform, increasing predictive model precision by 21% for donor engagement campaigns.",
+            "parser_semantic": "role_intro"
+          },
+          {
+            "para_id": "para_55",
+            "text": "Refactored legacy data processing modules into modular services,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_56",
+            "text": "decreasing average batch processing time by 17 minutes per run. Integrated REST APIs connecting CRM systems and campaign analytics tools, supporting data exchange across 3 enterprise client platforms.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_57",
+            "text": "Collaborated with data science and product teams to deploy experimentation pipelines that supported dozens of A/B campaign tests annually.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_38",
+            "text": "Software Engineer Intern",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Marketing Science Company",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_60",
+            "text": "April 2018 - March 2019 / Pittsburgh, PA",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_61",
+            "text": "Built internal dashboards to visualize campaign performance metrics, enabling analysts to monitor 150+ active advertising experiments.",
+            "parser_semantic": "role_intro"
+          },
+          {
+            "para_id": "para_62",
+            "text": "Automated recurring data preparation tasks in Python, reducing manual analyst workload by ~6 hours per week.",
+            "parser_semantic": "role_intro"
+          },
+          {
+            "para_id": "para_63",
+            "text": "Investigated anomalies in digital campaign reporting pipelines, resolving discrepancies affecting three client reporting workflows.",
+            "parser_semantic": "role_intro"
+          },
+          {
+            "para_id": "para_64",
+            "text": "Documented ETL processes and onboarding guides that shortened ramp-up time for incoming interns by one training session.",
+            "parser_semantic": "role_intro"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_24"
+            ],
+            "meta_para_ids": [
+              "para_45",
+              "para_46"
+            ],
+            "bullet_para_ids": [
+              "para_47",
+              "para_48",
+              "para_49",
+              "para_50"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_31"
+            ],
+            "meta_para_ids": [
+              "para_52",
+              "para_53"
+            ],
+            "bullet_para_ids": [
+              "para_54",
+              "para_55",
+              "para_56",
+              "para_57"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_38"
+            ],
+            "meta_para_ids": [
+              "para_59",
+              "para_60"
+            ],
+            "bullet_para_ids": [
+              "para_61",
+              "para_62",
+              "para_63",
+              "para_64"
+            ]
+          }
+        ]
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Experience",
+        "paragraphs": [
+          {
+            "para_id": "para_23",
+            "text": "Experience",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_24",
+            "text": "Software Engineer",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_45",
+            "text": "Embark",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_46",
+            "text": "January 2022 - current / New York, NY",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_47",
+            "text": "Architected backend services supporting vehicle logistics workflows, enabling dispatch systems to process ~12k shipment events per day with reliable status synchronization.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_48",
+            "text": "Optimized route-planning queries in a microservices environment using Python and PostgreSQL, reducing average API response time by 38% during peak operations.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_49",
+            "text": "Implemented automated validation checks across shipment ingestion pipelines, improving operational data accuracy across 5 core internal systems used by dispatch teams.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_50",
+            "text": "Partnered with product and operations stakeholders to ship incremental platform releases on a bi-weekly cadence, accelerating delivery of new carrier integration features.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_31",
+            "text": "Software Engineer",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_52",
+            "text": "MarketSmart",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_53",
+            "text": "April 2019 - January 2022 / Washington, DC",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_54",
+            "text": "Developed new lead-scoring features for a marketing analytics platform, increasing predictive model precision by 21% for donor engagement campaigns.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_55",
+            "text": "Refactored legacy data processing modules into modular services,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_56",
+            "text": "decreasing average batch processing time by 17 minutes per run. Integrated REST APIs connecting CRM systems and campaign analytics tools, supporting data exchange across 3 enterprise client platforms.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_57",
+            "text": "Collaborated with data science and product teams to deploy experimentation pipelines that supported dozens of A/B campaign tests annually.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_38",
+            "text": "Software Engineer Intern",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Marketing Science Company",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_60",
+            "text": "April 2018 - March 2019 / Pittsburgh, PA",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_61",
+            "text": "Built internal dashboards to visualize campaign performance metrics, enabling analysts to monitor 150+ active advertising experiments.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_62",
+            "text": "Automated recurring data preparation tasks in Python, reducing manual analyst workload by ~6 hours per week.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_63",
+            "text": "Investigated anomalies in digital campaign reporting pipelines, resolving discrepancies affecting three client reporting workflows.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_64",
+            "text": "Documented ETL processes and onboarding guides that shortened ramp-up time for incoming interns by one training session.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_24"
+            ],
+            "meta_para_ids": [
+              "para_45",
+              "para_46"
+            ],
+            "bullet_para_ids": [
+              "para_47",
+              "para_48",
+              "para_49",
+              "para_50"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_31"
+            ],
+            "meta_para_ids": [
+              "para_52",
+              "para_53"
+            ],
+            "bullet_para_ids": [
+              "para_54",
+              "para_55",
+              "para_56",
+              "para_57"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_38"
+            ],
+            "meta_para_ids": [
+              "para_59",
+              "para_60"
+            ],
+            "bullet_para_ids": [
+              "para_61",
+              "para_62",
+              "para_63",
+              "para_64"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_23",
+        "text_preview": "Experience"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 0
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Experience",
+        "display_title": "Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_1",
+                "para_id": "para_24",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_2",
+                "para_id": "para_45",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_3",
+                "para_id": "para_46",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_4",
+                "para_id": "para_47",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_5",
+                "para_id": "para_48",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_6",
+                "para_id": "para_49",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_7",
+                "para_id": "para_50",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_8",
+                "para_id": "para_31",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_9",
+                "para_id": "para_52",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_10",
+                "para_id": "para_53",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_11",
+                "para_id": "para_54",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_12",
+                "para_id": "para_55",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_13",
+                "para_id": "para_56",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_14",
+                "para_id": "para_57",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_15",
+                "para_id": "para_38",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_59",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_17",
+                "para_id": "para_60",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_18",
+                "para_id": "para_61",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_19",
+                "para_id": "para_62",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_20",
+                "para_id": "para_63",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_21",
+                "para_id": "para_64",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": true,
+    "errors": [],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "repair_input": null,
+  "repair_response": null,
+  "validation_after_repair": null,
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Experience",
+        "display_title": "Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_1",
+                "para_id": "para_24",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_2",
+                "para_id": "para_45",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_3",
+                "para_id": "para_46",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_4",
+                "para_id": "para_47",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_5",
+                "para_id": "para_48",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_6",
+                "para_id": "para_49",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_7",
+                "para_id": "para_50",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_8",
+                "para_id": "para_31",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_9",
+                "para_id": "para_52",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_10",
+                "para_id": "para_53",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_11",
+                "para_id": "para_54",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_12",
+                "para_id": "para_55",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_13",
+                "para_id": "para_56",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_14",
+                "para_id": "para_57",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_15",
+                "para_id": "para_38",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_59",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_17",
+                "para_id": "para_60",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_18",
+                "para_id": "para_61",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_19",
+                "para_id": "para_62",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_20",
+                "para_id": "para_63",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_21",
+                "para_id": "para_64",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "status": "valid",
+  "validation_error_count": 0,
+  "invalid_section_count_before_repair": 0,
+  "invalid_section_count_after_repair": 0,
+  "repaired_section_count": 0,
+  "downgraded_section_count": 0,
+  "invalid_section_ids": [],
+  "recovery_applied": false
+}

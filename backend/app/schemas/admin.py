@@ -48,6 +48,8 @@ class SystemStats(APIModel):
     total_failed_runs: int
     total_tailored_documents: int
     total_evaluation_runs: int
+    app_version: str = "dev"
+    build_date: str = ""
 
 
 class AdminActionResponse(APIModel):

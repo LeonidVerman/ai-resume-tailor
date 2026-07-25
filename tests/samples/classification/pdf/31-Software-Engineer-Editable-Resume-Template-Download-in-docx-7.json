@@ -1,0 +1,1692 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_5",
+            "text": "Fauget  University",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_6",
+            "text": "Borcelle  High",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_7",
+            "text": "School",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_8",
+            "text": "Computer Science",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_9",
+            "text": "2010-2014",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_10",
+            "text": "123 Anywhere St., Any",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_11",
+            "text": "City 2008-2011",
+            "parser_semantic": "role_meta"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "CERTIFICATION",
+        "paragraphs": [
+          {
+            "para_id": "para_12",
+            "text": "CERTIFICATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_13",
+            "text": "Liceria & Co.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_14",
+            "text": "Fauget  Company",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "Web Design &",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_16",
+            "text": "Development",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_17",
+            "text": "Web Design &",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_18",
+            "text": "Development",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_19",
+            "text": "2019",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_20",
+            "text": "2021",
+            "parser_semantic": "role_meta"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "sec_2_role_1",
+            "header_para_ids": [
+              "para_12"
+            ],
+            "meta_para_ids": [
+              "para_19",
+              "para_20"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "WORK EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_41",
+            "text": "Web Developer",
+            "parser_semantic": "specialization_header",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_42",
+            "text": "Liceria & Co. / 2019 - Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_43",
+            "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_25",
+            "text": "Praesent erat lacus, condimentum quis hendrerit at, convallis ac quam. Nam faucibus quis dui vel mollis. Cras tincidunt ligula nec nisi vulputate ornare.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_47",
+            "text": "Web Designer",
+            "parser_semantic": "specialization_header",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_48",
+            "text": "Borcelle Company / 2016-2018",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_49",
+            "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_29",
+            "text": "Praesent erat lacus, condimentum quis hendrerit at, convallis ac quam. Nam faucibus quis dui vel mollis. Cras tincidunt ligula nec nisi vulputate ornare.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_53",
+            "text": "Web Development  Intern",
+            "parser_semantic": "specialization_header",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_54",
+            "text": "Fauget / 2014-2015",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_55",
+            "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_33",
+            "text": "Praesent erat lacus, condimentum quis hendrerit at, convallis ac quam. Nam faucibus quis dui vel mollis. Cras",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_58",
+            "text": "COURSE",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Borcelle Tech",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_60",
+            "text": "Web Design & Development",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_61",
+            "text": "2019",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_62",
+            "text": "Fauget  Corp",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_63",
+            "text": "Web Design & Development",
+            "parser_semantic": "specialization_header",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_64",
+            "text": "2020",
+            "parser_semantic": "role_meta"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_41"
+            ],
+            "meta_para_ids": [
+              "para_42"
+            ],
+            "bullet_para_ids": [
+              "para_43",
+              "para_25"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_47"
+            ],
+            "meta_para_ids": [
+              "para_48"
+            ],
+            "bullet_para_ids": [
+              "para_49",
+              "para_29"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_53"
+            ],
+            "meta_para_ids": [
+              "para_54"
+            ],
+            "bullet_para_ids": [
+              "para_55",
+              "para_33"
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_para_ids": [
+              "para_58"
+            ],
+            "meta_para_ids": [
+              "para_59",
+              "para_60",
+              "para_61"
+            ],
+            "bullet_para_ids": [
+              "para_62"
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_para_ids": [
+              "para_63"
+            ],
+            "meta_para_ids": [
+              "para_64"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "AWARDS",
+        "paragraphs": [
+          {
+            "para_id": "para_70",
+            "text": "AWARDS",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_71",
+            "text": "Liceria & Co.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_72",
+            "text": "Best Web Designer and Developer",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_73",
+            "text": "08/2021",
+            "parser_semantic": "role_meta"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "SKILLS",
+        "paragraphs": [
+          {
+            "para_id": "para_75",
+            "text": "Databases",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_76",
+            "text": "Networking basics",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_77",
+            "text": "Operating Systems",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_78",
+            "text": "Cross-platform software",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_79",
+            "text": "Encryption",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_80",
+            "text": "Unit testing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_81",
+            "text": "Integration testing",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_82",
+            "text": "System testing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_83",
+            "text": "Critical Thinking",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_84",
+            "text": "Time management",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_85",
+            "text": "tincidunt ligula nec nisi",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_86",
+            "text": "vulputate ornare.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_4",
+            "text": "EDUCATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_5",
+            "text": "Fauget  University",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_6",
+            "text": "Borcelle  High",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_7",
+            "text": "School",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_8",
+            "text": "Computer Science",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_9",
+            "text": "2010-2014",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_10",
+            "text": "123 Anywhere St., Any",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_11",
+            "text": "City 2008-2011",
+            "parser_semantic": "role_meta"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "CERTIFICATION",
+        "paragraphs": [
+          {
+            "para_id": "para_12",
+            "text": "CERTIFICATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_13",
+            "text": "Liceria & Co.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_14",
+            "text": "Fauget  Company",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "Web Design &",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_16",
+            "text": "Development",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_17",
+            "text": "Web Design &",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_18",
+            "text": "Development",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_19",
+            "text": "2019",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_20",
+            "text": "2021",
+            "parser_semantic": "role_meta"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "sec_2_role_1",
+            "header_para_ids": [
+              "para_12"
+            ],
+            "meta_para_ids": [
+              "para_19",
+              "para_20"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "WORK EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_21",
+            "text": "WORK EXPERIENCE",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_41",
+            "text": "Web Developer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_42",
+            "text": "Liceria & Co. / 2019 - Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_43",
+            "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_25",
+            "text": "Praesent erat lacus, condimentum quis hendrerit at, convallis ac quam. Nam faucibus quis dui vel mollis. Cras tincidunt ligula nec nisi vulputate ornare.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_47",
+            "text": "Web Designer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_48",
+            "text": "Borcelle Company / 2016-2018",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_49",
+            "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_29",
+            "text": "Praesent erat lacus, condimentum quis hendrerit at, convallis ac quam. Nam faucibus quis dui vel mollis. Cras tincidunt ligula nec nisi vulputate ornare.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_53",
+            "text": "Web Development  Intern",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_54",
+            "text": "Fauget / 2014-2015",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_55",
+            "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_33",
+            "text": "Praesent erat lacus, condimentum quis hendrerit at, convallis ac quam. Nam faucibus quis dui vel mollis. Cras",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_58",
+            "text": "COURSE",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Borcelle Tech",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_60",
+            "text": "Web Design & Development",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_61",
+            "text": "2019",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_62",
+            "text": "Fauget  Corp",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_63",
+            "text": "Web Design & Development",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_64",
+            "text": "2020",
+            "parser_semantic": "role_meta"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_41"
+            ],
+            "meta_para_ids": [
+              "para_42"
+            ],
+            "bullet_para_ids": [
+              "para_43",
+              "para_25"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_47"
+            ],
+            "meta_para_ids": [
+              "para_48"
+            ],
+            "bullet_para_ids": [
+              "para_49",
+              "para_29"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_53"
+            ],
+            "meta_para_ids": [
+              "para_54"
+            ],
+            "bullet_para_ids": [
+              "para_55",
+              "para_33"
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_para_ids": [
+              "para_58"
+            ],
+            "meta_para_ids": [
+              "para_59",
+              "para_60",
+              "para_61"
+            ],
+            "bullet_para_ids": [
+              "para_62"
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_para_ids": [
+              "para_63"
+            ],
+            "meta_para_ids": [
+              "para_64"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "AWARDS",
+        "paragraphs": [
+          {
+            "para_id": "para_70",
+            "text": "AWARDS",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_71",
+            "text": "Liceria & Co.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_72",
+            "text": "Best Web Designer and Developer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_73",
+            "text": "08/2021",
+            "parser_semantic": "role_meta"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "sec_4_role_1",
+            "header_para_ids": [
+              "para_70"
+            ],
+            "meta_para_ids": [
+              "para_73"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "SKILLS",
+        "paragraphs": [
+          {
+            "para_id": "para_74",
+            "text": "SKILLS",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_75",
+            "text": "Databases",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_76",
+            "text": "Networking basics",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_77",
+            "text": "Operating Systems",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_78",
+            "text": "Cross-platform software",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_79",
+            "text": "Encryption",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_80",
+            "text": "Unit testing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_81",
+            "text": "Integration testing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_82",
+            "text": "System testing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_83",
+            "text": "Critical Thinking",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_84",
+            "text": "Time management",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_85",
+            "text": "tincidunt ligula nec nisi",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_86",
+            "text": "vulputate ornare.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_4",
+        "text_preview": "EDUCATION"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_21",
+        "text_preview": "WORK EXPERIENCE"
+      },
+      {
+        "section_id": "sec_5",
+        "para_id": "para_74",
+        "text_preview": "SKILLS"
+      }
+    ],
+    "roles_cleared": [
+      {
+        "section_id": "sec_4",
+        "raw_title": "AWARDS",
+        "role_count": 1
+      }
+    ],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 11
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_5",
+            "para_id": "para_5",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_6",
+            "para_id": "para_6",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_7",
+            "para_id": "para_7",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_8",
+            "para_id": "para_8",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_9",
+            "para_id": "para_9",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_10",
+            "para_id": "para_10",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_11",
+            "para_id": "para_11",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "CERTIFICATION",
+        "display_title": "Certification",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_12",
+            "para_id": "para_12",
+            "semantic_type": "role_header",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_13",
+            "para_id": "para_13",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_14",
+            "para_id": "para_14",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_15",
+            "para_id": "para_15",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_16",
+            "para_id": "para_16",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_17",
+            "para_id": "para_17",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_18",
+            "para_id": "para_18",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_19",
+            "para_id": "para_19",
+            "semantic_type": "role_meta",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_20",
+            "para_id": "para_20",
+            "semantic_type": "role_meta",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "sec_2_role_1",
+            "header_blocks": [
+              {
+                "block_id": "para_12",
+                "para_id": "para_12",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "para_19",
+                "para_id": "para_19",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_20",
+                "para_id": "para_20",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          }
+        ]
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_1",
+        "detail": "must be true"
+      },
+      {
+        "code": "OTHER_ROLES_PRESENT",
+        "section_id": "sec_2",
+        "detail": "roles[] must be empty for this section type"
+      },
+      {
+        "code": "OTHER_BLOCK_TYPE",
+        "section_id": "sec_2",
+        "detail": "block_id=para_12 semantic_type='role_header'"
+      },
+      {
+        "code": "OTHER_BLOCK_TYPE",
+        "section_id": "sec_2",
+        "detail": "block_id=para_19 semantic_type='role_meta'"
+      },
+      {
+        "code": "OTHER_BLOCK_TYPE",
+        "section_id": "sec_2",
+        "detail": "block_id=para_20 semantic_type='role_meta'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "EDUCATION_PRESERVE_BODY_STRUCTURE"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": false,
+        "error_codes": [
+          "OTHER_ROLES_PRESENT",
+          "OTHER_BLOCK_TYPE",
+          "OTHER_BLOCK_TYPE",
+          "OTHER_BLOCK_TYPE"
+        ]
+      }
+    ]
+  },
+  "repair_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "invalid_sections": [
+      {
+        "parser_section": {
+          "section_id": "sec_1",
+          "raw_title": "EDUCATION",
+          "paragraphs": [
+            {
+              "para_id": "para_5",
+              "text": "Fauget  University",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_6",
+              "text": "Borcelle  High",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_7",
+              "text": "School",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_8",
+              "text": "Computer Science",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_9",
+              "text": "2010-2014",
+              "parser_semantic": "role_meta"
+            },
+            {
+              "para_id": "para_10",
+              "text": "123 Anywhere St., Any",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_11",
+              "text": "City 2008-2011",
+              "parser_semantic": "role_meta"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_1",
+          "raw_title": "EDUCATION",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "para_5",
+              "para_id": "para_5",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_6",
+              "para_id": "para_6",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_7",
+              "para_id": "para_7",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_8",
+              "para_id": "para_8",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_9",
+              "para_id": "para_9",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_10",
+              "para_id": "para_10",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_11",
+              "para_id": "para_11",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+            "section_id": "sec_1",
+            "detail": "must be true"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_2",
+          "raw_title": "CERTIFICATION",
+          "paragraphs": [
+            {
+              "para_id": "para_12",
+              "text": "CERTIFICATION",
+              "parser_semantic": "section_heading"
+            },
+            {
+              "para_id": "para_13",
+              "text": "Liceria & Co.",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_14",
+              "text": "Fauget  Company",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_15",
+              "text": "Web Design &",
+              "parser_semantic": "specialization_header"
+            },
+            {
+              "para_id": "para_16",
+              "text": "Development",
+              "parser_semantic": "specialization_header"
+            },
+            {
+              "para_id": "para_17",
+              "text": "Web Design &",
+              "parser_semantic": "specialization_header"
+            },
+            {
+              "para_id": "para_18",
+              "text": "Development",
+              "parser_semantic": "specialization_header"
+            },
+            {
+              "para_id": "para_19",
+              "text": "2019",
+              "parser_semantic": "role_meta"
+            },
+            {
+              "para_id": "para_20",
+              "text": "2021",
+              "parser_semantic": "role_meta"
+            }
+          ],
+          "roles": [
+            {
+              "role_id": "sec_2_role_1",
+              "header_para_ids": [
+                "para_12"
+              ],
+              "meta_para_ids": [
+                "para_19",
+                "para_20"
+              ],
+              "bullet_para_ids": []
+            }
+          ]
+        },
+        "classified_section": {
+          "section_id": "sec_2",
+          "raw_title": "CERTIFICATION",
+          "display_title": "Certification",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "para_12",
+              "para_id": "para_12",
+              "semantic_type": "role_header",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_13",
+              "para_id": "para_13",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_14",
+              "para_id": "para_14",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_15",
+              "para_id": "para_15",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_16",
+              "para_id": "para_16",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_17",
+              "para_id": "para_17",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_18",
+              "para_id": "para_18",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_19",
+              "para_id": "para_19",
+              "semantic_type": "role_meta",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_20",
+              "para_id": "para_20",
+              "semantic_type": "role_meta",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": [
+            {
+              "role_id": "sec_2_role_1",
+              "header_blocks": [
+                {
+                  "block_id": "para_12",
+                  "para_id": "para_12",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve",
+                  "new": false
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "block_id": "para_19",
+                  "para_id": "para_19",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve",
+                  "new": false
+                },
+                {
+                  "block_id": "para_20",
+                  "para_id": "para_20",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve",
+                  "new": false
+                }
+              ],
+              "body_blocks": []
+            }
+          ]
+        },
+        "validation_errors": [
+          {
+            "code": "OTHER_ROLES_PRESENT",
+            "section_id": "sec_2",
+            "detail": "roles[] must be empty for this section type"
+          },
+          {
+            "code": "OTHER_BLOCK_TYPE",
+            "section_id": "sec_2",
+            "detail": "block_id=para_12 semantic_type='role_header'"
+          },
+          {
+            "code": "OTHER_BLOCK_TYPE",
+            "section_id": "sec_2",
+            "detail": "block_id=para_19 semantic_type='role_meta'"
+          },
+          {
+            "code": "OTHER_BLOCK_TYPE",
+            "section_id": "sec_2",
+            "detail": "block_id=para_20 semantic_type='role_meta'"
+          }
+        ]
+      }
+    ]
+  },
+  "repair_response": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "para_5",
+            "para_id": "para_5",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_6",
+            "para_id": "para_6",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_7",
+            "para_id": "para_7",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_8",
+            "para_id": "para_8",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_9",
+            "para_id": "para_9",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_10",
+            "para_id": "para_10",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_11",
+            "para_id": "para_11",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "CERTIFICATION",
+        "display_title": "Certification",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_12",
+            "para_id": "para_12",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_13",
+            "para_id": "para_13",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_14",
+            "para_id": "para_14",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_15",
+            "para_id": "para_15",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_16",
+            "para_id": "para_16",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_17",
+            "para_id": "para_17",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_18",
+            "para_id": "para_18",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "sec_2_role_1",
+            "header_blocks": [
+              {
+                "block_id": "para_12",
+                "para_id": "para_12",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "para_19",
+                "para_id": "para_19",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_20",
+                "para_id": "para_20",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          }
+        ]
+      }
+    ]
+  },
+  "validation_after_repair": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "OTHER_ROLES_PRESENT",
+        "section_id": "sec_2",
+        "detail": "roles[] must be empty for this section type"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": false,
+        "error_codes": [
+          "OTHER_ROLES_PRESENT"
+        ]
+      }
+    ]
+  },
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "para_5",
+            "para_id": "para_5",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_6",
+            "para_id": "para_6",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_7",
+            "para_id": "para_7",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_8",
+            "para_id": "para_8",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_9",
+            "para_id": "para_9",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_10",
+            "para_id": "para_10",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_11",
+            "para_id": "para_11",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "CERTIFICATION",
+        "display_title": "Certification",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "para_12",
+            "para_id": "para_12",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_13",
+            "para_id": "para_13",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_14",
+            "para_id": "para_14",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_15",
+            "para_id": "para_15",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_16",
+            "para_id": "para_16",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_17",
+            "para_id": "para_17",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_18",
+            "para_id": "para_18",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_19",
+            "para_id": "para_19",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_20",
+            "para_id": "para_20",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "status": "repaired_and_downgraded",
+  "validation_error_count": 5,
+  "invalid_section_count_before_repair": 2,
+  "invalid_section_count_after_repair": 1,
+  "repaired_section_count": 1,
+  "downgraded_section_count": 1,
+  "invalid_section_ids": [
+    "sec_2"
+  ],
+  "recovery_applied": true
+}

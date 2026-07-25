@@ -483,6 +483,8 @@ export interface SystemStats {
   total_failed_runs: number;
   total_tailored_documents: number;
   total_evaluation_runs: number;
+  app_version: string;
+  build_date: string;
 }
 
 // ── Benchmark ─────────────────────────────────────────────────────────────

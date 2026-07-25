@@ -10,8 +10,8 @@ GET  /admin/system-stats              — aggregate counts for all users
 GET  /admin/generation-config         — retrieve persisted generation config
 PUT  /admin/generation-config         — update generation mode / models
 GET  /admin/logs/download             — download zipped log files for a date range
-GET  /admin/run-data/download         — download zipped run-data JSONs for a date range
-GET  /admin/run-data/download/{run_id} — download a single run-data JSON by generation run ID
+GET  /admin/run-data/download         — download zipped run packs (debug+artifacts) for a date range
+GET  /admin/run-data/download/{run_id} — download a zip pack (debug+artifacts) for a specific run
 
 Phase 8 status: FUNCTIONAL (admin-only via require_admin dependency)
 ---------------------------------------------------------------------
@@ -140,7 +140,12 @@ def evaluate_run(request: EvaluationRequest, _admin: AdminDep, db: DbDep):
 @router.get("/system-stats", response_model=SystemStats)
 def system_stats(_admin: AdminDep, db: DbDep):
     """Return aggregate counts across all users for admin dashboard."""
-    return StatsService(db).get_system_stats()
+    settings = get_settings()
+    stats = StatsService(db).get_system_stats()
+    return stats.model_copy(update={
+        "app_version": settings.app_version,
+        "build_date": settings.build_date,
+    })
 
 
 @router.get("/generation-config", response_model=GenerationConfigResponse)
@@ -488,6 +493,86 @@ def download_logs(
 _RUN_DATA_DATE_RE = re.compile(r"(\d{4})(\d{2})(\d{2})-\d{6}\.json$")
 
 
+def _doc_filename(doc, part: str, fmt: str) -> str:
+    """Build artifact filename matching the user-facing download convention.
+
+    Same logic as _artifact_filename() in documents.py.
+    Format: {CandidateName}_{Resume|Cover_Letter}_{Company}.{fmt}
+    """
+    import re as _re
+    safe_company = "".join(
+        c if c.isalnum() or c in "_-" else "_" for c in (doc.company_name or "Unknown")
+    )
+    jsonb = doc.resume_jsonb if part == "resume" else doc.cover_letter_jsonb
+    raw = _re.sub(r"[^A-Za-z0-9_-]", "_", (jsonb or {}).get("candidate_name", "")).strip("_")
+    safe_name = _re.sub(r"_+", "_", raw)
+    label = "Resume" if part == "resume" else "Cover_Letter"
+    prefix = f"{safe_name}_{label}" if safe_name else label
+    return f"{prefix}_{safe_company}.{fmt}"
+
+
+def _collect_run_pack(run, db, storage, prefix: str = "") -> list[tuple[str, bytes]]:
+    """Return (arcname, bytes) pairs for all available files for a generation run.
+
+    Collects: debug JSON + resume (pdf/docx/txt) + cover letter (pdf/docx/txt).
+    Missing or failed files are silently skipped.
+    prefix is prepended to every arcname (use "{run_id}/" for multi-run zips).
+    """
+    files: list[tuple[str, bytes]] = []
+
+    # Debug JSON
+    try:
+        data = storage.get_debug_json_bytes(run.user_id, str(run.id))
+        files.append((prefix + _build_run_filename(run, db), data))
+    except Exception:
+        pass
+
+    if not run.tailored_documents:
+        return files
+
+    doc = run.tailored_documents[0]
+
+    # Resume TXT (derived from stored jsonb — no storage fetch needed)
+    resume_text = (doc.resume_jsonb or {}).get("text", "")
+    if resume_text:
+        files.append((prefix + _doc_filename(doc, "resume", "txt"), resume_text.encode("utf-8")))
+
+    # Resume DOCX
+    if doc.resume_docx_url:
+        try:
+            files.append((prefix + _doc_filename(doc, "resume", "docx"), storage.get_bytes(doc.resume_docx_url)))
+        except Exception:
+            pass
+
+    # Resume PDF
+    if doc.resume_pdf_url:
+        try:
+            files.append((prefix + _doc_filename(doc, "resume", "pdf"), storage.get_bytes(doc.resume_pdf_url)))
+        except Exception:
+            pass
+
+    # Cover letter TXT
+    cl_text = (doc.cover_letter_jsonb or {}).get("text", "")
+    if cl_text:
+        files.append((prefix + _doc_filename(doc, "cover_letter", "txt"), cl_text.encode("utf-8")))
+
+    # Cover letter DOCX
+    if doc.cover_letter_docx_url:
+        try:
+            files.append((prefix + _doc_filename(doc, "cover_letter", "docx"), storage.get_bytes(doc.cover_letter_docx_url)))
+        except Exception:
+            pass
+
+    # Cover letter PDF
+    if doc.cover_letter_pdf_url:
+        try:
+            files.append((prefix + _doc_filename(doc, "cover_letter", "pdf"), storage.get_bytes(doc.cover_letter_pdf_url)))
+        except Exception:
+            pass
+
+    return files
+
+
 def _run_data_files_for_range(
     run_data_dir: str, from_date: date, to_date: date
 ) -> list[Path]:
@@ -546,11 +631,12 @@ def download_run_data(
     to_date: date | None = Query(None, description="End date (inclusive), YYYY-MM-DD. Defaults to today."),
 ):
     """
-    Download a ZIP archive of run-data JSON files for the given date range.
+    Download a ZIP archive of run packs for the given date range.
 
-    Queries the DB for succeeded runs in the range, then fetches each debug.json
-    from object storage. Runs that pre-date the storage feature are skipped silently.
-    Returns run-data-YYYY-MM-DD-to-YYYY-MM-DD.zip containing one JSON per run.
+    Each run's files are placed in a subfolder named by run ID.
+    Each subfolder contains up to 7 files: debug JSON + resume (pdf/docx/txt) +
+    cover letter (pdf/docx/txt). Missing files are skipped silently.
+    Returns run-data-YYYY-MM-DD-to-YYYY-MM-DD.zip.
     """
     effective_to = _validate_date_range(from_date, to_date)
     runs = GenerationRunRepository(db).list_by_date_range(from_date, effective_to)
@@ -564,12 +650,8 @@ def download_run_data(
     storage = _storage_service()
     files: list[tuple[str, bytes]] = []
     for run in runs:
-        try:
-            data = storage.get_debug_json_bytes(run.user_id, str(run.id))
-            files.append((_build_run_filename(run, db), data))
-        except Exception:
-            # Skip runs that have no debug file (pre-feature or failed upload)
-            continue
+        pack = _collect_run_pack(run, db, storage, prefix=f"{run.id}/")
+        files.extend(pack)
 
     if not files:
         raise HTTPException(
@@ -585,10 +667,11 @@ def download_run_data(
 @router.get("/run-data/download/{run_id}")
 def download_run_data_by_id(run_id: str, _admin: AdminDep, db: DbDep):
     """
-    Download the run-data JSON for a specific generation run.
+    Download a ZIP pack for a specific generation run.
 
-    Looks up the run in the DB, then fetches debug.json from object storage.
-    Returns 404 if the run does not exist or has no debug file.
+    Contains up to 7 files: debug JSON + resume (pdf/docx/txt) +
+    cover letter (pdf/docx/txt). Missing files are skipped silently.
+    Returns 404 if the run does not exist or none of the files could be fetched.
     """
     try:
         run_id_int = int(run_id)
@@ -603,20 +686,16 @@ def download_run_data_by_id(run_id: str, _admin: AdminDep, db: DbDep):
         )
 
     storage = _storage_service()
-    try:
-        data = storage.get_debug_json_bytes(run.user_id, str(run_id_int))
-    except Exception:
+    files = _collect_run_pack(run, db, storage)
+
+    if not files:
         raise HTTPException(
             status_code=404,
-            detail=f"No debug file found for run {run_id}.",
+            detail=f"No files found for run {run_id}.",
         )
 
-    filename = _build_run_filename(run, db)
-    return Response(
-        content=data,
-        media_type="application/json",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+    zip_bytes = _build_zip_from_bytes(files)
+    return _zip_response(zip_bytes, f"run-data-{run_id}.zip")
 
 
 # ── Billing admin ──────────────────────────────────────────────────────────

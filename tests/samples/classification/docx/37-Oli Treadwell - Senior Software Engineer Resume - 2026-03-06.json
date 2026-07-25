@@ -1,0 +1,3011 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SUMMARY",
+        "paragraphs": [
+          {
+            "para_id": "para_6",
+            "text": "Senior Software Engineer with 10+ years of expertise using modern web development technologies. Proven ability to build accessible and user-friendly interfaces, collaborate effectively within teams, and deliver high-quality code. Seeking software engineering roles at any level.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "SKILLS",
+        "paragraphs": [
+          {
+            "para_id": "para_8",
+            "text": "Frontend & UX: React, TypeScript, Next.js, Storybook, CSS/SCSS, Design systems, Localisation",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_9",
+            "text": "Backend & APIs: Node.js, .NET, Ruby on Rails, Python Flask, GraphQL, REST/JSON:API, Schema design",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_10",
+            "text": "DevOps & Tooling: AWS, Docker, GitHub Actions, CircleCI, Cypress, Jest/React Testing Library (RTL), Monitoring - Leadership & Accessibility: Technical mentoring, Stakeholder facilitation, Accessibility advocacy,",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "PROFESSIONAL EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_55",
+            "text": "Senior Software Engineer | Numeral Studio | Wellington, NZ",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_1_normA_1",
+            "text": "2025–Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_56",
+            "text": "Delivered reusable React/TypeScript components inside Electron with accessible, responsive UI patterns plus Jest/React Testing Library coverage so compliance reports went in without manual errors.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_57",
+            "text": "Supported the launch of the design conference 2025 and 2026 site on Next.js/TypeScript with Sanity CMS and Storybook, extending the design system to cut duplicate code and keep the experience polished.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_58",
+            "text": "Built React/TypeScript interfaces and Prisma-backed Node/Express services for secure HR case workflows, adding dynamic staff routing, hardened permissions, and automated ESLint/Prettier + unit-test checks.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Contributed to a one-of-a-kind, mobile-first interactive marketing demo for a Fortune 500 progressive web app, handling localized feature work with remote teams and tuning performance for fast global launches.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_60",
+            "text": "Technologies: React, Next.js, Electron, TypeScript, SCSS, Node.js/Express, Prisma ORM, Sanity CMS, Storybook, GSAP, Cypress, Jest, React Testing Library, GitHub Actions, ESLint, Prettier, localization & accessibility tools.",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_61",
+            "text": "Software Engineer (Contract) | PartsTrader Markets Ltd. | Wellington, NZ",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_2_normA_2",
+            "text": "2024–2025",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_62",
+            "text": "Developed a dedicated .NET microservice to interface with a legacy API and built a modern, responsive front-end using React withTypeScript.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_63",
+            "text": "Translated Figma UI designs into dynamic, accessible interfaces using React, TypeScript, and styled-components. - Applied Domain-Driven Design principles by structuring the microservice with Repository, Domain Model, Mapper, and Application Service patterns.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_64",
+            "text": "Technologies: .NET service layer, React, TypeScript, Cypress, GitHub Actions, domain-driven design patterns.",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_65",
+            "text": "Software Engineer & Founder | Habitual Genesis | Remote",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_3_normA_3",
+            "text": "2016–Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_66",
+            "text": "Partner with authors, museums, and education nonprofits to ship low-maintenance digital products. - Delivered discovery-through-launch engagements while keeping ongoing costs low.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_67",
+            "text": "Stayed lean by embedding with stakeholders to clarify needs, prioritise MVPs, and trial marketing ideas without raising spend.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_68",
+            "text": "Various projects with General Assembly, Thinkful, Codecademy, and others",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_69",
+            "text": "Technologies: JavaScript, HTML5, CSS3, Bootstrap, GitHub, GitHub Pages, Squarespace, Mailchimp, Google Drive.",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_70",
+            "text": "Software Engineer & Lead Instructor | The Flatiron School | Remote",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_4_normA_4",
+            "text": "2022–2023",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_71",
+            "text": "Delivered remote & asynchronous technical training on software engineering to a diverse group of students. - Wrote and presented curriculum covering JavaScript, HTML/CSS, ReactJS, Python, Flask, PostgreSQL,",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_72",
+            "text": "Object-Oriented Programming, CI/CD, Agile, APIs, Web Accessibility, and more.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_73",
+            "text": "Mentored and coached junior engineers, preparing them for success in their roles and job duties. - Lead a working group promoting inclusive web design and web accessibility practices.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_74",
+            "text": "Technologies: JavaScript, HTML5, CSS3, ReactJS, React Router, Python, Flask, Object-Oriented Programming, CI/CD, Render.com, Agile, APIs, Web Accessibility",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_75",
+            "text": "Page 1 of 2",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_79",
+            "text": "Oli Treadwell",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_80",
+            "text": "Senior Software Engineer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_81",
+            "text": "Senior Software Engineer | WorkTango (formerly KazooHR) | Remote",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_5_normA_5",
+            "text": "2019–2020",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_82",
+            "text": "PROFESSIONAL EXPERIENCE (cont.)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_83",
+            "text": "Re-architected the Rewards platform from Rails to ReactJS, resulting in a 15% increase in customer engagement. - Implemented a modular design system to improve UI consistency and boost developer velocity.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_84",
+            "text": "Integrated features across Performance Management and Rewards platforms to overhaul the product suite.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_85",
+            "text": "Technologies: ReactJS, Storybook, NodeJS, Jest, Chai, TypeScript, Ruby on Rails, ActiveRecord, RSpec, GraphQL, PostgreSQL, Circle CI, SASS/SCSS, GitHub, Design Language Systems, JIRA, Zeplin, Figma.",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_86",
+            "text": "Software Engineer | Condé Nast | Austin, TX",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_6_normA_6",
+            "text": "2017–2019",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_87",
+            "text": "Delivered new design features & ReactJS components for over 26 media brands, improving readership and SEO. - Built and iterated upon a brand-agnostic paywall architecture and a suite of components, driving significant",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_88",
+            "text": "growth and achieving a year-over-year increase of over 100% in monthly subscriptions for Vanity Fair and Wired. - Authored a technology blog post on End-to-End Testing of the Condé Nast Paywalls.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_89",
+            "text": "https://technology.condenast.com/story/end-to-end-testing-conde-nast-paywalls",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_90",
+            "text": "Technologies: ReactJS, Storybook, NodeJS, Jest, Puppeteer, TypeScript, SASS, GitHub, Jenkins, CI/CD, Design Language Systems, JIRA.",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_91",
+            "text": "Software Engineer & Instructor | Hack Reactor (formerly Galvanize) | Austin, TX | 2016–2017 - Facilitated technical workshops for full-time and part-time programs in an Agile environment.",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_92",
+            "text": "Built a mock interview app for students, exponentially increasing career services' capacity to give feedback.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_93",
+            "text": "Technologies: ReactJS, JavaScript, jQuery, Mocha, Chai, HTML, CSS3, SASS/SCSS, PostgreSQL, MySQL, Git, GitHub, Heroku, bash, zsh.",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_94",
+            "text": "Software Engineer (Contract) | Bypass Mobile | Austin, TX",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_8_normA_7",
+            "text": "2016–2016",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_95",
+            "text": "Designed and developed a JSON-API spec product licensing platform using Ruby on Rails as part of a small team.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_96",
+            "text": "Technologies: JSON-API, Ruby on Rails, ActiveRecord, RSpec, MySQL, Git, GitHub, Vagrant, bash, JIRA.",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          },
+          {
+            "para_id": "para_97",
+            "text": "Software Engineer | Union Metrics | Austin, TX",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_9_normA_8",
+            "text": "2014–2016",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_98",
+            "text": "Migrated and refactored two legacy codebases to use Rails 4, improving maintainability, security of core business features, and performance by 20%.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_99",
+            "text": "Created a knowledge base of 100 most common customer technical challenges, reducing resolution time by 50%.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_100",
+            "text": "Technologies: JavaScript, Ruby on Rails, ActiveRecord, RSpec, jQuery, HTML, CSS3, SASS/SCSS, MySQL, Git, GitHub, Vagrant, Jenkins, bash.",
+            "parser_semantic": "tech_stack",
+            "semantic_hint": "tech_stack_candidate"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_55"
+            ],
+            "meta_para_ids": [
+              "role_1_normA_1"
+            ],
+            "bullet_para_ids": [
+              "para_56",
+              "para_57",
+              "para_58",
+              "para_59",
+              "para_60"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_61"
+            ],
+            "meta_para_ids": [
+              "role_2_normA_2"
+            ],
+            "bullet_para_ids": [
+              "para_62",
+              "para_63",
+              "para_64"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_65"
+            ],
+            "meta_para_ids": [
+              "role_3_normA_3"
+            ],
+            "bullet_para_ids": [
+              "para_66",
+              "para_67",
+              "para_68",
+              "para_69"
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_para_ids": [
+              "para_70"
+            ],
+            "meta_para_ids": [
+              "role_4_normA_4"
+            ],
+            "bullet_para_ids": [
+              "para_71",
+              "para_72",
+              "para_73",
+              "para_74",
+              "para_75",
+              "para_79",
+              "para_80"
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_para_ids": [
+              "para_81"
+            ],
+            "meta_para_ids": [
+              "role_5_normA_5",
+              "para_82"
+            ],
+            "bullet_para_ids": [
+              "para_83",
+              "para_84",
+              "para_85"
+            ]
+          },
+          {
+            "role_id": "role_6",
+            "header_para_ids": [
+              "para_86"
+            ],
+            "meta_para_ids": [
+              "role_6_normA_6"
+            ],
+            "bullet_para_ids": [
+              "para_87",
+              "para_88",
+              "para_89",
+              "para_90"
+            ]
+          },
+          {
+            "role_id": "role_7",
+            "header_para_ids": [
+              "para_91"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": [
+              "para_92",
+              "para_93"
+            ]
+          },
+          {
+            "role_id": "role_8",
+            "header_para_ids": [
+              "para_94"
+            ],
+            "meta_para_ids": [
+              "role_8_normA_7"
+            ],
+            "bullet_para_ids": [
+              "para_95",
+              "para_96"
+            ]
+          },
+          {
+            "role_id": "role_9",
+            "header_para_ids": [
+              "para_97"
+            ],
+            "meta_para_ids": [
+              "role_9_normA_8"
+            ],
+            "bullet_para_ids": [
+              "para_98",
+              "para_99",
+              "para_100"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_102",
+            "text": "Postgraduate Diploma in Information Technology | Whitireia and WelTec, New Zealand Full-Stack Web Development, Ruby on Rails, and JavaScript Certification | Dev Bootcamp",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_103",
+            "text": "BS in Business Administration, Entrepreneurship, & International Business | Chapman University",
+            "parser_semantic": "role_header"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "ADDITIONAL INFORMATION",
+        "paragraphs": [
+          {
+            "para_id": "para_105",
+            "text": "For more details, you can find answers to common hiring questions, my references, and a detailed list of my skills and experience at the following links:",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_106",
+            "text": "Common Hiring Questions: github.com/olitreadwell/resume/blob/main/common-hiring-questions.md - Portfolio Projects: https://github.com/olitreadwell/resume/blob/main/portfolio-projects.md",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_107",
+            "text": "Professional References: github.com/olitreadwell/resume/blob/main/linkedin-recommendations.md - Skills and Experience: github.com/olitreadwell/resume/blob/main/skills-and-experience.md",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_108",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_109",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_110",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_111",
+            "text": "Page 2 of 2",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_112",
+            "text": "olitreadwell@gmail.com | +64 22 451 9939 (Text First Please) linkedin.com/in/olitreadwell | github.com/olitreadwell | Book a Call",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_113",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SUMMARY",
+        "paragraphs": [
+          {
+            "para_id": "para_5",
+            "text": "SUMMARY",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_6",
+            "text": "Senior Software Engineer with 10+ years of expertise using modern web development technologies. Proven ability to build accessible and user-friendly interfaces, collaborate effectively within teams, and deliver high-quality code. Seeking software engineering roles at any level.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "SKILLS",
+        "paragraphs": [
+          {
+            "para_id": "para_7",
+            "text": "SKILLS",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_8",
+            "text": "- Frontend & UX: React, TypeScript, Next.js, Storybook, CSS/SCSS, Design systems, Localisation",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_9",
+            "text": "- Backend & APIs: Node.js, .NET, Ruby on Rails, Python Flask, GraphQL, REST/JSON:API, Schema design",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_10",
+            "text": "- DevOps & Tooling: AWS, Docker, GitHub Actions, CircleCI, Cypress, Jest/React Testing Library (RTL), Monitoring - Leadership & Accessibility: Technical mentoring, Stakeholder facilitation, Accessibility advocacy,",
+            "parser_semantic": "bullet"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "PROFESSIONAL EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_11",
+            "text": "PROFESSIONAL EXPERIENCE",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_55",
+            "text": "Senior Software Engineer | Numeral Studio | Wellington, NZ",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_1_normA_1",
+            "text": "2025–Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_56",
+            "text": "- Delivered reusable React/TypeScript components inside Electron with accessible, responsive UI patterns plus Jest/React Testing Library coverage so compliance reports went in without manual errors.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_57",
+            "text": "- Supported the launch of the design conference 2025 and 2026 site on Next.js/TypeScript with Sanity CMS and Storybook, extending the design system to cut duplicate code and keep the experience polished.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_58",
+            "text": "- Built React/TypeScript interfaces and Prisma-backed Node/Express services for secure HR case workflows, adding dynamic staff routing, hardened permissions, and automated ESLint/Prettier + unit-test checks.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_59",
+            "text": "- Contributed to a one-of-a-kind, mobile-first interactive marketing demo for a Fortune 500 progressive web app, handling localized feature work with remote teams and tuning performance for fast global launches.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_60",
+            "text": "- Technologies: React, Next.js, Electron, TypeScript, SCSS, Node.js/Express, Prisma ORM, Sanity CMS, Storybook, GSAP, Cypress, Jest, React Testing Library, GitHub Actions, ESLint, Prettier, localization & accessibility tools.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_61",
+            "text": "Software Engineer (Contract) | PartsTrader Markets Ltd. | Wellington, NZ",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_2_normA_2",
+            "text": "2024–2025",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_62",
+            "text": "- Developed a dedicated .NET microservice to interface with a legacy API and built a modern, responsive front-end using React withTypeScript.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_63",
+            "text": "- Translated Figma UI designs into dynamic, accessible interfaces using React, TypeScript, and styled-components. - Applied Domain-Driven Design principles by structuring the microservice with Repository, Domain Model, Mapper, and Application Service patterns.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_64",
+            "text": "- Technologies: .NET service layer, React, TypeScript, Cypress, GitHub Actions, domain-driven design patterns.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_65",
+            "text": "Software Engineer & Founder | Habitual Genesis | Remote",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_3_normA_3",
+            "text": "2016–Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_66",
+            "text": "- Partner with authors, museums, and education nonprofits to ship low-maintenance digital products. - Delivered discovery-through-launch engagements while keeping ongoing costs low.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_67",
+            "text": "- Stayed lean by embedding with stakeholders to clarify needs, prioritise MVPs, and trial marketing ideas without raising spend.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_68",
+            "text": "- Various projects with General Assembly, Thinkful, Codecademy, and others",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_69",
+            "text": "- Technologies: JavaScript, HTML5, CSS3, Bootstrap, GitHub, GitHub Pages, Squarespace, Mailchimp, Google Drive.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_70",
+            "text": "Software Engineer & Lead Instructor | The Flatiron School | Remote",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_4_normA_4",
+            "text": "2022–2023",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_71",
+            "text": "- Delivered remote & asynchronous technical training on software engineering to a diverse group of students. - Wrote and presented curriculum covering JavaScript, HTML/CSS, ReactJS, Python, Flask, PostgreSQL,",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_72",
+            "text": "Object-Oriented Programming, CI/CD, Agile, APIs, Web Accessibility, and more.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_73",
+            "text": "- Mentored and coached junior engineers, preparing them for success in their roles and job duties. - Lead a working group promoting inclusive web design and web accessibility practices.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_74",
+            "text": "- Technologies: JavaScript, HTML5, CSS3, ReactJS, React Router, Python, Flask, Object-Oriented Programming, CI/CD, Render.com, Agile, APIs, Web Accessibility",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_75",
+            "text": "Page 1 of 2",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_79",
+            "text": "Oli Treadwell",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_80",
+            "text": "Senior Software Engineer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_81",
+            "text": "Senior Software Engineer | WorkTango (formerly KazooHR) | Remote",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_5_normA_5",
+            "text": "2019–2020",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_82",
+            "text": "PROFESSIONAL EXPERIENCE (cont.)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_83",
+            "text": "- Re-architected the Rewards platform from Rails to ReactJS, resulting in a 15% increase in customer engagement. - Implemented a modular design system to improve UI consistency and boost developer velocity.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_84",
+            "text": "- Integrated features across Performance Management and Rewards platforms to overhaul the product suite.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_85",
+            "text": "- Technologies: ReactJS, Storybook, NodeJS, Jest, Chai, TypeScript, Ruby on Rails, ActiveRecord, RSpec, GraphQL, PostgreSQL, Circle CI, SASS/SCSS, GitHub, Design Language Systems, JIRA, Zeplin, Figma.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_86",
+            "text": "Software Engineer | Condé Nast | Austin, TX",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_6_normA_6",
+            "text": "2017–2019",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_87",
+            "text": "- Delivered new design features & ReactJS components for over 26 media brands, improving readership and SEO. - Built and iterated upon a brand-agnostic paywall architecture and a suite of components, driving significant",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_88",
+            "text": "growth and achieving a year-over-year increase of over 100% in monthly subscriptions for Vanity Fair and Wired. - Authored a technology blog post on End-to-End Testing of the Condé Nast Paywalls.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_89",
+            "text": "https://technology.condenast.com/story/end-to-end-testing-conde-nast-paywalls",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_90",
+            "text": "- Technologies: ReactJS, Storybook, NodeJS, Jest, Puppeteer, TypeScript, SASS, GitHub, Jenkins, CI/CD, Design Language Systems, JIRA.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_91",
+            "text": "Software Engineer & Instructor | Hack Reactor (formerly Galvanize) | Austin, TX | 2016–2017 - Facilitated technical workshops for full-time and part-time programs in an Agile environment.",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_92",
+            "text": "- Built a mock interview app for students, exponentially increasing career services' capacity to give feedback.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_93",
+            "text": "- Technologies: ReactJS, JavaScript, jQuery, Mocha, Chai, HTML, CSS3, SASS/SCSS, PostgreSQL, MySQL, Git, GitHub, Heroku, bash, zsh.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_94",
+            "text": "Software Engineer (Contract) | Bypass Mobile | Austin, TX",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_8_normA_7",
+            "text": "2016–2016",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_95",
+            "text": "- Designed and developed a JSON-API spec product licensing platform using Ruby on Rails as part of a small team.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_96",
+            "text": "- Technologies: JSON-API, Ruby on Rails, ActiveRecord, RSpec, MySQL, Git, GitHub, Vagrant, bash, JIRA.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_97",
+            "text": "Software Engineer | Union Metrics | Austin, TX",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_9_normA_8",
+            "text": "2014–2016",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_98",
+            "text": "- Migrated and refactored two legacy codebases to use Rails 4, improving maintainability, security of core business features, and performance by 20%.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_99",
+            "text": "- Created a knowledge base of 100 most common customer technical challenges, reducing resolution time by 50%.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_100",
+            "text": "- Technologies: JavaScript, Ruby on Rails, ActiveRecord, RSpec, jQuery, HTML, CSS3, SASS/SCSS, MySQL, Git, GitHub, Vagrant, Jenkins, bash.",
+            "parser_semantic": "bullet"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_55"
+            ],
+            "meta_para_ids": [
+              "role_1_normA_1"
+            ],
+            "bullet_para_ids": [
+              "para_56",
+              "para_57",
+              "para_58",
+              "para_59",
+              "para_60"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_61"
+            ],
+            "meta_para_ids": [
+              "role_2_normA_2"
+            ],
+            "bullet_para_ids": [
+              "para_62",
+              "para_63",
+              "para_64"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_65"
+            ],
+            "meta_para_ids": [
+              "role_3_normA_3"
+            ],
+            "bullet_para_ids": [
+              "para_66",
+              "para_67",
+              "para_68",
+              "para_69"
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_para_ids": [
+              "para_70"
+            ],
+            "meta_para_ids": [
+              "role_4_normA_4"
+            ],
+            "bullet_para_ids": [
+              "para_71",
+              "para_72",
+              "para_73",
+              "para_74",
+              "para_75",
+              "para_79",
+              "para_80"
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_para_ids": [
+              "para_81"
+            ],
+            "meta_para_ids": [
+              "role_5_normA_5",
+              "para_82"
+            ],
+            "bullet_para_ids": [
+              "para_83",
+              "para_84",
+              "para_85"
+            ]
+          },
+          {
+            "role_id": "role_6",
+            "header_para_ids": [
+              "para_86"
+            ],
+            "meta_para_ids": [
+              "role_6_normA_6"
+            ],
+            "bullet_para_ids": [
+              "para_87",
+              "para_88",
+              "para_89",
+              "para_90"
+            ]
+          },
+          {
+            "role_id": "role_7",
+            "header_para_ids": [
+              "para_91"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": [
+              "para_92",
+              "para_93"
+            ]
+          },
+          {
+            "role_id": "role_8",
+            "header_para_ids": [
+              "para_94"
+            ],
+            "meta_para_ids": [
+              "role_8_normA_7"
+            ],
+            "bullet_para_ids": [
+              "para_95",
+              "para_96"
+            ]
+          },
+          {
+            "role_id": "role_9",
+            "header_para_ids": [
+              "para_97"
+            ],
+            "meta_para_ids": [
+              "role_9_normA_8"
+            ],
+            "bullet_para_ids": [
+              "para_98",
+              "para_99",
+              "para_100"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_101",
+            "text": "EDUCATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_102",
+            "text": "Postgraduate Diploma in Information Technology | Whitireia and WelTec, New Zealand Full-Stack Web Development, Ruby on Rails, and JavaScript Certification | Dev Bootcamp",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_103",
+            "text": "BS in Business Administration, Entrepreneurship, & International Business | Chapman University",
+            "parser_semantic": "role_header"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "ADDITIONAL INFORMATION",
+        "paragraphs": [
+          {
+            "para_id": "para_104",
+            "text": "ADDITIONAL INFORMATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_105",
+            "text": "For more details, you can find answers to common hiring questions, my references, and a detailed list of my skills and experience at the following links:",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_106",
+            "text": "- Common Hiring Questions: github.com/olitreadwell/resume/blob/main/common-hiring-questions.md - Portfolio Projects: https://github.com/olitreadwell/resume/blob/main/portfolio-projects.md",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_107",
+            "text": "- Professional References: github.com/olitreadwell/resume/blob/main/linkedin-recommendations.md - Skills and Experience: github.com/olitreadwell/resume/blob/main/skills-and-experience.md",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_108",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_109",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_110",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_111",
+            "text": "Page 2 of 2",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_112",
+            "text": "olitreadwell@gmail.com | +64 22 451 9939 (Text First Please) linkedin.com/in/olitreadwell | github.com/olitreadwell | Book a Call",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_113",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [
+      {
+        "para_id": "para_8",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Frontend & UX: React, TypeScript, Next.js, Storybook, CSS/SCSS, Design systems",
+        "after": "Frontend & UX: React, TypeScript, Next.js, Storybook, CSS/SCSS, Design systems, "
+      },
+      {
+        "para_id": "para_9",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Backend & APIs: Node.js, .NET, Ruby on Rails, Python Flask, GraphQL, REST/JSON",
+        "after": "Backend & APIs: Node.js, .NET, Ruby on Rails, Python Flask, GraphQL, REST/JSON:A"
+      },
+      {
+        "para_id": "para_10",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- DevOps & Tooling: AWS, Docker, GitHub Actions, CircleCI, Cypress, Jest/React T",
+        "after": "DevOps & Tooling: AWS, Docker, GitHub Actions, CircleCI, Cypress, Jest/React Tes"
+      },
+      {
+        "para_id": "para_56",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Delivered reusable React/TypeScript components inside Electron with accessible",
+        "after": "Delivered reusable React/TypeScript components inside Electron with accessible, "
+      },
+      {
+        "para_id": "para_57",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Supported the launch of the design conference 2025 and 2026 site on Next.js/Ty",
+        "after": "Supported the launch of the design conference 2025 and 2026 site on Next.js/Type"
+      },
+      {
+        "para_id": "para_58",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Built React/TypeScript interfaces and Prisma-backed Node/Express services for ",
+        "after": "Built React/TypeScript interfaces and Prisma-backed Node/Express services for se"
+      },
+      {
+        "para_id": "para_59",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Contributed to a one-of-a-kind, mobile-first interactive marketing demo for a ",
+        "after": "Contributed to a one-of-a-kind, mobile-first interactive marketing demo for a Fo"
+      },
+      {
+        "para_id": "para_60",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Technologies: React, Next.js, Electron, TypeScript, SCSS, Node.js/Express, Pri",
+        "after": "Technologies: React, Next.js, Electron, TypeScript, SCSS, Node.js/Express, Prism"
+      },
+      {
+        "para_id": "para_62",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Developed a dedicated .NET microservice to interface with a legacy API and bui",
+        "after": "Developed a dedicated .NET microservice to interface with a legacy API and built"
+      },
+      {
+        "para_id": "para_63",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Translated Figma UI designs into dynamic, accessible interfaces using React, T",
+        "after": "Translated Figma UI designs into dynamic, accessible interfaces using React, Typ"
+      },
+      {
+        "para_id": "para_64",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Technologies: .NET service layer, React, TypeScript, Cypress, GitHub Actions, ",
+        "after": "Technologies: .NET service layer, React, TypeScript, Cypress, GitHub Actions, do"
+      },
+      {
+        "para_id": "para_66",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Partner with authors, museums, and education nonprofits to ship low-maintenanc",
+        "after": "Partner with authors, museums, and education nonprofits to ship low-maintenance "
+      },
+      {
+        "para_id": "para_67",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Stayed lean by embedding with stakeholders to clarify needs, prioritise MVPs, ",
+        "after": "Stayed lean by embedding with stakeholders to clarify needs, prioritise MVPs, an"
+      },
+      {
+        "para_id": "para_68",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Various projects with General Assembly, Thinkful, Codecademy, and others",
+        "after": "Various projects with General Assembly, Thinkful, Codecademy, and others"
+      },
+      {
+        "para_id": "para_69",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Technologies: JavaScript, HTML5, CSS3, Bootstrap, GitHub, GitHub Pages, Square",
+        "after": "Technologies: JavaScript, HTML5, CSS3, Bootstrap, GitHub, GitHub Pages, Squaresp"
+      },
+      {
+        "para_id": "para_71",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Delivered remote & asynchronous technical training on software engineering to ",
+        "after": "Delivered remote & asynchronous technical training on software engineering to a "
+      },
+      {
+        "para_id": "para_73",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Mentored and coached junior engineers, preparing them for success in their rol",
+        "after": "Mentored and coached junior engineers, preparing them for success in their roles"
+      },
+      {
+        "para_id": "para_74",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Technologies: JavaScript, HTML5, CSS3, ReactJS, React Router, Python, Flask, O",
+        "after": "Technologies: JavaScript, HTML5, CSS3, ReactJS, React Router, Python, Flask, Obj"
+      },
+      {
+        "para_id": "para_83",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Re-architected the Rewards platform from Rails to ReactJS, resulting in a 15% ",
+        "after": "Re-architected the Rewards platform from Rails to ReactJS, resulting in a 15% in"
+      },
+      {
+        "para_id": "para_84",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Integrated features across Performance Management and Rewards platforms to ove",
+        "after": "Integrated features across Performance Management and Rewards platforms to overh"
+      },
+      {
+        "para_id": "para_85",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Technologies: ReactJS, Storybook, NodeJS, Jest, Chai, TypeScript, Ruby on Rail",
+        "after": "Technologies: ReactJS, Storybook, NodeJS, Jest, Chai, TypeScript, Ruby on Rails,"
+      },
+      {
+        "para_id": "para_87",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Delivered new design features & ReactJS components for over 26 media brands, i",
+        "after": "Delivered new design features & ReactJS components for over 26 media brands, imp"
+      },
+      {
+        "para_id": "para_90",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Technologies: ReactJS, Storybook, NodeJS, Jest, Puppeteer, TypeScript, SASS, G",
+        "after": "Technologies: ReactJS, Storybook, NodeJS, Jest, Puppeteer, TypeScript, SASS, Git"
+      },
+      {
+        "para_id": "para_92",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Built a mock interview app for students, exponentially increasing career servi",
+        "after": "Built a mock interview app for students, exponentially increasing career service"
+      },
+      {
+        "para_id": "para_93",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Technologies: ReactJS, JavaScript, jQuery, Mocha, Chai, HTML, CSS3, SASS/SCSS,",
+        "after": "Technologies: ReactJS, JavaScript, jQuery, Mocha, Chai, HTML, CSS3, SASS/SCSS, P"
+      },
+      {
+        "para_id": "para_95",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Designed and developed a JSON-API spec product licensing platform using Ruby o",
+        "after": "Designed and developed a JSON-API spec product licensing platform using Ruby on "
+      },
+      {
+        "para_id": "para_96",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Technologies: JSON-API, Ruby on Rails, ActiveRecord, RSpec, MySQL, Git, GitHub",
+        "after": "Technologies: JSON-API, Ruby on Rails, ActiveRecord, RSpec, MySQL, Git, GitHub, "
+      },
+      {
+        "para_id": "para_98",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Migrated and refactored two legacy codebases to use Rails 4, improving maintai",
+        "after": "Migrated and refactored two legacy codebases to use Rails 4, improving maintaina"
+      },
+      {
+        "para_id": "para_99",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Created a knowledge base of 100 most common customer technical challenges, red",
+        "after": "Created a knowledge base of 100 most common customer technical challenges, reduc"
+      },
+      {
+        "para_id": "para_100",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Technologies: JavaScript, Ruby on Rails, ActiveRecord, RSpec, jQuery, HTML, CS",
+        "after": "Technologies: JavaScript, Ruby on Rails, ActiveRecord, RSpec, jQuery, HTML, CSS3"
+      },
+      {
+        "para_id": "para_106",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Common Hiring Questions: github.com/olitreadwell/resume/blob/main/common-hirin",
+        "after": "Common Hiring Questions: github.com/olitreadwell/resume/blob/main/common-hiring-"
+      },
+      {
+        "para_id": "para_107",
+        "stage": "B_repeated_prefix:'- '",
+        "before": "- Professional References: github.com/olitreadwell/resume/blob/main/linkedin-rec",
+        "after": "Professional References: github.com/olitreadwell/resume/blob/main/linkedin-recom"
+      }
+    ],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_5",
+        "text_preview": "SUMMARY"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_7",
+        "text_preview": "SKILLS"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_11",
+        "text_preview": "PROFESSIONAL EXPERIENCE"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_101",
+        "text_preview": "EDUCATION"
+      },
+      {
+        "section_id": "sec_5",
+        "para_id": "para_104",
+        "text_preview": "ADDITIONAL INFORMATION"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 33
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SUMMARY",
+        "display_title": "SUMMARY",
+        "semantic_type": "summary",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "para_6",
+            "para_id": "para_6",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "SKILLS",
+        "display_title": "SKILLS",
+        "semantic_type": "skills",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "para_8",
+            "para_id": "para_8",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_9",
+            "para_id": "para_9",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_10",
+            "para_id": "para_10",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "PROFESSIONAL EXPERIENCE",
+        "display_title": "PROFESSIONAL EXPERIENCE",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "para_55",
+                "para_id": "para_55",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_1_normA_1",
+                "para_id": "role_1_normA_1",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_56",
+                "para_id": "para_56",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_57",
+                "para_id": "para_57",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_58",
+                "para_id": "para_58",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_59",
+                "para_id": "para_59",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_60",
+                "para_id": "para_60",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "para_61",
+                "para_id": "para_61",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_2_normA_2",
+                "para_id": "role_2_normA_2",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_62",
+                "para_id": "para_62",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_63",
+                "para_id": "para_63",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_64",
+                "para_id": "para_64",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "para_65",
+                "para_id": "para_65",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_3_normA_3",
+                "para_id": "role_3_normA_3",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_66",
+                "para_id": "para_66",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_67",
+                "para_id": "para_67",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_68",
+                "para_id": "para_68",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_69",
+                "para_id": "para_69",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_blocks": [
+              {
+                "block_id": "para_70",
+                "para_id": "para_70",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_4_normA_4",
+                "para_id": "role_4_normA_4",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_75",
+                "para_id": "para_75",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_79",
+                "para_id": "para_79",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_71",
+                "para_id": "para_71",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_72",
+                "para_id": "para_72",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_73",
+                "para_id": "para_73",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_74",
+                "para_id": "para_74",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_blocks": [
+              {
+                "block_id": "para_81",
+                "para_id": "para_81",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_5_normA_5",
+                "para_id": "role_5_normA_5",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_82",
+                "para_id": "para_82",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_83",
+                "para_id": "para_83",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_84",
+                "para_id": "para_84",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_85",
+                "para_id": "para_85",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_6",
+            "header_blocks": [
+              {
+                "block_id": "para_86",
+                "para_id": "para_86",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_6_normA_6",
+                "para_id": "role_6_normA_6",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_87",
+                "para_id": "para_87",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_88",
+                "para_id": "para_88",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_89",
+                "para_id": "para_89",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_90",
+                "para_id": "para_90",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_7",
+            "header_blocks": [
+              {
+                "block_id": "para_91",
+                "para_id": "para_91",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "para_92",
+                "para_id": "para_92",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_93",
+                "para_id": "para_93",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_8",
+            "header_blocks": [
+              {
+                "block_id": "para_94",
+                "para_id": "para_94",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_8_normA_7",
+                "para_id": "role_8_normA_7",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_95",
+                "para_id": "para_95",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_96",
+                "para_id": "para_96",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_9",
+            "header_blocks": [
+              {
+                "block_id": "para_97",
+                "para_id": "para_97",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_9_normA_8",
+                "para_id": "role_9_normA_8",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_98",
+                "para_id": "para_98",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_99",
+                "para_id": "para_99",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_100",
+                "para_id": "para_100",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "EDUCATION",
+        "display_title": "EDUCATION",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "para_102",
+            "para_id": "para_102",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_103",
+            "para_id": "para_103",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "ADDITIONAL INFORMATION",
+        "display_title": "ADDITIONAL INFORMATION",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "para_105",
+            "para_id": "para_105",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_106",
+            "para_id": "para_106",
+            "semantic_type": "bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_107",
+            "para_id": "para_107",
+            "semantic_type": "bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_111",
+            "para_id": "para_111",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_112",
+            "para_id": "para_112",
+            "semantic_type": "role_header",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_REWRITE_POLICY",
+        "section_id": "sec_1",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_HEADING",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=para_6 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SKILLS_REWRITE_POLICY",
+        "section_id": "sec_2",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_5",
+        "detail": "block_id=para_106 semantic_type='bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_5",
+        "detail": "block_id=para_106 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_5",
+        "detail": "block_id=para_107 semantic_type='bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_5",
+        "detail": "block_id=para_107 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_5",
+        "detail": "block_id=para_112 semantic_type='role_header'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_REWRITE_POLICY",
+          "SUMMARY_PRESERVE_HEADING",
+          "SUMMARY_PRESERVE_BODY_STRUCTURE",
+          "SUMMARY_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": false,
+        "error_codes": [
+          "SKILLS_REWRITE_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_5",
+        "is_valid": false,
+        "error_codes": [
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE"
+        ]
+      }
+    ]
+  },
+  "repair_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "invalid_sections": [
+      {
+        "parser_section": {
+          "section_id": "sec_1",
+          "raw_title": "SUMMARY",
+          "paragraphs": [
+            {
+              "para_id": "para_6",
+              "text": "Senior Software Engineer with 10+ years of expertise using modern web development technologies. Proven ability to build accessible and user-friendly interfaces, collaborate effectively within teams, and deliver high-quality code. Seeking software engineering roles at any level.",
+              "parser_semantic": "paragraph"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_1",
+          "raw_title": "SUMMARY",
+          "display_title": "SUMMARY",
+          "semantic_type": "summary",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "para_6",
+              "para_id": "para_6",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SUMMARY_REWRITE_POLICY",
+            "section_id": "sec_1",
+            "detail": "got 'preserve'"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_HEADING",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_BODY_STRUCTURE",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=para_6 rewrite_policy='preserve'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_2",
+          "raw_title": "SKILLS",
+          "paragraphs": [
+            {
+              "para_id": "para_8",
+              "text": "Frontend & UX: React, TypeScript, Next.js, Storybook, CSS/SCSS, Design systems, Localisation",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_9",
+              "text": "Backend & APIs: Node.js, .NET, Ruby on Rails, Python Flask, GraphQL, REST/JSON:API, Schema design",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_10",
+              "text": "DevOps & Tooling: AWS, Docker, GitHub Actions, CircleCI, Cypress, Jest/React Testing Library (RTL), Monitoring - Leadership & Accessibility: Technical mentoring, Stakeholder facilitation, Accessibility advocacy,",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_2",
+          "raw_title": "SKILLS",
+          "display_title": "SKILLS",
+          "semantic_type": "skills",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "para_8",
+              "para_id": "para_8",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_9",
+              "para_id": "para_9",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_10",
+              "para_id": "para_10",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SKILLS_REWRITE_POLICY",
+            "section_id": "sec_2",
+            "detail": "got 'preserve'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_5",
+          "raw_title": "ADDITIONAL INFORMATION",
+          "paragraphs": [
+            {
+              "para_id": "para_105",
+              "text": "For more details, you can find answers to common hiring questions, my references, and a detailed list of my skills and experience at the following links:",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_106",
+              "text": "Common Hiring Questions: github.com/olitreadwell/resume/blob/main/common-hiring-questions.md - Portfolio Projects: https://github.com/olitreadwell/resume/blob/main/portfolio-projects.md",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_107",
+              "text": "Professional References: github.com/olitreadwell/resume/blob/main/linkedin-recommendations.md - Skills and Experience: github.com/olitreadwell/resume/blob/main/skills-and-experience.md",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_108",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_109",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_110",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_111",
+              "text": "Page 2 of 2",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_112",
+              "text": "olitreadwell@gmail.com | +64 22 451 9939 (Text First Please) linkedin.com/in/olitreadwell | github.com/olitreadwell | Book a Call",
+              "parser_semantic": "role_header"
+            },
+            {
+              "para_id": "para_113",
+              "text": "",
+              "parser_semantic": "empty"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_5",
+          "raw_title": "ADDITIONAL INFORMATION",
+          "display_title": "ADDITIONAL INFORMATION",
+          "semantic_type": "additional",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "para_105",
+              "para_id": "para_105",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_106",
+              "para_id": "para_106",
+              "semantic_type": "bullet",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "para_107",
+              "para_id": "para_107",
+              "semantic_type": "bullet",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "para_111",
+              "para_id": "para_111",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "para_112",
+              "para_id": "para_112",
+              "semantic_type": "role_header",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_5",
+            "detail": "block_id=para_106 semantic_type='bullet'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_POLICY",
+            "section_id": "sec_5",
+            "detail": "block_id=para_106 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_5",
+            "detail": "block_id=para_107 semantic_type='bullet'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_POLICY",
+            "section_id": "sec_5",
+            "detail": "block_id=para_107 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_5",
+            "detail": "block_id=para_112 semantic_type='role_header'"
+          }
+        ]
+      }
+    ]
+  },
+  "repair_response": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SUMMARY",
+        "display_title": "SUMMARY",
+        "semantic_type": "summary",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_6",
+            "para_id": "para_6",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "SKILLS",
+        "display_title": "SKILLS",
+        "semantic_type": "skills",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_8",
+            "para_id": "para_8",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_9",
+            "para_id": "para_9",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_10",
+            "para_id": "para_10",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "ADDITIONAL INFORMATION",
+        "display_title": "ADDITIONAL INFORMATION",
+        "semantic_type": "additional",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_105",
+            "para_id": "para_105",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_106",
+            "para_id": "para_106",
+            "semantic_type": "bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_107",
+            "para_id": "para_107",
+            "semantic_type": "bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_111",
+            "para_id": "para_111",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_112",
+            "para_id": "para_112",
+            "semantic_type": "role_header",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "validation_after_repair": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "ADDITIONAL_REWRITE_POLICY",
+        "section_id": "sec_5",
+        "detail": "got 'rewrite_body'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_5",
+        "detail": "block_id=para_106 semantic_type='bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_5",
+        "detail": "block_id=para_106 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_5",
+        "detail": "block_id=para_107 semantic_type='bullet'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_POLICY",
+        "section_id": "sec_5",
+        "detail": "block_id=para_107 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_5",
+        "detail": "block_id=para_112 semantic_type='role_header'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_5",
+        "is_valid": false,
+        "error_codes": [
+          "ADDITIONAL_REWRITE_POLICY",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE",
+          "ADDITIONAL_BLOCK_POLICY",
+          "ADDITIONAL_BLOCK_TYPE"
+        ]
+      }
+    ]
+  },
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SUMMARY",
+        "display_title": "SUMMARY",
+        "semantic_type": "summary",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_6",
+            "para_id": "para_6",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "SKILLS",
+        "display_title": "SKILLS",
+        "semantic_type": "skills",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "para_8",
+            "para_id": "para_8",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_9",
+            "para_id": "para_9",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "para_10",
+            "para_id": "para_10",
+            "semantic_type": "skills_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "PROFESSIONAL EXPERIENCE",
+        "display_title": "PROFESSIONAL EXPERIENCE",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "para_55",
+                "para_id": "para_55",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_1_normA_1",
+                "para_id": "role_1_normA_1",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_56",
+                "para_id": "para_56",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_57",
+                "para_id": "para_57",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_58",
+                "para_id": "para_58",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_59",
+                "para_id": "para_59",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_60",
+                "para_id": "para_60",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "para_61",
+                "para_id": "para_61",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_2_normA_2",
+                "para_id": "role_2_normA_2",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_62",
+                "para_id": "para_62",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_63",
+                "para_id": "para_63",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_64",
+                "para_id": "para_64",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "para_65",
+                "para_id": "para_65",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_3_normA_3",
+                "para_id": "role_3_normA_3",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_66",
+                "para_id": "para_66",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_67",
+                "para_id": "para_67",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_68",
+                "para_id": "para_68",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_69",
+                "para_id": "para_69",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_blocks": [
+              {
+                "block_id": "para_70",
+                "para_id": "para_70",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_4_normA_4",
+                "para_id": "role_4_normA_4",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_75",
+                "para_id": "para_75",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_79",
+                "para_id": "para_79",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_71",
+                "para_id": "para_71",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_72",
+                "para_id": "para_72",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_73",
+                "para_id": "para_73",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_74",
+                "para_id": "para_74",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_blocks": [
+              {
+                "block_id": "para_81",
+                "para_id": "para_81",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_5_normA_5",
+                "para_id": "role_5_normA_5",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_82",
+                "para_id": "para_82",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_83",
+                "para_id": "para_83",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_84",
+                "para_id": "para_84",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_85",
+                "para_id": "para_85",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_6",
+            "header_blocks": [
+              {
+                "block_id": "para_86",
+                "para_id": "para_86",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_6_normA_6",
+                "para_id": "role_6_normA_6",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_87",
+                "para_id": "para_87",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_88",
+                "para_id": "para_88",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_89",
+                "para_id": "para_89",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_90",
+                "para_id": "para_90",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_7",
+            "header_blocks": [
+              {
+                "block_id": "para_91",
+                "para_id": "para_91",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "para_92",
+                "para_id": "para_92",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_93",
+                "para_id": "para_93",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_8",
+            "header_blocks": [
+              {
+                "block_id": "para_94",
+                "para_id": "para_94",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_8_normA_7",
+                "para_id": "role_8_normA_7",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_95",
+                "para_id": "para_95",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_96",
+                "para_id": "para_96",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_9",
+            "header_blocks": [
+              {
+                "block_id": "para_97",
+                "para_id": "para_97",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_9_normA_8",
+                "para_id": "role_9_normA_8",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "para_98",
+                "para_id": "para_98",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_99",
+                "para_id": "para_99",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "para_100",
+                "para_id": "para_100",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "EDUCATION",
+        "display_title": "EDUCATION",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "para_102",
+            "para_id": "para_102",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_103",
+            "para_id": "para_103",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "ADDITIONAL INFORMATION",
+        "display_title": "ADDITIONAL INFORMATION",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "para_105",
+            "para_id": "para_105",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_106",
+            "para_id": "para_106",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_107",
+            "para_id": "para_107",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_111",
+            "para_id": "para_111",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "para_112",
+            "para_id": "para_112",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "status": "repaired_and_downgraded",
+  "validation_error_count": 10,
+  "invalid_section_count_before_repair": 3,
+  "invalid_section_count_after_repair": 1,
+  "repaired_section_count": 2,
+  "downgraded_section_count": 1,
+  "invalid_section_ids": [
+    "sec_5"
+  ],
+  "recovery_applied": true
+}

@@ -372,12 +372,20 @@ export default function AdminPage() {
 
   return (
     <AppShell>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-gray-900 flex items-center gap-2">
-          <ShieldCheck className="h-6 w-6 text-indigo-600" />
-          Admin dashboard
-        </h1>
-        <p className="text-gray-500 mt-1">System-wide metrics and admin operations.</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-gray-900 flex items-center gap-2">
+            <ShieldCheck className="h-6 w-6 text-indigo-600" />
+            Admin dashboard
+          </h1>
+          <p className="text-gray-500 mt-1">System-wide metrics and admin operations.</p>
+        </div>
+        {stats && (
+          <div className="text-right text-sm text-gray-500 leading-snug">
+            <div className="font-semibold text-gray-700">CVRocket {stats.app_version}</div>
+            {stats.build_date && <div>Built {stats.build_date}</div>}
+          </div>
+        )}
       </div>
 
       {/* System stats */}
