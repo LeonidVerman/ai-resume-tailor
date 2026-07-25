@@ -615,11 +615,25 @@ class TestCompactExperienceBullets:
             bullets=[f"Bullet {i}." for i in range(n_bullets)],
         )
 
-    def test_trims_to_orig_density(self):
+    def test_trims_to_orig_density_above_floor(self):
         result = compact_experience_bullets(
-            [self._llm_role(6)], self._container([3]), compact_template=True
+            [self._llm_role(8)], self._container([5]), compact_template=True
         )
-        assert len(result[0].bullets) == 3
+        assert len(result[0].bullets) == 5
+
+    def test_floor_protects_low_density_roles(self):
+        # orig=1 is usually a placeholder para or a glued multi-line block
+        # (samples 14/18/23) — never trim below _MIN_ROLE_BULLET_CAP.
+        result = compact_experience_bullets(
+            [self._llm_role(6)], self._container([1]), compact_template=True
+        )
+        assert len(result[0].bullets) == 4
+
+    def test_llm_within_floor_untouched(self):
+        result = compact_experience_bullets(
+            [self._llm_role(4)], self._container([1]), compact_template=True
+        )
+        assert len(result[0].bullets) == 4
 
     def test_zero_orig_count_skips_trimming(self):
         # orig=0 means the template parser couldn't attribute bullets to the
