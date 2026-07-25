@@ -897,6 +897,9 @@ def _update_body_section(
 
     # Build updated versions of each content para (paired by position with LLM lines).
     _is_skills = orig.semantic_type == "skills"
+    # Whitespace-normalized lowercase join of all LLM lines — used to detect
+    # template skill items already covered by the injected content.
+    _llm_joined_lower = " ".join(" ".join(l.split()) for l in llm_lines).lower()
 
     # For PDF-origin skills sections, compute the dominant font size to guard against
     # anomalous sizes from PDF extraction artifacts (e.g. 15.8pt when body is 9.3pt).
@@ -979,8 +982,16 @@ def _update_body_section(
             # verbatim — they carry either the original design element text
             # (e.g. 'Leonid Verman') or the LLM summary text injected earlier
             # by _find_intro_prose_para.  Clearing them erases the name/summary.
+            # Narrowed: a para whose text is already covered by the injected
+            # LLM lines is a leftover skill item, not a name/summary — keeping
+            # it duplicates content the LLM line already carries (sample 17:
+            # 'Statistical Analysis' survives next to the joined skills line).
             if _is_skills and p.semantic == "paragraph":
-                new_body.append(p)  # preserve name / summary / non-skill para
+                _pt = " ".join(p.text.split()).lower()
+                if _pt and _pt in _llm_joined_lower:
+                    new_body.append(p.with_text(""))
+                else:
+                    new_body.append(p)  # preserve name / summary / non-skill para
             else:
                 new_body.append(p.with_text(""))
         # else (non-layout-bound): LLM produced fewer lines — drop trailing para
@@ -1036,6 +1047,28 @@ def _update_body_section(
     return result
 
 
+def _heading_like_style(pm: "ParaModel") -> bool:
+    """True when the para's named style is a heading, Title, or Subtitle.
+
+    Checks both the parsed style_name and the xml_proto's pStyle — parsed
+    models sometimes carry the named style only in the proto (sample 12:
+    style_name empty, pStyle val='Subtitle').  Cloning such a para for body
+    text makes the rendered lines re-parse as section headings.
+    """
+    names = [pm.style.style_name or ""]
+    if pm.style.xml_proto is not None:
+        pPr = pm.style.xml_proto.find(f"{{{_W}}}pPr")
+        if pPr is not None:
+            ps = pPr.find(f"{{{_W}}}pStyle")
+            if ps is not None:
+                names.append(ps.get(f"{{{_W}}}val") or "")
+    for n in names:
+        n = n.replace(" ", "").lower()
+        if n.startswith("heading") or n in ("title", "subtitle"):
+            return True
+    return False
+
+
 def _find_body_prototype(
     pairs: "list[tuple[ResumeSection, LlmSection | None]]",
 ) -> ParaModel:
@@ -1050,9 +1083,7 @@ def _find_body_prototype(
     Falls back to any non-empty non-bold body para, then any non-empty body
     para, then the first section heading.
     """
-    def _is_heading_style(p: "ParaModel") -> bool:
-        sn = (p.style.style_name or "").lower()
-        return sn.startswith("heading")
+    _is_heading_style = _heading_like_style
 
     # Preferred: non-other, non-bold, non-heading-style, non-center/right para
     for orig_section, _ in pairs:
@@ -1158,18 +1189,24 @@ def _make_extra_section(
     # 'Heading 3' which is bold in most themes), normalise it here so the
     # injected section body text renders as regular weight.
     def _normalise_body_pm(pm: "ParaModel") -> "ParaModel":
-        sn = (pm.style.style_name or "").lower()
+        # Heading/Title/Subtitle (from style_name OR the xml proto's pStyle)
+        # count as heading-like: leaving their pStyle on body lines makes the
+        # rendered paragraphs re-parse as section headings (sample 12
+        # doc-end skills).
+        _heading_like = _heading_like_style(pm)
         # Also check paragraph_profile.bold for PDF-sourced paragraphs whose
         # style.bold is None even when the paragraph is visually bold.
         _pp_bold = pm.paragraph_profile.bold if pm.paragraph_profile else False
-        if not sn.startswith("heading") and not pm.style.bold and not _pp_bold:
+        if not _heading_like and not pm.style.bold and not _pp_bold:
             return pm
         from dataclasses import replace as _dc_replace
         from copy import deepcopy as _deepcopy
         new_style = _dc_replace(pm.style, bold=False)
+        if _heading_like:
+            new_style = _dc_replace(new_style, style_name=None)
         # If the xml_proto carries a heading pStyle, remove it so the paragraph
         # inherits the document's Normal/body style (typically not bold).
-        if new_style.xml_proto is not None and sn.startswith("heading"):
+        if new_style.xml_proto is not None and _heading_like:
             new_proto = _deepcopy(new_style.xml_proto)
             pPr = new_proto.find(f"{{{_W}}}pPr")
             if pPr is not None:
@@ -4612,6 +4649,65 @@ def apply_tailored(
             else:
                 _log.debug("SUMMARY_ANCHORS_NOT_FOUND: no safe empty header slots")
 
+        def _try_inbody_skills_subblock(llm_s: "LlmSection") -> bool:
+            """Anchor a skills-y extra at an in-body sub-block label.
+
+            Sample 32: the template's Education section ends with an
+            unlabeled skills sub-block ('Skills and Abilities' label para +
+            item lines).  When an unmatched LLM section's heading equals such
+            an in-body label, write the LLM lines into the item paras instead
+            of dropping the section or appending it at the document end.
+            Only locked-type or unmatched host sections are eligible — their
+            ParaModel objects flow into new_sections unchanged, so in-place
+            text updates propagate to the renderer.
+            """
+            _norm = lambda s: re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+            target = _norm(llm_s.heading)
+            if not target or "skill" not in target:
+                return False
+            lines = [l.strip() for l in llm_s.body_lines if l.strip()]
+            if not lines:
+                return False
+            for orig_section, _ls in match.pairs:
+                if orig_section.semantic_type in ("experience", "summary", "skills"):
+                    continue
+                if (
+                    orig_section.semantic_type not in _LOCKED_SEMANTIC_TYPES
+                    and _ls is not None
+                ):
+                    # Matched non-locked sections are rewritten as copies —
+                    # in-place mutation here would be silently lost.
+                    continue
+                paras = orig_section.body_paras
+                for i, p in enumerate(paras):
+                    if not p.text.strip() or _norm(p.text) != target:
+                        continue
+                    slots: list[ParaModel] = []
+                    for q in paras[i + 1:]:
+                        if not q.text.strip():
+                            continue
+                        if q.semantic not in ("paragraph", "bullet") or not q.para_id:
+                            break
+                        slots.append(q)
+                    if not slots:
+                        continue
+                    for j, q in enumerate(slots):
+                        q.text = lines[j] if j < len(lines) else ""
+                    if len(lines) > len(slots):
+                        _log.debug(
+                            "SKILLS_SUBBLOCK_OVERFLOW_DROPPED: %d line(s) "
+                            "beyond %d slot(s)",
+                            len(lines) - len(slots), len(slots),
+                        )
+                    _log.debug(
+                        "SKILLS_SUBBLOCK_INJECTED: section=%r label=%r "
+                        "slots=%d lines=%d",
+                        orig_section.title, p.text.strip()[:40],
+                        len(slots), len(lines),
+                    )
+                    return True
+            return False
+
         # Iterate LLM output order; emit matched or extra sections.
         # Spec §5: extra experience sections are never created.
         # Skills extras that have a header target are injected there instead.
@@ -4817,8 +4913,10 @@ def apply_tailored(
                          if s.semantic_type in _CONTENT_BOUNDARY_TYPES),
                         None,
                     )
-                    _skills_injected = False
-                    if _left_col_end is not None and _left_col_end > 0:
+                    # Prefer an in-body sub-block whose label matches the LLM
+                    # heading — more native than left-column or doc-end.
+                    _skills_injected = _try_inbody_skills_subblock(llm_s)
+                    if not _skills_injected and _left_col_end is not None and _left_col_end > 0:
                         # Find the last 'other' section before the content boundary
                         # that has a valid anchor paragraph (non-contact, non-empty).
                         # Contact-info guard: reject paragraphs with URLs, email,
@@ -4923,6 +5021,10 @@ def apply_tailored(
                             "apply_tailored: skills extra %r → unbound (doc end fallback)",
                             llm_s.heading,
                         )
+                elif _try_inbody_skills_subblock(llm_s):
+                    # Skills-y "other" extra (e.g. 'Skills and Abilities')
+                    # anchored at a matching in-body sub-block label.
+                    pass
                 else:
                     _log.debug(
                         "UPDATER_SECTION_ANCHOR_NOT_FOUND: %r dropped in layout-bound mode",
@@ -5314,9 +5416,16 @@ def apply_tailored(
                     _olen = _orig_bp_len.get(_nbp.para_id, 0)
                     _skills_cap = max(_olen * 2, 60) if _olen > 0 else 0
                     if _skills_cap > 0 and len(_nbp.text.strip()) > _skills_cap:
-                        _bpcut = _nbp.text.rfind(" ", 0, _skills_cap)
+                        # Prefer cutting at the last complete comma-separated
+                        # item: "Label: A, B, C" capped mid-item leaves a
+                        # dangling fragment ("..., Goal") in the rendered cell
+                        # (sample 10 Key Skills).
+                        _bpcut = _nbp.text.rfind(", ", 0, _skills_cap)
+                        if _bpcut <= 0:
+                            _bpcut = _nbp.text.rfind(" ", 0, _skills_cap)
                         _capped_bps.append(_nbp.with_text(
-                            _nbp.text[:_bpcut] if _bpcut > 0 else _nbp.text[:_skills_cap]
+                            _nbp.text[:_bpcut].rstrip(",")
+                            if _bpcut > 0 else _nbp.text[:_skills_cap]
                         ))
                         _bp_changed = True
                     else:
@@ -5889,6 +5998,23 @@ def apply_tailored(
                                     _ski_el = _ski_rpr.find(f"{{{_W_SK}}}{_ski_tag}")
                                     if _ski_el is not None:
                                         _ski_rpr.remove(_ski_el)
+                            # Strip heading-like pStyle (Heading*/Title/Subtitle)
+                            # from the body proto: the CI cell para used as the
+                            # prototype may be a styled label, and its pStyle
+                            # makes every injected skill line re-parse as a
+                            # section heading (sample 12).
+                            _ski_pPr = _ski_b_proto.find(f"{{{_W_SK}}}pPr")
+                            if _ski_pPr is not None:
+                                _ski_ps = _ski_pPr.find(f"{{{_W_SK}}}pStyle")
+                                if _ski_ps is not None:
+                                    _ski_val = (
+                                        _ski_ps.get(f"{{{_W_SK}}}val") or ""
+                                    ).replace(" ", "").lower()
+                                    if (
+                                        _ski_val.startswith("heading")
+                                        or _ski_val in ("title", "subtitle")
+                                    ):
+                                        _ski_pPr.remove(_ski_ps)
                             for _ski_t in _ski_b_proto.findall(f".//{{{_W_SK}}}t"):
                                 _ski_t.text = ""
                             for _su in _ski_unbound:
