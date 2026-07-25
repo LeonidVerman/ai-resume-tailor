@@ -4423,6 +4423,18 @@ def apply_anchor_budgets(
         else:
             all_paras.extend(s.body_paras)
 
+    # Carry over injected extras that live only in updated.all_paras (e.g.
+    # the left-column skills extras registered at the end of apply_tailored):
+    # the renderer resolves their _ext_ layout blocks through this list, and
+    # dropping them here made those blocks render the ANCHOR's XML verbatim —
+    # sample 28 showed eight copies of "Excelled in Mechanics and Materials."
+    # instead of the injected skills lines.
+    _seen_pids = {p.para_id for p in all_paras if p.para_id}
+    for p in (updated.all_paras or []):
+        if p.para_id and p.para_id not in _seen_pids:
+            all_paras.append(_t(p))
+            _seen_pids.add(p.para_id)
+
     return ResumeDocument(
         header_paras=new_header,
         sections=new_sections,
@@ -6294,6 +6306,21 @@ def apply_tailored(
                     "SKILLS_UNBOUND_LAYOUT_BLOCKS: appended %d blocks for %d section(s)",
                     len(_skills_lb), len(_skills_unbound_secs),
                 )
+
+    # Register injected extras in all_paras: their layout blocks clone the
+    # ANCHOR's XML prototype, and the renderer swaps in the extra's text only
+    # when it can resolve the block's para_id via the semantic model.  Extras
+    # living solely in _extra_injections (e.g. the left-column skills path)
+    # were invisible to that lookup, so their blocks rendered the anchor's
+    # text verbatim — sample 28 showed eight copies of "Excelled in Mechanics
+    # and Materials." instead of the injected skills lines.
+    if _all_extra_injections:
+        _known_pids = {p.para_id for p in all_paras if p.para_id}
+        for _epms in _all_extra_injections.values():
+            for _epm in _epms:
+                if _epm.para_id and _epm.para_id not in _known_pids:
+                    all_paras.append(_epm)
+                    _known_pids.add(_epm.para_id)
 
     _result = ResumeDocument(
         header_paras=effective_header_paras,
