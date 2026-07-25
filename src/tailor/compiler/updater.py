@@ -55,6 +55,7 @@ from tailor.compiler.models import (
     RoleEntry,
     TableBlock,
 )
+from tailor.compiler.text_parser import _ALL_KNOWN as _KNOWN_HEADING_NAMES
 from tailor.compiler.text_parser import LlmRole, LlmSection
 
 if TYPE_CHECKING:
@@ -880,8 +881,37 @@ def _update_body_section(
     # Separate body paragraphs into content targets and decorative preservations.
     # Decorative paras (mixed run fonts) are preserved verbatim and never used as
     # LLM-text targets; they act like empty spacers in the mapping.
+    def _is_structural_body_para(p: "ParaModel") -> bool:
+        """Foreign structural paras inside a body section are never slots.
+
+        Scrambled two-column templates interleave the other column's content
+        into a section's body (sample 38: KEY SKILLS contains the
+        "\\nPROFESSIONAL EXPERIENCE" heading para, the "Senior Software
+        Engineer" title, and the "Brightline Technologies | …" role header).
+        Writing LLM lines into them destroys section headings and role
+        headers; preserve them verbatim like decorative paras.
+        """
+        t = p.text.strip()
+        if not t:
+            return False
+        if p.semantic == "role_header":
+            return True
+        if t.lower() in _KNOWN_HEADING_NAMES:
+            return True
+        if (
+            len(t) <= 40
+            and ":" not in t
+            and "," not in t
+            and _is_role_like_heading(t)
+        ):
+            return True
+        return False
+
     non_empty = [p for p in orig.body_paras if p.text.strip()]
-    content_paras = [p for p in non_empty if not _is_decorative_para(p)]
+    content_paras = [
+        p for p in non_empty
+        if not _is_decorative_para(p) and not _is_structural_body_para(p)
+    ]
 
     # Derive the cloning archetype from real content paragraphs (clean font).
     # Fall back to heading only when the section has no content paragraphs at all.
@@ -963,8 +993,19 @@ def _update_body_section(
     for p in orig.body_paras:
         if not p.text.strip():
             new_body.append(p)
-        elif _is_decorative_para(p):
-            new_body.append(p)
+        elif _is_decorative_para(p) or _is_structural_body_para(p):
+            # A preserved structural para whose text is already covered by
+            # the injected LLM lines would render as a duplicate (sample 18:
+            # template 'Licensed Civil Engineer' next to the LLM's identical
+            # skills line) — blank it; the LLM copy carries the content.
+            if (
+                _is_skills
+                and _is_structural_body_para(p)
+                and " ".join(p.text.split()).lower() in _llm_joined_lower
+            ):
+                new_body.append(p.with_text(""))
+            else:
+                new_body.append(p)
         elif content_cursor < len(updated):
             new_body.append(updated[content_cursor])
             content_cursor += 1
@@ -1431,6 +1472,7 @@ def _inject_fragmented_experience(
     sections: "list[ResumeSection]",
     original_sections: "list[ResumeSection]",
     llm_exp: LlmSection,
+    matched_section_ids: "set[str] | None" = None,
 ) -> "list[ResumeSection]":
     """Inject LLM experience roles into role-like 'other' sections.
 
@@ -1444,6 +1486,20 @@ def _inject_fragmented_experience(
     body paragraph slots are filled with bullets.
     """
     role_like = _find_role_like_other_sections(original_sections)
+    # A role-TITLED section that was already matched to an LLM section is not
+    # an orphaned role fragment — its body carries that section's content.
+    # Sample 38: the template's 'Senior Software Engineer' section holds the
+    # summary prose and matched the LLM summary; injecting role bullets there
+    # clobbered the summary and duplicated role 1's content.
+    if matched_section_ids:
+        for _skip in [s for s in role_like if s.section_id in matched_section_ids]:
+            _log.debug(
+                "FRAGMENTED_EXPERIENCE_SKIPPED_MATCHED: %r already matched "
+                "to an LLM section", _skip.title[:40],
+            )
+        role_like = [
+            s for s in role_like if s.section_id not in matched_section_ids
+        ]
     if not role_like or not llm_exp.roles:
         return sections
 
@@ -5318,7 +5374,11 @@ def apply_tailored(
             s.semantic_type == "experience" for s in new_sections
         ):
             new_sections = _inject_fragmented_experience(
-                new_sections, original.sections, _unmatched_exp
+                new_sections, original.sections, _unmatched_exp,
+                matched_section_ids={
+                    _os.section_id for _os, _ls in match.pairs
+                    if _ls is not None and _os.section_id
+                },
             )
 
     # Lorem ipsum cleanup in layout-bound mode: blank out any remaining lorem ipsum
