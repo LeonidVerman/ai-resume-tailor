@@ -28,6 +28,7 @@ from tailor.compiler.layout import (
     TemplateContainer,
     apply_layout_fitting,
     classify_template,
+    compact_experience_bullets,
     compact_skills,
     compact_summary,
     estimate_fit,
@@ -38,7 +39,7 @@ from tailor.compiler.layout import (
 )
 from tailor.compiler.models import ResumeDocument, TableBlock
 from tailor.compiler.pipeline import compile_resume
-from tailor.compiler.text_parser import LlmSection, parse_llm_output
+from tailor.compiler.text_parser import LlmRole, LlmSection, parse_llm_output
 from tailor.docx.template_fill import read_docx
 
 
@@ -591,6 +592,65 @@ class TestCompactSkills:
         assert "Important 1" in result
         assert "Important 2" in result
         assert "Less important" not in result
+
+
+# ---------------------------------------------------------------------------
+# TestCompactExperienceBullets
+# ---------------------------------------------------------------------------
+
+class TestCompactExperienceBullets:
+    def _container(self, bullets_per_role: list[int]) -> TemplateContainer:
+        return TemplateContainer(
+            section_idx=0, title="Experience", semantic_type="experience",
+            subkind="", region="main",
+            orig_para_count=sum(1 + b for b in bullets_per_role),
+            orig_char_count=500, is_narrow=False,
+            orig_bullets_per_role=bullets_per_role,
+            orig_role_count=len(bullets_per_role),
+        )
+
+    def _llm_role(self, n_bullets: int) -> LlmRole:
+        return LlmRole(
+            header="Engineer | Corp",
+            bullets=[f"Bullet {i}." for i in range(n_bullets)],
+        )
+
+    def test_trims_to_orig_density_above_floor(self):
+        # orig=5 (+1 universal headroom) → cap 6.
+        result = compact_experience_bullets(
+            [self._llm_role(8)], self._container([5]), compact_template=True
+        )
+        assert len(result[0].bullets) == 6
+
+    def test_floor_protects_low_density_roles(self):
+        # orig=1 is usually a placeholder para or a glued multi-line block
+        # (samples 14/18/23) — never trim below _MIN_ROLE_BULLET_CAP.
+        result = compact_experience_bullets(
+            [self._llm_role(6)], self._container([1]), compact_template=True
+        )
+        assert len(result[0].bullets) == 4
+
+    def test_llm_within_floor_untouched(self):
+        result = compact_experience_bullets(
+            [self._llm_role(4)], self._container([1]), compact_template=True
+        )
+        assert len(result[0].bullets) == 4
+
+    def test_zero_orig_count_skips_trimming(self):
+        # orig=0 means the template parser couldn't attribute bullets to the
+        # role — density unknown, all LLM bullets must survive (samples 15/17).
+        result = compact_experience_bullets(
+            [self._llm_role(4)], self._container([0]), compact_template=True
+        )
+        assert len(result[0].bullets) == 4
+
+    def test_all_zero_counts_skip_unmatched_roles_too(self):
+        # avg of all-zero counts is 0 → extra LLM roles are not trimmed either
+        result = compact_experience_bullets(
+            [self._llm_role(4), self._llm_role(3)],
+            self._container([0]), compact_template=True,
+        )
+        assert [len(r.bullets) for r in result] == [4, 3]
 
 
 # ---------------------------------------------------------------------------

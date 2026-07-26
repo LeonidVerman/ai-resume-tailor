@@ -380,6 +380,31 @@ class TestInjectFragmentedExperience:
         result = _inject_fragmented_experience(non_role_secs, non_role_secs, llm_exp)
         assert result is non_role_secs, "No role-like sections → must return original list unchanged"
 
+    def test_template_heading_kept_when_contained_in_llm_header(self):
+        # Sample 38: 'Senior Software Engineer' is the template heading and
+        # the LLM role header is 'Senior Software Engineer | Brightline ... |
+        # May 2017 – Present'.  The template heading must stay verbatim —
+        # overwriting it fabricates a section title absent from the template.
+        from tailor.compiler.text_parser import LlmRole, LlmSection
+        from tailor.compiler.updater import _inject_fragmented_experience
+
+        role_secs = self._build_fragmented_doc()[:1]
+        original_sections = list(role_secs)
+        llm_exp = LlmSection(
+            heading="Experience",
+            semantic_type="experience",
+            roles=[LlmRole(
+                "Senior Software Engineer | Brightline Technologies | "
+                "San Francisco, CA | May 2017 – Present",
+                bullets=["Spearheaded the migration."],
+            )],
+        )
+        result = _inject_fragmented_experience(role_secs, original_sections, llm_exp)
+        assert result[0].title == "Senior Software Engineer"
+        assert result[0].heading.text == "Senior Software Engineer"
+        # Bullets are still injected into the body slots.
+        assert any("Spearheaded" in p.text for p in result[0].body_paras)
+
     def test_heading_para_id_preserved_after_injection(self):
         from tailor.compiler.text_parser import LlmRole, LlmSection
         from tailor.compiler.updater import _inject_fragmented_experience
