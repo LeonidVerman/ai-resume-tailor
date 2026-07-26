@@ -1,5 +1,24 @@
 # Release Notes
 
+## 0.8.9.BETA — 2026-07-26
+
+### Bug fixes
+- **#118 DOCX rendering - injection degradation**: end-to-end overhaul of LLM-content injection on the DOCX path — golden-set missing experience bullets reduced from 26% to 4% (all remaining pre-existing template fit-outs). Date-first layouts get slot handling with parser/classification arbitration; classification data is trust-guarded (empty body_blocks, duplicate/date-headed/headerless roles are repaired, spurious date roles merged into their real role); compactors no longer silently cap reparsed roles; a final experience dedup sweep reconciles same-para-id model copies so template text never renders next to its own LLM rewrite; role identity (company, title, date lines) is released from bullet-slot streams and always kept template-verbatim; roles pair to LLM output by exact header, company similarity, then date-range signature before positional fallback; summaries injected into narrow label columns are relocated into the template's real summary paragraph.
+- **#69 PDF rendering - some samples contain Experience bullet points from both original template and LLM output**: template bullets the LLM visibly rewrote are blanked instead of surviving next to their rewrite; near-duplicate detection compares section-wide so template bullet sets repeated across roles no longer leak through; redundant stale slot copies of already-placed LLM lines are blanked.
+- **#103 DOCX - rendering problem of sample 36**: classification-driven mega-role splitting and role reconstruction hardened — skills truncation and dangling empty bullets resolved; experience formatting made consistent across roles.
+
+### New features
+- **#112 Support more complex Experience roles structure for real-life resume**: role body blocks carry per-block subtypes and rewrite policies (role_intro, tech_stack, key_technologies, project labels, freeform notes and more); preserve-policy adjuncts are kept verbatim while achievement/responsibility bullets are rewritten from LLM output, with placeholder and covered-content overrides so preserved slots never shadow injected content.
+- **#114 Admin - change Download run data to download full run pack**: single-run download now produces a `run-data-<runID>.zip` archive containing the debug data file plus the generated resume and cover letter in all three formats (.pdf, .docx, .txt).
+- **#116 Admin - display application current version on admin page** (PR #117): application version from pyproject.toml and build date are shown on the admin page.
+
+### Testing & tooling
+- **#119 Test - improve test_rendering execution time**: rendering test run time reduced substantially for the 80-sample golden set.
+- **#126 PDF rendering - Implement grading system for PDF origin pipeline**: the DOCX grading system is extended to the PDF-origin pipeline, reusing grading components; per-sample output interleaves DOCX and PDF results so the two pipelines are directly comparable.
+- **#129 PDF and DOCX rendering - final injection check between PDF and DOCX**: test_rendering now performs a final cross-pipeline check — normalized text extracted from the PDF-origin and DOCX-origin renders of each sample is compared to catch content divergence between the two paths.
+
+---
+
 ## 0.8.8.BETA — 2026-05-27
 
 ### Bug fixes
