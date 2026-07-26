@@ -3690,11 +3690,42 @@ def _render_table_block(tb: TableBlock, doc: "ResumeDocument", body, sectPr) -> 
     clone = deepcopy(tb.xml_proto)
     clone_paras = clone.findall(f".//{{{_W}}}p")
 
+    _DISPOSABLE_SLOT_SEMANTICS_TB = frozenset({
+        "bullet", "paragraph", "role_intro",
+        "role_key_technologies", "role_tech_stack",
+        "role_project_label", "role_freeform_note",
+    })
     if len(clone_paras) == len(tb.para_models):
         # Happy path: counts match — update each paragraph in place.
         for p_elem, pm in zip(clone_paras, tb.para_models):
+            _proto_had_text_tb = any(
+                (t.text or "").strip() for t in p_elem.iter(f"{{{_W}}}t")
+            )
             _set_para_text(p_elem, pm.text)
             _clear_sdt_placeholder(p_elem)
+            # Orphan-bullet neutralization, table path (issue #152): a
+            # blanked in-table body slot must not keep list numbering —
+            # an empty w:numPr paragraph still draws a bare bullet dot
+            # (sample 9's emptied skill-category labels).
+            if (
+                not pm.text.strip()
+                and _proto_had_text_tb
+                and pm.semantic in _DISPOSABLE_SLOT_SEMANTICS_TB
+            ):
+                _pPr_ob_tb = p_elem.find(f"{{{_W}}}pPr")
+                if _pPr_ob_tb is not None:
+                    _removed_ob_tb = []
+                    for _tag_ob_tb in ("numPr", "keepNext", "pageBreakBefore"):
+                        _el_ob_tb = _pPr_ob_tb.find(f"{{{_W}}}{_tag_ob_tb}")
+                        if _el_ob_tb is not None:
+                            _pPr_ob_tb.remove(_el_ob_tb)
+                            _removed_ob_tb.append(_tag_ob_tb)
+                    if _removed_ob_tb:
+                        _log.debug(
+                            "ORPHAN_BULLET_NEUTRALIZED_TABLE: para_id=%r "
+                            "stripped=%s", pm.para_id,
+                            ",".join(_removed_ob_tb),
+                        )
     # else: count mismatch (shouldn't happen unless LLM restructured the table);
     # fall through and insert the unmodified clone so the layout is preserved.
 
@@ -6921,10 +6952,46 @@ def _render_from_layout_blocks(
                         p_elem.set(f"{{{_W14}}}paraId", para_id)
                 pm = para_lookup.get(para_id)
                 if pm is not None:
+                    _proto_had_text_ltb = any(
+                        (t.text or "").strip()
+                        for t in p_elem.iter(f"{{{_W}}}t")
+                    )
                     _strip_text_wrapping_breaks(p_elem, pm.text)
                     _set_para_text(p_elem, pm.text)
                     _clear_sdt_placeholder(p_elem)
                     patched += 1
+                    # Orphan-bullet neutralization, layout-table path
+                    # (issue #152): a blanked in-table body slot must not
+                    # keep its list numbering — an empty w:numPr paragraph
+                    # still draws a bare bullet dot (sample 9's emptied
+                    # skill-category labels).
+                    if (
+                        not pm.text.strip()
+                        and _proto_had_text_ltb
+                        and pm.semantic in (
+                            "bullet", "paragraph", "role_intro",
+                            "role_key_technologies", "role_tech_stack",
+                            "role_project_label", "role_freeform_note",
+                        )
+                    ):
+                        _pPr_ob_ltb = p_elem.find(f"{{{_W}}}pPr")
+                        if _pPr_ob_ltb is not None:
+                            _removed_ob_ltb = []
+                            for _tag_ob_ltb in (
+                                "numPr", "keepNext", "pageBreakBefore",
+                            ):
+                                _el_ob_ltb = _pPr_ob_ltb.find(
+                                    f"{{{_W}}}{_tag_ob_ltb}"
+                                )
+                                if _el_ob_ltb is not None:
+                                    _pPr_ob_ltb.remove(_el_ob_ltb)
+                                    _removed_ob_ltb.append(_tag_ob_ltb)
+                            if _removed_ob_ltb:
+                                _log.debug(
+                                    "ORPHAN_BULLET_NEUTRALIZED_TABLE: "
+                                    "para_id=%r stripped=%s", para_id,
+                                    ",".join(_removed_ob_ltb),
+                                )
                 else:
                     _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: table para_id=%r", para_id)
                     # keep original text — surplus / unmatched template cells
@@ -7285,6 +7352,40 @@ def _render_from_layout_blocks(
                             _numPr_nb_lb = _pPr_nb_lb.find(f"{{{_W}}}numPr")
                             if _numPr_nb_lb is not None:
                                 _pPr_nb_lb.remove(_numPr_nb_lb)
+                    # Orphan-bullet neutralization (issue #152): a body slot
+                    # whose template text was rewritten away (model text now
+                    # empty) must not keep its list numbering — an empty
+                    # w:numPr paragraph still draws a bare bullet dot
+                    # (sample 36 rendered 26 of them).  keepNext /
+                    # pageBreakBefore are stripped too so dead slots cannot
+                    # pin page flow.  Restricted to disposable rewritten
+                    # body-slot semantics: headings, role headers/meta and
+                    # template spacers (empty in the template, no text
+                    # written away) are untouched.
+                    _DISPOSABLE_SLOT_SEMANTICS_LB = frozenset({
+                        "bullet", "paragraph", "role_intro",
+                        "role_key_technologies", "role_tech_stack",
+                        "role_project_label", "role_freeform_note",
+                    })
+                    if (
+                        not pm.text.strip()
+                        and _proto_text_raw_lb.strip()
+                        and pm.semantic in _DISPOSABLE_SLOT_SEMANTICS_LB
+                    ):
+                        _pPr_ob_lb = elem.find(f"{{{_W}}}pPr")
+                        if _pPr_ob_lb is not None:
+                            _removed_ob_lb = []
+                            for _tag_ob_lb in ("numPr", "keepNext", "pageBreakBefore"):
+                                _el_ob_lb = _pPr_ob_lb.find(f"{{{_W}}}{_tag_ob_lb}")
+                                if _el_ob_lb is not None:
+                                    _pPr_ob_lb.remove(_el_ob_lb)
+                                    _removed_ob_lb.append(_tag_ob_lb)
+                            if _removed_ob_lb:
+                                _log.debug(
+                                    "ORPHAN_BULLET_NEUTRALIZED: para_id=%r "
+                                    "stripped=%s", block.para_id,
+                                    ",".join(_removed_ob_lb),
+                                )
                     # Semantic visual styling (layout-bound path): italic for
                     # narrative intro types, bold for technology/label types.
                     _SEM_ITALIC_LB = frozenset({"role_intro", "project_intro"})
