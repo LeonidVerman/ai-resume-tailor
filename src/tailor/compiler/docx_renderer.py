@@ -21,6 +21,7 @@ newspaper-column and table layouts are not flattened into a single column.
 from __future__ import annotations
 
 import logging
+import re
 import shutil
 from copy import deepcopy
 from typing import TYPE_CHECKING
@@ -3690,11 +3691,42 @@ def _render_table_block(tb: TableBlock, doc: "ResumeDocument", body, sectPr) -> 
     clone = deepcopy(tb.xml_proto)
     clone_paras = clone.findall(f".//{{{_W}}}p")
 
+    _DISPOSABLE_SLOT_SEMANTICS_TB = frozenset({
+        "bullet", "paragraph", "role_intro",
+        "role_key_technologies", "role_tech_stack",
+        "role_project_label", "role_freeform_note",
+    })
     if len(clone_paras) == len(tb.para_models):
         # Happy path: counts match — update each paragraph in place.
         for p_elem, pm in zip(clone_paras, tb.para_models):
+            _proto_had_text_tb = any(
+                (t.text or "").strip() for t in p_elem.iter(f"{{{_W}}}t")
+            )
             _set_para_text(p_elem, pm.text)
             _clear_sdt_placeholder(p_elem)
+            # Orphan-bullet neutralization, table path (issue #152): a
+            # blanked in-table body slot must not keep list numbering —
+            # an empty w:numPr paragraph still draws a bare bullet dot
+            # (sample 9's emptied skill-category labels).
+            if (
+                not pm.text.strip()
+                and _proto_had_text_tb
+                and pm.semantic in _DISPOSABLE_SLOT_SEMANTICS_TB
+            ):
+                _pPr_ob_tb = p_elem.find(f"{{{_W}}}pPr")
+                if _pPr_ob_tb is not None:
+                    _removed_ob_tb = []
+                    for _tag_ob_tb in ("numPr", "keepNext", "pageBreakBefore"):
+                        _el_ob_tb = _pPr_ob_tb.find(f"{{{_W}}}{_tag_ob_tb}")
+                        if _el_ob_tb is not None:
+                            _pPr_ob_tb.remove(_el_ob_tb)
+                            _removed_ob_tb.append(_tag_ob_tb)
+                    if _removed_ob_tb:
+                        _log.debug(
+                            "ORPHAN_BULLET_NEUTRALIZED_TABLE: para_id=%r "
+                            "stripped=%s", pm.para_id,
+                            ",".join(_removed_ob_tb),
+                        )
     # else: count mismatch (shouldn't happen unless LLM restructured the table);
     # fall through and insert the unmodified clone so the layout is preserved.
 
@@ -6905,6 +6937,49 @@ def _render_from_layout_blocks(
             len(_tl_consumed), _tl_seg1_heading_pid, _tl_seg2_trigger_pid, _tl_sectpr_pid,
         )
 
+    # Step 4 (#152) pre-pass: role-bullet formatting donors.  When bullet
+    # content is written into a plain paragraph slot (a role_intro /
+    # project-label para the LLM visibly rewrote — sample 36 GlobalLogic
+    # bullets 1-2), the paragraph must adopt the list formatting of its
+    # sibling bullets.  For each role, remember its bullet-member pids and
+    # keep the pPr of the first member whose template XML carries w:numPr
+    # as the donor.  Conversely, a generated tech-stack line ("Key
+    # technologies: …") renders as PLAIN text even when it lands in a
+    # bullet slot — semantic type wins over slot formatting.
+    _role_of_pid_rb: dict[str, int] = {}
+    for _si_rb, _sec_rb in enumerate(doc.sections or []):
+        for _rj_rb, _r_rb in enumerate(_sec_rb.roles):
+            _rkey_rb = _si_rb * 1000 + _rj_rb
+            for _b_rb in _r_rb.bullets:
+                if _b_rb.para_id:
+                    _role_of_pid_rb[_b_rb.para_id] = _rkey_rb
+    _role_donor_ppr_rb: dict[int, Any] = {}
+    if _role_of_pid_rb:
+        for _blk_rb in doc.layout_blocks:
+            if not isinstance(_blk_rb, LayoutParagraphBlock):
+                continue
+            _pid_rb = _blk_rb.para_id
+            if not _pid_rb or _pid_rb not in _role_of_pid_rb:
+                continue
+            _rk_rb = _role_of_pid_rb[_pid_rb]
+            if _rk_rb in _role_donor_ppr_rb:
+                continue
+            if "numPr" not in (_blk_rb.xml_proto_xml or ""):
+                continue
+            try:
+                _del_rb = etree.fromstring(_blk_rb.xml_proto_xml)
+            except Exception:
+                continue
+            _dppr_rb = _del_rb.find(f"{{{_W}}}pPr")
+            if _dppr_rb is not None and _dppr_rb.find(f"{{{_W}}}numPr") is not None:
+                _role_donor_ppr_rb[_rk_rb] = _dppr_rb
+    _TECH_PREFIX_RENDER_RE = re.compile(
+        r"(?i)^\s*(?:key\s+tech(?:nolog(?:y|ies))?\s*:"
+        r"|tech(?:nology|nologies)\s*:"
+        r"|tech\s*stack\s*:)"
+    )
+    from copy import deepcopy as _deepcopy_rb
+
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
             tbl_elem = etree.fromstring(block.xml_proto_xml)
@@ -6921,10 +6996,46 @@ def _render_from_layout_blocks(
                         p_elem.set(f"{{{_W14}}}paraId", para_id)
                 pm = para_lookup.get(para_id)
                 if pm is not None:
+                    _proto_had_text_ltb = any(
+                        (t.text or "").strip()
+                        for t in p_elem.iter(f"{{{_W}}}t")
+                    )
                     _strip_text_wrapping_breaks(p_elem, pm.text)
                     _set_para_text(p_elem, pm.text)
                     _clear_sdt_placeholder(p_elem)
                     patched += 1
+                    # Orphan-bullet neutralization, layout-table path
+                    # (issue #152): a blanked in-table body slot must not
+                    # keep its list numbering — an empty w:numPr paragraph
+                    # still draws a bare bullet dot (sample 9's emptied
+                    # skill-category labels).
+                    if (
+                        not pm.text.strip()
+                        and _proto_had_text_ltb
+                        and pm.semantic in (
+                            "bullet", "paragraph", "role_intro",
+                            "role_key_technologies", "role_tech_stack",
+                            "role_project_label", "role_freeform_note",
+                        )
+                    ):
+                        _pPr_ob_ltb = p_elem.find(f"{{{_W}}}pPr")
+                        if _pPr_ob_ltb is not None:
+                            _removed_ob_ltb = []
+                            for _tag_ob_ltb in (
+                                "numPr", "keepNext", "pageBreakBefore",
+                            ):
+                                _el_ob_ltb = _pPr_ob_ltb.find(
+                                    f"{{{_W}}}{_tag_ob_ltb}"
+                                )
+                                if _el_ob_ltb is not None:
+                                    _pPr_ob_ltb.remove(_el_ob_ltb)
+                                    _removed_ob_ltb.append(_tag_ob_ltb)
+                            if _removed_ob_ltb:
+                                _log.debug(
+                                    "ORPHAN_BULLET_NEUTRALIZED_TABLE: "
+                                    "para_id=%r stripped=%s", para_id,
+                                    ",".join(_removed_ob_ltb),
+                                )
                 else:
                     _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: table para_id=%r", para_id)
                     # keep original text — surplus / unmatched template cells
@@ -7273,18 +7384,154 @@ def _render_from_layout_blocks(
                                     _bel_ab_lb = _rPr_ab_lb.find(_btag_ab_lb)
                                     if _bel_ab_lb is not None:
                                         _rPr_ab_lb.remove(_bel_ab_lb)
+                    # Step 4a (#152): bullet content written into a plain
+                    # paragraph slot adopts the list formatting (numPr +
+                    # indentation) of its sibling bullets within the SAME
+                    # role.  pStyle is copied only when the slot has no
+                    # meaningful style of its own.
+                    _is_tech_line_lb = bool(
+                        _TECH_PREFIX_RENDER_RE.match(pm.text.strip())
+                    )
+                    if (
+                        pm.text.strip()
+                        and not _is_tech_line_lb
+                        and block.para_id in _role_of_pid_rb
+                        and elem.find(f"{{{_W}}}pPr/{{{_W}}}numPr") is None
+                        # Only slots whose text the LLM actually rewrote:
+                        # preserved adjuncts keeping template text keep
+                        # template formatting too.
+                        and pm.text.strip() != _proto_text_raw_lb.strip()
+                    ):
+                        _donor_bf = _role_donor_ppr_rb.get(
+                            _role_of_pid_rb[block.para_id]
+                        )
+                        if _donor_bf is not None:
+                            _tppr_bf = elem.find(f"{{{_W}}}pPr")
+                            if _tppr_bf is None:
+                                _tppr_bf = etree.Element(f"{{{_W}}}pPr")
+                                elem.insert(0, _tppr_bf)
+                            _copied_bf = []
+                            _dps_bf = _donor_bf.find(f"{{{_W}}}pStyle")
+                            _tps_bf = _tppr_bf.find(f"{{{_W}}}pStyle")
+                            if _dps_bf is not None:
+                                _tval_bf = (
+                                    _tps_bf.get(f"{{{_W}}}val", "")
+                                    if _tps_bf is not None else ""
+                                ).lower()
+                                if _tps_bf is None:
+                                    _tppr_bf.insert(0, _deepcopy_rb(_dps_bf))
+                                    _copied_bf.append("pStyle")
+                                elif _tval_bf in ("normal", "bodytext", "default"):
+                                    _tps_bf.set(
+                                        f"{{{_W}}}val",
+                                        _dps_bf.get(f"{{{_W}}}val", ""),
+                                    )
+                                    _copied_bf.append("pStyle")
+                            _dnum_bf = _donor_bf.find(f"{{{_W}}}numPr")
+                            if _dnum_bf is not None:
+                                _after_bf = _tppr_bf.find(f"{{{_W}}}pStyle")
+                                _pos_bf = (
+                                    list(_tppr_bf).index(_after_bf) + 1
+                                    if _after_bf is not None else 0
+                                )
+                                _tppr_bf.insert(_pos_bf, _deepcopy_rb(_dnum_bf))
+                                _copied_bf.append("numPr")
+                            _dind_bf = _donor_bf.find(f"{{{_W}}}ind")
+                            if _dind_bf is not None:
+                                _tind_bf = _tppr_bf.find(f"{{{_W}}}ind")
+                                if _tind_bf is not None:
+                                    _tppr_bf.remove(_tind_bf)
+                                _trpr_bf = _tppr_bf.find(f"{{{_W}}}rPr")
+                                if _trpr_bf is not None:
+                                    _trpr_bf.addprevious(_deepcopy_rb(_dind_bf))
+                                else:
+                                    _tppr_bf.append(_deepcopy_rb(_dind_bf))
+                                _copied_bf.append("ind")
+                            if _copied_bf:
+                                _log.debug(
+                                    "BULLET_FORMAT_NORMALIZED: para_id=%r "
+                                    "copied=%s", block.para_id,
+                                    ",".join(_copied_bf),
+                                )
+                    # Step 4b (#152): a generated tech-stack paragraph
+                    # ("Key technologies: …") renders plain even when it
+                    # landed in a bullet slot — semantic over slot format.
+                    # Restricted to role-bullet slots so labeled skills
+                    # lines keep their template bullets.
+                    if (
+                        _is_tech_line_lb
+                        and block.para_id in _role_of_pid_rb
+                    ):
+                        _tppr_ts = elem.find(f"{{{_W}}}pPr")
+                        if _tppr_ts is not None:
+                            _tnum_ts = _tppr_ts.find(f"{{{_W}}}numPr")
+                            if _tnum_ts is not None:
+                                _tppr_ts.remove(_tnum_ts)
+                                _log.debug(
+                                    "TECH_STACK_FORMAT_NORMALIZED: "
+                                    "para_id=%r numPr stripped",
+                                    block.para_id,
+                                )
                     # Strip bullet/list formatting (w:numPr) for semantic types
                     # that represent prose or technology-block text, not list items.
+                    # Exception (#152 step 4a): a slot that is a role-bullet
+                    # MEMBER carrying real bullet content keeps the list
+                    # formatting just normalized above — semantic labels
+                    # from the template no longer describe its content.
                     _NO_BULLET_SEMANTICS_LB = frozenset({
                         "role_intro", "role_key_technologies",
                         "role_tech_stack", "role_project_label",
                     })
-                    if pm.semantic in _NO_BULLET_SEMANTICS_LB and pm.text.strip():
+                    _is_rewritten_bullet_slot_lb = (
+                        block.para_id in _role_of_pid_rb
+                        and pm.text.strip()
+                        and not _is_tech_line_lb
+                        and pm.text.strip() != _proto_text_raw_lb.strip()
+                    )
+                    if (
+                        pm.semantic in _NO_BULLET_SEMANTICS_LB
+                        and pm.text.strip()
+                        and not _is_rewritten_bullet_slot_lb
+                    ):
                         _pPr_nb_lb = elem.find(f"{{{_W}}}pPr")
                         if _pPr_nb_lb is not None:
                             _numPr_nb_lb = _pPr_nb_lb.find(f"{{{_W}}}numPr")
                             if _numPr_nb_lb is not None:
                                 _pPr_nb_lb.remove(_numPr_nb_lb)
+                    # Orphan-bullet neutralization (issue #152): a body slot
+                    # whose template text was rewritten away (model text now
+                    # empty) must not keep its list numbering — an empty
+                    # w:numPr paragraph still draws a bare bullet dot
+                    # (sample 36 rendered 26 of them).  keepNext /
+                    # pageBreakBefore are stripped too so dead slots cannot
+                    # pin page flow.  Restricted to disposable rewritten
+                    # body-slot semantics: headings, role headers/meta and
+                    # template spacers (empty in the template, no text
+                    # written away) are untouched.
+                    _DISPOSABLE_SLOT_SEMANTICS_LB = frozenset({
+                        "bullet", "paragraph", "role_intro",
+                        "role_key_technologies", "role_tech_stack",
+                        "role_project_label", "role_freeform_note",
+                    })
+                    if (
+                        not pm.text.strip()
+                        and _proto_text_raw_lb.strip()
+                        and pm.semantic in _DISPOSABLE_SLOT_SEMANTICS_LB
+                    ):
+                        _pPr_ob_lb = elem.find(f"{{{_W}}}pPr")
+                        if _pPr_ob_lb is not None:
+                            _removed_ob_lb = []
+                            for _tag_ob_lb in ("numPr", "keepNext", "pageBreakBefore"):
+                                _el_ob_lb = _pPr_ob_lb.find(f"{{{_W}}}{_tag_ob_lb}")
+                                if _el_ob_lb is not None:
+                                    _pPr_ob_lb.remove(_el_ob_lb)
+                                    _removed_ob_lb.append(_tag_ob_lb)
+                            if _removed_ob_lb:
+                                _log.debug(
+                                    "ORPHAN_BULLET_NEUTRALIZED: para_id=%r "
+                                    "stripped=%s", block.para_id,
+                                    ",".join(_removed_ob_lb),
+                                )
                     # Semantic visual styling (layout-bound path): italic for
                     # narrative intro types, bold for technology/label types.
                     _SEM_ITALIC_LB = frozenset({"role_intro", "project_intro"})
@@ -7292,7 +7539,11 @@ def _render_from_layout_blocks(
                         "role_key_technologies", "role_tech_stack",
                         "role_project_label", "highlight_header",
                     })
-                    if pm.semantic in _SEM_ITALIC_LB and pm.text.strip():
+                    if (
+                        pm.semantic in _SEM_ITALIC_LB
+                        and pm.text.strip()
+                        and not _is_rewritten_bullet_slot_lb
+                    ):
                         _pPr_si_lb = elem.find(f"{{{_W}}}pPr")
                         if _pPr_si_lb is not None:
                             _rPr_ppr_si_lb = _pPr_si_lb.find(f"{{{_W}}}rPr")
@@ -7309,7 +7560,11 @@ def _render_from_layout_blocks(
                             for _t_si_lb in (f"{{{_W}}}i", f"{{{_W}}}iCs"):
                                 if _rPr_si_lb.find(_t_si_lb) is None:
                                     etree.SubElement(_rPr_si_lb, _t_si_lb)
-                    elif pm.semantic in _SEM_BOLD_LB and pm.text.strip():
+                    elif (
+                        pm.semantic in _SEM_BOLD_LB
+                        and pm.text.strip()
+                        and not _is_rewritten_bullet_slot_lb
+                    ):
                         _pPr_sb_lb = elem.find(f"{{{_W}}}pPr")
                         if _pPr_sb_lb is not None:
                             _rPr_ppr_sb_lb = _pPr_sb_lb.find(f"{{{_W}}}rPr")
