@@ -2169,19 +2169,27 @@ def _update_role_bullets_only(
     _skip_header_extra_merge = (
         (orig.layout_binding or {}).get("kind") == "timeline_left_role_right"
     )
+    kept_hx = list(orig.header_extra)
+    # Merge header_extra into the header ONLY for the PDF pipe-break case
+    # (header text ends with '|': "Title |" + "Company" were one source
+    # line).  DOCX templates keep title and company as SEPARATE paragraphs
+    # by design — merging glues them ("DEVOPS ENGINEER | Kalayaan National
+    # Bank", sample 21) and the dropped hx para renders blank.
     if orig.header_extra and not _skip_header_extra_merge:
-        extra_text = " | ".join(he.text.strip() for he in orig.header_extra if he.text.strip())
-        if extra_text:
-            h = _hdr.text.strip()
-            if h.endswith("|"):
+        h = _hdr.text.strip()
+        if h.endswith("|"):
+            extra_text = " | ".join(
+                he.text.strip() for he in orig.header_extra if he.text.strip()
+            )
+            if extra_text:
                 _hdr = _hdr.with_text(h + " " + extra_text)
-            elif "|" not in h:
-                _hdr = _hdr.with_text(h + " | " + extra_text)
+                kept_hx = []
     return RoleEntry(
         # Strip any column break from the role header — the section heading
         # (or Summary heading) handles right-column placement; a second break
         # on the first role header would cause a spurious column jump.
         header=_hdr,
+        header_extra=kept_hx,
         meta_lines=kept_meta,
         bullets=new_bullets,
         role_id=orig.role_id,
@@ -2945,6 +2953,47 @@ def _rebuild_roles_from_classification(
                     )
                     break
 
+            # Merge fallback: no rebind candidate exists when the cls file
+            # split ONE physical role into a real role plus a date-headed
+            # remainder (sample 21: 'DEVOPS ENGINEER' role AND a
+            # 'June 2012 - March 2014' role holding its bullets).  Fold the
+            # date role into the nearest preceding role: date line → meta,
+            # bullets/meta follow.  Left split, the date role position-
+            # matches an LLM role, its company para becomes a bullet slot,
+            # and the real role looks dateless (LLM date glued onto header).
+            _pos_dh = {id(p): i for i, p in enumerate(section.body_paras)}
+            for r in list(_date_headed):
+                if not _STANDALONE_DATE_LINE_RE.match(r.header.text.strip()):
+                    continue  # rebound above
+                _rpos = _pos_dh.get(id(r.header))
+                if _rpos is None:
+                    continue
+                _target = None
+                _tpos = -1
+                for r2 in roles:
+                    if r2 is r or _STANDALONE_DATE_LINE_RE.match(
+                        r2.header.text.strip()
+                    ):
+                        continue
+                    _hp = _pos_dh.get(id(r2.header))
+                    if _hp is not None and _tpos < _hp < _rpos:
+                        _target, _tpos = r2, _hp
+                if _target is None:
+                    continue
+                _target.meta_lines.append(r.header)
+                for m in r.meta_lines:
+                    if m not in _target.meta_lines:
+                        _target.meta_lines.append(m)
+                _target.bullets.extend(
+                    b for b in r.bullets if b not in _target.bullets
+                )
+                roles.remove(r)
+                _log.debug(
+                    "cls-rebuild: date-headed role %r — merged into "
+                    "preceding role %r (%d bullet slots)",
+                    r.role_id, _target.role_id, len(r.bullets),
+                )
+
     # A para that is some role's HEADER must never remain another role's
     # bullet slot (sample 6: Nod's body_blocks include Southridge's header
     # para — writing a bullet there would destroy the header).
@@ -3315,6 +3364,57 @@ def _match_llm_to_ir_roles(
                 llm_roles[best_llm_idx].header, best_score,
             )
 
+    # Pass 1.5: date-range match.  Template roles whose identity is a bare
+    # date span ('(2010-2013)' / '(2014-Now)', sample 22) carry no company
+    # tokens, and the positional fallback pairs them wrong whenever the LLM
+    # lists roles in the opposite chronological order.  Match on the year
+    # signature instead: same start year and compatible end (equal end year
+    # or both open-ended).
+    _open_end_re = re.compile(
+        r"\b(now|present|current|ongoing)\b", re.IGNORECASE
+    )
+    _year_re4 = re.compile(r"\b(?:19|20)\d{2}\b")
+
+    def _date_sig(texts: "list[str]") -> "tuple[int, int, bool] | None":
+        years: list[int] = []
+        open_end = False
+        for t in texts:
+            years += [int(m.group(0)) for m in _year_re4.finditer(t)]
+            if _open_end_re.search(t):
+                open_end = True
+        if not years:
+            return None
+        return (min(years), max(years), open_end)
+
+    _llm_sigs = {
+        idx: _date_sig([lr.header, *(lr.meta_lines or [])])
+        for idx, lr in enumerate(llm_roles)
+    }
+    for ir_idx, ir_role in enumerate(ir_roles):
+        if result[ir_idx] is not None:
+            continue
+        ir_sig = _date_sig([
+            p.text for p in [
+                ir_role.header, *ir_role.header_extra, *ir_role.meta_lines,
+            ] if p is not None
+        ])
+        if ir_sig is None:
+            continue
+        cands = [
+            idx for idx, sig in _llm_sigs.items()
+            if idx not in used_llm and sig is not None
+            and sig[0] == ir_sig[0]
+            and (sig[2] == ir_sig[2] or sig[1] == ir_sig[1])
+        ]
+        if len(cands) == 1:
+            result[ir_idx] = cands[0]
+            used_llm.add(cands[0])
+            _log.debug(
+                "date-first match: IR role %r → LLM[%d] %r "
+                "(strategy=date_range)",
+                ir_role.role_id, cands[0], llm_roles[cands[0]].header,
+            )
+
     # Pass 2: positional fallback for unmatched IR roles
     llm_cursor = 0
     for ir_idx in range(len(ir_roles)):
@@ -3338,6 +3438,95 @@ def _match_llm_to_ir_roles(
             )
 
     return result
+
+
+def _release_identity_slots(
+    ir_role: "RoleEntry", llm_role: "LlmRole"
+) -> None:
+    """Move role-identity paras out of a role's bullet-slot stream.
+
+    The parser sometimes drops a role's company line or date line into
+    ``bullets`` (sample 21: 'Kalayaan National Bank' / 'June 2012 - March
+    2014' became slots and were overwritten by bullet text, after which the
+    dateless-looking role got the LLM date glued onto its header).  Any slot
+    para whose text is a standalone date goes to ``meta_lines``; a slot
+    whose text equals a segment of the matched LLM role's header (pipe/em-
+    dash separated) or one of its meta lines goes to ``header_extra``.
+    Both render template-verbatim per the injection policy.
+    """
+    def _norm_seg(s: str) -> str:
+        return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+
+    segs: set[str] = set()
+    for src in [llm_role.header, *(llm_role.meta_lines or [])]:
+        for part in re.split(r"\||—", src):
+            for variant in (part, re.sub(r"\([^)]*\)", " ", part)):
+                n = _norm_seg(variant)
+                if n:
+                    segs.add(n)
+        n = _norm_seg(src)
+        if n:
+            segs.add(n)
+
+    kept: list = []
+    for b in ir_role.bullets:
+        t = b.text.strip()
+        if not t:
+            kept.append(b)
+            continue
+        if _STANDALONE_DATE_LINE_RE.match(t):
+            ir_role.meta_lines.append(b)
+            _log.debug(
+                "identity-slot release: role %r — date slot %s (%r) → meta",
+                ir_role.role_id, b.para_id or "?", t[:40],
+            )
+            continue
+        if len(t) <= 60 and _norm_seg(t) in segs:
+            ir_role.header_extra.append(b)
+            _log.debug(
+                "identity-slot release: role %r — header-segment slot %s "
+                "(%r) → header_extra",
+                ir_role.role_id, b.para_id or "?", t[:40],
+            )
+            continue
+        kept.append(b)
+    if len(kept) != len(ir_role.bullets):
+        ir_role.bullets = kept
+
+
+def _identity_hx_paras(
+    ir_role: "RoleEntry", llm_role: "LlmRole | None"
+) -> "set[int]":
+    """ids of header_extra paras that are role identity (company/title/date)
+    and must never serve as bullet slots (sample 22: 'Wardiere Inc.' and
+    'SOFTWARE ENGINEERING' hx paras were consumed by the hx slot fallback)."""
+    def _norm_seg(s: str) -> str:
+        return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+
+    segs: set[str] = set()
+    if llm_role is not None:
+        for src in [llm_role.header, *(llm_role.meta_lines or [])]:
+            for part in re.split(r"\||—", src):
+                for variant in (part, re.sub(r"\([^)]*\)", " ", part)):
+                    n = _norm_seg(variant)
+                    if n:
+                        segs.add(n)
+    out: set[int] = set()
+    for p in ir_role.header_extra:
+        t = p.text.strip()
+        if not t:
+            continue
+        if _STANDALONE_DATE_LINE_RE.match(t):
+            out.add(id(p))
+            continue
+        # Short non-sentence lines are identity material (company names,
+        # ALL-CAPS titles) even without an LLM-header echo.
+        if len(t) <= 60 and (
+            _norm_seg(t) in segs
+            or (not t.endswith((".", "!", "?")) and len(t.split()) <= 5)
+        ):
+            out.add(id(p))
+    return out
 
 
 def _update_experience_date_first(
@@ -3522,7 +3711,14 @@ def _update_experience_date_first(
                     "section=%r role=%r first_bullet=%r — may be a misaligned role title",
                     orig.title, ir_role.role_id, first[:60],
                 )
-        targets = ir_role.bullets if ir_role.bullets else ir_role.header_extra
+        _release_identity_slots(ir_role, llm_roles[llm_idx])
+        if ir_role.bullets:
+            targets = ir_role.bullets
+        else:
+            _identity_ids = _identity_hx_paras(ir_role, llm_roles[llm_idx])
+            targets = [
+                p for p in ir_role.header_extra if id(p) not in _identity_ids
+            ]
         if not targets:
             if llm_bullets:
                 # No template slot exists for this role (classification gave
@@ -4162,6 +4358,7 @@ def _update_experience_classified(
     for i, o_role in enumerate(orig.roles):
         llm_idx = match_map[i]
         if llm_idx is not None:
+            _release_identity_slots(o_role, llm_roles[llm_idx])
             updated = _update_role_with_adjuncts(
                 o_role, llm_roles[llm_idx].bullets, cls_body_block_map,
                 layout_bound=layout_bound,
@@ -7668,6 +7865,109 @@ def apply_tailored(
             if len(_pref & _llm_token_union) / len(_pref) >= 0.9:
                 return True
         return False
+
+    # Summary relocation: in two-column/table templates (sample 28) the
+    # matched summary section has no wide body slot, so the LLM summary
+    # lands as an extra clone in the narrow LABEL column while the
+    # template's real summary para renders verbatim elsewhere — double
+    # summary text overflowing the fixed frame.  Swap them: write the LLM
+    # text into the template summary para (in-place, so table blobs pick it
+    # up) and blank the extra clone.
+    _llm_summary_lines = [
+        l.strip() for _ls in llm_sections
+        if _ls.semantic_type == "summary"
+        for l in (_ls.body_lines or []) if l.strip()
+    ]
+    if _llm_summary_lines:
+        def _iter_model_paras_sr():
+            for pm in effective_header_paras:
+                yield pm
+            for sec in new_sections:
+                if sec.heading is not None:
+                    yield sec.heading
+                for r in sec.roles:
+                    for x in [
+                        r.header, *r.header_extra, *r.meta_lines, *r.bullets,
+                    ]:
+                        if x is not None:
+                            yield x
+                for pm in sec.body_paras:
+                    yield pm
+            for pm in all_paras:
+                yield pm
+            for pm in (original.all_paras or []):
+                yield pm
+
+        def _shared_word_prefix(a: str, b: str) -> int:
+            _aw = re.findall(r"[a-z0-9+]+", a.lower())
+            _bw = re.findall(r"[a-z0-9+]+", b.lower())
+            n = 0
+            for x, y in zip(_aw, _bw):
+                if x != y:
+                    break
+                n += 1
+            return n
+
+        for _L in _llm_summary_lines:
+            _Ln = " ".join(_L.split()).lower()
+            _exact_objs: dict[int, "ParaModel"] = {}
+            _stale_objs: dict[int, "ParaModel"] = {}
+            for pm in _iter_model_paras_sr():
+                if id(pm) in _exact_objs or id(pm) in _stale_objs:
+                    continue
+                t = pm.text.strip()
+                if not t:
+                    continue
+                if " ".join(t.split()).lower() == _Ln:
+                    _exact_objs[id(pm)] = pm
+                elif len(re.findall(r"[A-Za-z]{3,}", t)) >= 15 and (
+                    _similar_to_any_line(t, [_L])
+                    # The template summary seeds the rewrite, so the two
+                    # share a long identical opening even when the tails
+                    # diverge past the similarity threshold (sample 28).
+                    or _shared_word_prefix(t, _L) >= 8
+                ):
+                    _stale_objs[id(pm)] = pm
+            # Only the pathological shape qualifies: the exact LLM text
+            # lives in an EXTRA CLONE (_ext_ para — the narrow-column
+            # insert) while the stale near-copy is a real TEMPLATE para.
+            # When the exact holder is a template para the normal injection
+            # already succeeded (sample 12) — touching anything would
+            # clobber legitimate content.
+            _exact_objs = {
+                k: p for k, p in _exact_objs.items()
+                if p.para_id and "_ext_" in p.para_id
+            }
+            _stale_objs = {
+                k: p for k, p in _stale_objs.items()
+                if p.para_id and "_ext_" not in p.para_id
+            }
+            if not _exact_objs or not _stale_objs:
+                continue
+            _stale_ids = {
+                p.para_id for p in _stale_objs.values() if p.para_id
+            }
+            _exact_ids = {
+                p.para_id for p in _exact_objs.values() if p.para_id
+            }
+            _exact_ids -= _stale_ids
+            for pm in _iter_model_paras_sr():
+                if id(pm) in _stale_objs or (
+                    pm.para_id and pm.para_id in _stale_ids
+                ):
+                    if pm.text != _L:
+                        pm.text = _L
+                elif id(pm) in _exact_objs or (
+                    pm.para_id and pm.para_id in _exact_ids
+                ):
+                    if pm.text.strip():
+                        pm.text = ""
+            _log.debug(
+                "SUMMARY_RELOCATED: LLM summary written into stale template "
+                "summary para(s) %s; extra clone(s) %s blanked",
+                sorted(_stale_ids) or "<no-id>",
+                sorted(_exact_ids) or "<no-id>",
+            )
 
     # Group every model copy of each experience para id — the same id often
     # exists as several ParaModel objects (section body, role slot, all_paras)
