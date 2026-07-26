@@ -4157,6 +4157,40 @@ def _update_role_with_adjuncts(
                 _p.text[:80],
             )
 
+    # Full-role replacement semantics (issue #152): once a matched role is
+    # rewritten from LLM output, unused body adjuncts (intro, tech-stack,
+    # project labels, list paragraphs) do not survive automatically.  An
+    # adjunct is retained only with a CLEAR counterpart in the generated
+    # role content: a tech-stack block claimed by the DUP_TECH override
+    # above, or a line the LLM visibly rewrote (already excluded from
+    # preserved_ids and used as a slot).  Everything else is blanked.
+    # Role identity (header / header_extra / meta_lines) is never touched
+    # here — this loop only walks body-slot members.
+    _ADJUNCT_REMOVABLE_SEMANTICS = frozenset({
+        "role_intro", "role_tech_stack", "role_key_technologies",
+        "role_project_label", "role_project_context",
+        "role_freeform_note", "role_nested_detail", "role_highlight",
+        "intro", "tech_stack", "key_technologies", "project_label",
+        "project_context", "freeform_note", "nested_detail", "highlight",
+    })
+    _adjunct_blank_ids: set[str] = set()
+    if llm_bullets_working or preserved_text_overrides:
+        for _p in orig.bullets:
+            if (
+                _p.para_id not in preserved_ids
+                or _p.para_id in preserved_text_overrides
+            ):
+                continue
+            _blk = cls_body_block_map.get(_p.para_id)
+            if _blk is not None and _blk.semantic_type in _ADJUNCT_REMOVABLE_SEMANTICS:
+                _adjunct_blank_ids.add(_p.para_id)
+                _log.debug(
+                    "ADJUNCT_REMOVED_FULL_REPLACEMENT: role=%r para_id=%r "
+                    "semantic=%r text=%r",
+                    orig.role_id, _p.para_id, _blk.semantic_type,
+                    _p.text[:60],
+                )
+
     # Diagnostics
     _log.debug(
         "ROLE_ADJUNCT_SPLIT: role=%r  rewriteable=[%s]  preserved=[%s]  llm_bullets=%d",
@@ -4193,7 +4227,16 @@ def _update_role_with_adjuncts(
     for p in orig.bullets:
         if p.para_id in preserved_ids:
             _override = preserved_text_overrides.get(p.para_id)
-            final_bullets.append(_dc_replace(p, text=_override) if _override is not None else p)
+            if _override is not None:
+                final_bullets.append(_dc_replace(p, text=_override))
+            elif p.para_id in _adjunct_blank_ids:
+                # Blank IN PLACE: body_paras/all_paras hold the same
+                # ParaModel object — a blanked copy would leave a stale
+                # twin that can win the render lookup.
+                p.text = ""
+                final_bullets.append(p)
+            else:
+                final_bullets.append(p)
         else:
             nxt = next(updated_iter, None)
             if nxt is not None:
