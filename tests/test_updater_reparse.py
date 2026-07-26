@@ -444,6 +444,156 @@ class TestSample7Regression:
 
 
 # ---------------------------------------------------------------------------
+# 17: Title/company BEFORE the date line (sample 19 format)
+# ---------------------------------------------------------------------------
+
+class TestTitleBeforeDateBoundary:
+    _BODY_LINES = [
+        "Software Engineer",
+        "Tropang True Po",
+        "January 2020 - Present",
+        "Created an automated testing framework that reduced testing time by 50%.",
+        "Collaborated with cross-functional teams to troubleshoot issues.",
+        "Back-End Developer",
+        "Truesdays",
+        "March 2014 - December 2020",
+        "Designed and implemented new features on a cloud-based platform.",
+        "DevOps Engineer",
+        "Kalayaan National Bank",
+        "June 2012 - March 2014",
+        "Conducted research and development to improve product performance.",
+        "Created technical documentation and provided training for end-users.",
+    ]
+
+    def test_three_roles_with_pre_date_headers(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert [r.header for r in roles] == [
+            "Software Engineer", "Back-End Developer", "DevOps Engineer",
+        ]
+
+    def test_company_and_date_in_meta(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert roles[0].meta_lines == ["Tropang True Po", "January 2020 - Present"]
+        assert roles[2].meta_lines == ["Kalayaan National Bank", "June 2012 - March 2014"]
+
+    def test_bullets_exclude_next_role_header_lines(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert len(roles[0].bullets) == 2
+        assert not any("Back-End Developer" in b for b in roles[0].bullets)
+        assert not any("Truesdays" in b for b in roles[0].bullets)
+        assert len(roles[2].bullets) == 2
+
+    def test_dates_first_format_unaffected(self):
+        # boundaries[0] == 0 → no pre-header lines → header-after-date kept
+        lines = [
+            "Jan 20XX - Current",
+            "Office Manager, Corp A",
+            "Managed operations.",
+        ]
+        roles = _reparse_body_lines_as_roles(lines)
+        assert roles[0].header == "Office Manager, Corp A"
+
+    def test_sentence_before_first_date_not_a_header(self):
+        # A bullet-like sentence before the first date must not become a header
+        lines = [
+            "Improved processes across the organization.",
+            "Jan 20XX - Current",
+            "Office Manager, Corp A",
+            "Managed operations.",
+        ]
+        roles = _reparse_body_lines_as_roles(lines)
+        assert roles[0].header == "Office Manager, Corp A"
+
+
+# ---------------------------------------------------------------------------
+# 17b: Slash-separated month/year dates (sample 39 format)
+# ---------------------------------------------------------------------------
+
+class TestSlashDateBoundaries:
+    _BODY_LINES = [
+        "Backend Developer",
+        "Jan / 2021-Ongoing",
+        "Pineapple Enterprises  Santa Monica, CA",
+        "Designed and implemented a scalable database architecture for web applications.",
+        "Created efficient stored procedures to optimize data retrieval processes.",
+        "Backend Developer",
+        "Jan / 2018-Jan / 2021",
+        "Silver Lake Enterprises  Seattle, WA",
+        "Managed the backend development for over 350 websites.",
+    ]
+
+    def test_slash_dates_are_boundaries(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert len(roles) == 2
+        assert roles[0].header == "Backend Developer"
+        assert roles[1].header == "Backend Developer"
+
+    def test_company_line_goes_to_meta_not_bullets(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert "Pineapple Enterprises  Santa Monica, CA" in roles[0].meta_lines
+        assert len(roles[0].bullets) == 2
+        assert not any("Pineapple" in b for b in roles[0].bullets)
+        assert "Silver Lake Enterprises  Seattle, WA" in roles[1].meta_lines
+        assert roles[1].bullets == [
+            "Managed the backend development for over 350 websites.",
+        ]
+
+
+# ---------------------------------------------------------------------------
+# 18: Paren-date role headers — "Title (YYYY - Present)" (sample 24 format)
+# ---------------------------------------------------------------------------
+
+class TestParenDateHeaders:
+    # Mixed-case company pre-lines: the ALL-CAPS variant is handled by
+    # Strategy 3 (caps_company); this exercises Strategy 4 (paren_date).
+    _BODY_LINES = [
+        "Timmerman Industries, Any City",
+        "Project Manager (2023 - Present)",
+        "Prepared project worksheets and managed work estimates.",
+        "Prepared administrative documents and proposals.",
+        "Coordinated with other divisions.",
+        "Timmerman Industries, Any City",
+        "Project Engineer (2021 - 2023)",
+        "Controlled project progress according to the plan.",
+        "Supported the engineering department.",
+    ]
+
+    def test_two_roles_from_paren_headers(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert [r.header for r in roles] == ["Project Manager", "Project Engineer"]
+
+    def test_company_preline_and_dates_in_meta(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert roles[0].meta_lines == [
+            "Timmerman Industries, Any City",
+            "2023 - Present",
+        ]
+        assert roles[1].meta_lines[-1] == "2021 - 2023"
+
+    def test_bullets_split_per_role(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert len(roles[0].bullets) == 3
+        assert len(roles[1].bullets) == 2
+        assert not any("TIMMERMAN" in b for b in roles[0].bullets)
+
+    def test_paren_strategy_only_when_no_date_lines(self):
+        # A standalone date line present → Strategy 2 wins, paren headers are
+        # regular content lines for it.
+        lines = [
+            "Jan 20XX - Current",
+            "Office Manager, Corp A",
+            "Managed operations (2019 - 2021) budget.",
+        ]
+        roles = _reparse_body_lines_as_roles(lines)
+        assert len(roles) == 1
+        assert roles[0].header == "Office Manager, Corp A"
+
+    def test_no_paren_dates_returns_empty(self):
+        lines = ["Built a system.", "Led a team (five people)."]
+        assert _reparse_body_lines_as_roles(lines) == []
+
+
+# ---------------------------------------------------------------------------
 # 15: Updater safety fallback — orig.roles preserved when reparse fails
 # ---------------------------------------------------------------------------
 

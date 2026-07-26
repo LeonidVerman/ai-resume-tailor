@@ -1,0 +1,683 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFESSIONAL Experience",
+        "paragraphs": [
+          {
+            "para_id": "para_19",
+            "text": "Phlebotomist",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_1_normA_1",
+            "text": "Jan 20XX — present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_20",
+            "text": "Lamna Healthcare",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_21",
+            "text": "This is the place for a summary of your key responsibilities and most stellar accomplishments",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_23",
+            "text": "Phlebotomist",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_2_normA_2",
+            "text": "Feb 20XX — Jan 20XX",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_24",
+            "text": "Wholeness Healthcare",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_25",
+            "text": "This is the place for a summary of your key responsibilities and most stellar accomplishments",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_27",
+            "text": "Phlebotomist",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_3_normA_3",
+            "text": "Dec 20XX — Jul 20XX",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_28",
+            "text": "Swan Sonia Healthcare",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_29",
+            "text": "This is the place for a summary of your key responsibilities and most stellar accomplishments",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_19"
+            ],
+            "meta_para_ids": [
+              "role_1_normA_1",
+              "para_20",
+              "para_21"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_23"
+            ],
+            "meta_para_ids": [
+              "role_2_normA_2",
+              "para_24",
+              "para_25"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_27"
+            ],
+            "meta_para_ids": [
+              "role_3_normA_3",
+              "para_28",
+              "para_29"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_32",
+            "text": "Aug 20XX — May 20XX | Associates in Phlebotomy",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_33",
+            "text": "Bellows College",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_34",
+            "text": "Completed courses in Introduction to Phlebotomy, Venipuncture Techniques, Capillary Puncture Techniques, Laboratory Procedures and Equipment, and Medical Law and Ethics as part of associate degree in Phlebotomy program.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_35",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "SKILLS & ABILITIES",
+        "paragraphs": [
+          {
+            "para_id": "para_37",
+            "text": "Performing venipuncture and capillary puncture procedures",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_38",
+            "text": "Processing blood samples according to established laboratory protocols",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_39",
+            "text": "Familiar with medical terminology and patient privacy regulations.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_40",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Awards",
+        "paragraphs": [
+          {
+            "para_id": "para_42",
+            "text": "Recognized by supervisors and colleagues for excellent patient care and attention to detail. Successfully completed certification in phlebotomy from a national health organization.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFESSIONAL Experience",
+        "paragraphs": [
+          {
+            "para_id": "para_9",
+            "text": "PROFESSIONAL Experience",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_19",
+            "text": "Phlebotomist",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_1_normA_1",
+            "text": "Jan 20XX — present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_20",
+            "text": "Lamna Healthcare",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_21",
+            "text": "This is the place for a summary of your key responsibilities and most stellar accomplishments",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_23",
+            "text": "Phlebotomist",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_2_normA_2",
+            "text": "Feb 20XX — Jan 20XX",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_24",
+            "text": "Wholeness Healthcare",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_25",
+            "text": "This is the place for a summary of your key responsibilities and most stellar accomplishments",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_27",
+            "text": "Phlebotomist",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "role_3_normA_3",
+            "text": "Dec 20XX — Jul 20XX",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_28",
+            "text": "Swan Sonia Healthcare",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_29",
+            "text": "This is the place for a summary of your key responsibilities and most stellar accomplishments",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_19"
+            ],
+            "meta_para_ids": [
+              "role_1_normA_1",
+              "para_20",
+              "para_21"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_23"
+            ],
+            "meta_para_ids": [
+              "role_2_normA_2",
+              "para_24",
+              "para_25"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_27"
+            ],
+            "meta_para_ids": [
+              "role_3_normA_3",
+              "para_28",
+              "para_29"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_31",
+            "text": "EDUCATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_32",
+            "text": "Aug 20XX — May 20XX | Associates in Phlebotomy",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_33",
+            "text": "Bellows College",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_34",
+            "text": "Completed courses in Introduction to Phlebotomy, Venipuncture Techniques, Capillary Puncture Techniques, Laboratory Procedures and Equipment, and Medical Law and Ethics as part of associate degree in Phlebotomy program.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_35",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "SKILLS & ABILITIES",
+        "paragraphs": [
+          {
+            "para_id": "para_36",
+            "text": "SKILLS & ABILITIES",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_37",
+            "text": "Performing venipuncture and capillary puncture procedures",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_38",
+            "text": "Processing blood samples according to established laboratory protocols",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_39",
+            "text": "Familiar with medical terminology and patient privacy regulations.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_40",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Awards",
+        "paragraphs": [
+          {
+            "para_id": "para_41",
+            "text": "Awards",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_42",
+            "text": "Recognized by supervisors and colleagues for excellent patient care and attention to detail. Successfully completed certification in phlebotomy from a national health organization.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_9",
+        "text_preview": "PROFESSIONAL Experience"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_31",
+        "text_preview": "EDUCATION"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_36",
+        "text_preview": "SKILLS & ABILITIES"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_41",
+        "text_preview": "Awards"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 0
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFESSIONAL Experience",
+        "display_title": "PROFESSIONAL EXPERIENCE",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "para_19",
+                "para_id": "para_19",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_1_normA_1",
+                "para_id": "role_1_normA_1",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_20",
+                "para_id": "para_20",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_21",
+                "para_id": "para_21",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "para_23",
+                "para_id": "para_23",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_2_normA_2",
+                "para_id": "role_2_normA_2",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_24",
+                "para_id": "para_24",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_25",
+                "para_id": "para_25",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "para_27",
+                "para_id": "para_27",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_3_normA_3",
+                "para_id": "role_3_normA_3",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_28",
+                "para_id": "para_28",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_29",
+                "para_id": "para_29",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          }
+        ]
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": true,
+    "errors": [],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "repair_input": null,
+  "repair_response": null,
+  "validation_after_repair": null,
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "PROFESSIONAL Experience",
+        "display_title": "PROFESSIONAL EXPERIENCE",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "para_19",
+                "para_id": "para_19",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_1_normA_1",
+                "para_id": "role_1_normA_1",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_20",
+                "para_id": "para_20",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_21",
+                "para_id": "para_21",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "para_23",
+                "para_id": "para_23",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_2_normA_2",
+                "para_id": "role_2_normA_2",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_24",
+                "para_id": "para_24",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_25",
+                "para_id": "para_25",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "para_27",
+                "para_id": "para_27",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "role_3_normA_3",
+                "para_id": "role_3_normA_3",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_28",
+                "para_id": "para_28",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "para_29",
+                "para_id": "para_29",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          }
+        ]
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "status": "valid",
+  "validation_error_count": 0,
+  "invalid_section_count_before_repair": 0,
+  "invalid_section_count_after_repair": 0,
+  "repaired_section_count": 0,
+  "downgraded_section_count": 0,
+  "invalid_section_ids": [],
+  "recovery_applied": false
+}

@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     # ── App ───────────────────────────────────────────────────────────────
     app_env: str = "development"
     app_version: str = "dev"
+    build_date: str = ""  # Injected at deploy time, e.g. BUILD_DATE=2026-06-27
     secret_key: str = "changeme"
     # Stored as a raw string; use .cors_origins for the parsed list.
     # Accepts either a comma-separated string or a JSON array:

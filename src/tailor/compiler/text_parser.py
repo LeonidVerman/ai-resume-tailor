@@ -40,6 +40,13 @@ _BULLET_PREFIXES: tuple[str, ...] = ("- ", "\u2022 ", "\u25cf ", "\u2013 ")
 
 _CURRENT_DATE_RE = re.compile(r"^\s*Current\s+Date\s*:", re.IGNORECASE)
 
+# ALL-CAPS known section heading glued directly to following content with no
+# newline in between, e.g. "EDUCATIONReally Great University (2012-2014)" or
+# "SUMMARYMaster Degree of Project Engineering".  The lazy first group grows
+# until the remainder starts with an Upper-lower pair, which lands the split
+# exactly between the caps-run heading and the Title-Case content.
+_GLUED_HEADING_RE = re.compile(r"^([A-Z][A-Z &/]{2,}?)([A-Z][a-z].*)$")
+
 # Section heading words that must never be treated as role-title merge candidates.
 # The merger is only intended for job titles ("Web Developer", "Senior Engineer")
 # that happen to appear on the line before "Company | Year".  Well-known section
@@ -63,10 +70,14 @@ _SECTION_HEADING_WORDS: frozenset[str] = frozenset({
 def preprocess_resume_text(text: str) -> str:
     """Normalize LLM resume text before parsing.
 
-    Two transformations applied in order:
+    Transformations applied in order:
 
     1. Remove "Current Date: \u2026" lines (the LLM sometimes appends a timestamp
        that must never appear in rendered output).
+
+    1b. Split glued headings: "EDUCATIONReally Great University" \u2192 two lines
+       ("EDUCATION" + "Really Great University") when the caps prefix is a
+       known section heading.
 
     2. Merge "title-line\\ncompany|date-line" pairs into a single
        "title | company | date" role-header line so that ``parse_llm_output``
@@ -89,6 +100,29 @@ def preprocess_resume_text(text: str) -> str:
 
     # 1. Drop "Current Date:" lines
     lines = [line for line in lines if not _CURRENT_DATE_RE.match(line)]
+
+    # 1b. Split glued headings: an ALL-CAPS known heading fused to the next
+    # line's content ("EDUCATIONReally Great University") becomes two lines so
+    # the heading is recognised as a section boundary instead of the whole
+    # line polluting the preceding section as a bullet.
+    split_lines: list[str] = []
+    for line in lines:
+        m = _GLUED_HEADING_RE.match(line.strip())
+        if (
+            m
+            and m.group(1).strip().lower() in _ALL_KNOWN
+            # Never split summary-type prefixes: templates glue "SUMMARY" runs
+            # onto arbitrary content ("SUMMARYMaster Degree of Project
+            # Engineering"), and splitting one creates a phantom summary
+            # section that gets injected into the template's summary slot,
+            # duplicating content that another section already holds verbatim.
+            and _classify(m.group(1)) != "summary"
+        ):
+            split_lines.append(m.group(1).strip())
+            split_lines.append(m.group(2))
+        else:
+            split_lines.append(line)
+    lines = split_lines
 
     # 2. Merge role title + company|date onto one line
     result: list[str] = []
@@ -152,7 +186,7 @@ def _normalize_letter_spaced(s: str) -> str:
 
 _EXPERIENCE_NAMES: frozenset[str] = frozenset({
     "experience", "experiences", "work experience", "professional experience",
-    "employment history", "employment", "career history",
+    "employment history", "employment", "employment summary", "career history",
     "work history", "professional background",
 })
 _SUMMARY_NAMES: frozenset[str] = frozenset({
@@ -171,7 +205,7 @@ _SKILLS_NAMES: frozenset[str] = frozenset({
 })
 _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
-    "educational background", "degrees",
+    "educational background", "educational history", "degrees",
 })
 _CERTIFICATIONS_NAMES: frozenset[str] = frozenset({
     "certifications", "certification", "licenses", "license",
@@ -400,15 +434,16 @@ def parse_llm_output(text: str) -> list[LlmSection]:
                 and cur_role is None
                 and bool(current.body_lines)
             )
-            # Inside an experience role that already has meta_lines, suppress the
-            # title-case fallback.  Sub-titles like "Software Engineer" (a role
-            # promotion within a company) have 2 title-case words but are NOT
-            # new section headings — they are meta content for the current role.
-            in_experience_role_with_meta = (
+            # Inside any active experience role, suppress the title-case fallback.
+            # Company names like "Lamna Healthcare" or "Wholeness Healthcare" are
+            # 2 title-case words that appear immediately after a role header line;
+            # they are company names (meta content), not new section headings.
+            # Known headings in _ALL_KNOWN are still recognised via the restricted
+            # check below, so real sections are not missed.
+            in_experience_role = (
                 cur_role is not None
-                and bool(cur_role.meta_lines)
             )
-            if in_roleless_experience or in_section_with_body or in_experience_role_with_meta:
+            if in_roleless_experience or in_section_with_body or in_experience_role:
                 is_heading = bool(stripped) and (
                     stripped.lower() in _ALL_KNOWN
                     or _normalize_letter_spaced(stripped) in _ALL_KNOWN

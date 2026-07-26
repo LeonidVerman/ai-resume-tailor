@@ -30,9 +30,13 @@ not interleaved with main-column content.
 """
 from __future__ import annotations
 
+import logging
 import re
 from collections import Counter
 from dataclasses import dataclass, field
+
+log = logging.getLogger(__name__)
+_geo_log = logging.getLogger("tailor.geometry")
 
 from tailor.compiler.models import (
     LayoutProfile,
@@ -43,6 +47,7 @@ from tailor.compiler.models import (
     ResumeSection,
     RoleEntry,
 )
+from tailor.compiler.pdf_text_normalizer import normalize_spans as _normalize_spans
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -491,6 +496,8 @@ def _pixel_sample_col_bg(
     r, g, b = dominant
     if (r + g + b) / 3 >= 225:
         return None
+    if (r + g + b) / 3 < 15:  # near-black → text pixels, not a sidebar background
+        return None
     return f"{r:02x}{g:02x}{b:02x}"
 
 
@@ -540,6 +547,10 @@ def _extract_col_info(
         # Skip full-width bands (header/footer bars spanning >80% page width) —
         # they are not column backgrounds.
         if (x1 - x0) > pw * 0.80:
+            continue
+        # Skip rects that start below the top 40% of the page — sidebar
+        # backgrounds always start near the top; lower rects are decorative.
+        if y0 > ph * 0.40:
             continue
         hex_color = _fitz_color_to_hex(fill)
         if hex_color is None:
@@ -838,29 +849,39 @@ def _extract_decorative_vector_images(page) -> "list":
         if hex_color is None:
             continue
 
-        # Skip near-white fills (nothing to overlay)
         r_c = int(hex_color[0:2], 16)
         g_c = int(hex_color[2:4], 16)
         b_c = int(hex_color[4:6], 16)
-        if (r_c + g_c + b_c) / 3 >= 240:
-            continue
+
+        # Evaluate full-page first so cream/near-white full-page backgrounds (avg ≥ 240
+        # but min < 240) are not dropped by the partial-shape near-white filter below.
+        _is_full_page = w >= pw * 0.85 and h >= ph * 0.85
+
+        if _is_full_page:
+            # Near-white full-page shape → skip (virtual canvas, no visual contribution)
+            if min(r_c, g_c, b_c) > 240:
+                continue
+            category = "full_page_bg"
+        else:
+            # Skip near-white partial fills (nothing to overlay on a white background)
+            if (r_c + g_c + b_c) / 3 >= 240:
+                continue
+            # Normal classification for partial shapes
+            is_full_w = w > pw * 0.75
+            is_sidebar = (x0 < pw * 0.10 or x1 > pw * 0.90) and w < pw * 0.65 and h > ph * 0.12
+            if is_full_w and y0 < ph * 0.20:
+                category = "header_band"
+            elif is_full_w and y1 > ph * 0.75:
+                category = "footer_band"
+            elif is_sidebar:
+                category = "sidebar_bg"
+            else:
+                category = "body_decor"
 
         key = (round(x0), round(y0), round(x1), round(y1))
         if key in seen:
             continue
         seen.add(key)
-
-        # Classify
-        is_full_w = w > pw * 0.75
-        is_sidebar = (x0 < pw * 0.10 or x1 > pw * 0.90) and w < pw * 0.65 and h > ph * 0.12
-        if is_full_w and y0 < ph * 0.20:
-            category = "header_band"
-        elif is_full_w and y1 > ph * 0.75:
-            category = "footer_band"
-        elif is_sidebar:
-            category = "sidebar_bg"
-        else:
-            category = "body_decor"
 
         try:
             png_bytes = _make_solid_color_png(w, h, hex_color)
@@ -1163,25 +1184,53 @@ def _extract_page_images(fitz_doc, page_index: int = 0) -> "list":
         x0 = float(bbox.x0)
         y0 = float(bbox.y0)
 
-        # --- Filtering ---
+        # --- Filtering / Classification ---
+        # Fix 13: Distinguish blank virtual-canvas images from decorative full-page
+        # backgrounds.  Previously all images ≥85% page size were skipped, which
+        # silently dropped legitimate decorative backgrounds (sample 13 gradient).
+        # Now we sample the center pixel: near-white (luminance > 200) → skip,
+        # otherwise preserve as 'full_page_bg' behind-text floating image.
+        category = ""
         if bw >= pw * 0.85 and bh >= ph * 0.85:
-            continue  # full-page background
+            try:
+                _pix_check = _fitz.Pixmap(fitz_doc, xref)
+                if _pix_check.n > 4 or _pix_check.colorspace != _fitz.csRGB:
+                    _pix_check = _fitz.Pixmap(_fitz.csRGB, _pix_check)
+                # Sample a 3×3 grid at 10 %/50 %/90 % of width and height.
+                # A single center-pixel check incorrectly drops templates whose
+                # center is white but whose edges/corners carry decorative color
+                # (e.g. watercolor brush strokes).  Using grid points at 10 %
+                # from the edges catches corner decorations while still skipping
+                # truly blank canvases (every sampled point near-white).
+                _pw2, _ph2 = _pix_check.width, _pix_check.height
+                _sample_pts = [
+                    (int(_pw2 * fx), int(_ph2 * fy))
+                    for fx in (0.10, 0.50, 0.90)
+                    for fy in (0.10, 0.50, 0.90)
+                ]
+                if all(
+                    min(_pix_check.pixel(_sx, _sy)[:3]) > 240
+                    for _sx, _sy in _sample_pts
+                ):
+                    continue  # all 9 sampled points near-white → blank canvas, skip
+                category = "full_page_bg"
+            except Exception:
+                continue  # cannot sample → skip safely
 
-        if bw < 25.0 or bh < 25.0:
-            continue  # tiny icon (handled by _extract_icon_map)
+        if not category:
+            if bw < 25.0 or bh < 25.0:
+                continue  # tiny icon (handled by _extract_icon_map)
+            if bh < 4.0:
+                continue  # separator / ruling line
 
-        if bh < 4.0:
-            continue  # separator / ruling line
-
-        # --- Classification ---
-        aspect = max(bw, bh) / max(min(bw, bh), 1.0)
-        is_squarish = aspect < 2.5
-        if is_squarish and bw < pw * 0.45 and bh < ph * 0.40:
-            category = "profile_photo"
-        elif y0 < ph * 0.25 or (y0 + bh) > ph * 0.78:
-            category = "header_footer_decor"
-        else:
-            category = "body_decor"
+            aspect = max(bw, bh) / max(min(bw, bh), 1.0)
+            is_squarish = aspect < 2.5
+            if is_squarish and bw < pw * 0.45 and bh < ph * 0.40:
+                category = "profile_photo"
+            elif y0 < ph * 0.25 or (y0 + bh) > ph * 0.78:
+                category = "header_footer_decor"
+            else:
+                category = "body_decor"
 
         # --- Extraction ---
         try:
@@ -1308,18 +1357,33 @@ def _extract_layout(doc) -> LayoutProfile:
                     for s in l.get("spans", [])
                 ).strip())
 
-            _right_xs = [b["bbox"][0] for b in blocks
-                         if b.get("type") == 0 and b["bbox"][0] >= split_x and b["bbox"][1] >= _top_cut]
-            _right_chars = sum(_block_chars(b) for b in blocks
-                               if b.get("type") == 0 and b["bbox"][0] >= split_x and b["bbox"][1] >= _top_cut)
-            _left_chars  = sum(_block_chars(b) for b in blocks
-                               if b.get("type") == 0 and b["bbox"][0] < split_x  and b["bbox"][1] >= _top_cut)
+            # Count per span (not per block) so that wide merged blocks
+            # containing both left and right content (parallel-column layouts)
+            # are correctly classified.
+            _right_xs: list[float] = []
+            _right_chars = 0
+            _left_chars = 0
+            for _sb in blocks:
+                if _sb.get("type") != 0 or _sb["bbox"][1] < _top_cut:
+                    continue
+                for _sl in _sb.get("lines", []):
+                    for _ss in _sl.get("spans", []):
+                        _ssx0 = float(_ss["bbox"][0])
+                        _sst = _ss.get("text", "").strip()
+                        if _ssx0 >= split_x:
+                            _right_chars += len(_sst)
+                            _right_xs.append(_ssx0)
+                        else:
+                            _left_chars += len(_sst)
             _right_range = (max(_right_xs) - min(_right_xs)) if len(_right_xs) > 1 else 0
 
             # Suppress when right zone is thin: few chars, narrow x-span, and
             # left zone dominates in character count.
+            # Threshold: 150 chars rather than 200 so that a narrow SKILLS
+            # sidebar (~10 items, ~150–200 chars) is not suppressed when it
+            # falls in the 60–80 % x-range zone introduced by the 0.80 guard.
             if (
-                _right_chars < 200
+                _right_chars < 150
                 and _right_range < 100
                 and _left_chars > _right_chars * 2.5
             ):
@@ -1336,6 +1400,21 @@ def _extract_layout(doc) -> LayoutProfile:
         left_bg = right_bg = None
         col_boundary = None
 
+    # Infer semantic table layout mode (B1).
+    # "synchronized_rows" is set later in parse_pdf after section_row_table is known.
+    table_layout_mode: str | None = None
+    if col_boundary is not None:
+        left_frac = (col_boundary / rect.width) if rect.width > 0 else 0.5
+        if left_bg is not None or right_bg is not None:
+            # Column with a background colour → visually distinct coloured sidebar
+            table_layout_mode = "sidebar_layout"
+        elif left_frac <= 0.40 or left_frac >= 0.60:
+            # Notably asymmetric column widths → narrow sidebar on one side
+            table_layout_mode = "sidebar_layout"
+        else:
+            # Roughly balanced columns with no background → independent flows
+            table_layout_mode = "independent_columns"
+
     return LayoutProfile(
         page_width_pt=rect.width,
         page_height_pt=rect.height,
@@ -1350,6 +1429,7 @@ def _extract_layout(doc) -> LayoutProfile:
         right_col_width_twips=right_col_width_twips,
         left_col_bg_color=left_bg,
         right_col_bg_color=right_bg,
+        table_layout_mode=table_layout_mode,
     )
 
 
@@ -1460,6 +1540,22 @@ def _detect_column_split(
         if cnt < 2:
             if any(abs(rx0 - k) <= 5 for k in _kept):
                 _kept.add(rx0)
+    # Cluster-based fallback: group x0 positions by 15-pt tolerance; if a
+    # cluster's total block count >= 2, keep all positions in the cluster.
+    # This catches centered columns where each block has a unique x0 but all
+    # left-column blocks cluster in the left portion of the page (e.g. a
+    # template with CONTACT / EDUCATION / SKILLS centered in a narrow sidebar).
+    _sorted_x0s = sorted(_x0_freq.keys())
+    _cl: list[int] = []
+    for _pos in _sorted_x0s:
+        if _cl and _pos - _cl[-1] <= 15:
+            _cl.append(_pos)
+        else:
+            if _cl and sum(_x0_freq[p] for p in _cl) >= 2:
+                _kept.update(_cl)
+            _cl = [_pos]
+    if _cl and sum(_x0_freq[p] for p in _cl) >= 2:
+        _kept.update(_cl)
     x0s = sorted(_kept)
     if len(x0s) < 2:
         return None
@@ -1474,18 +1570,49 @@ def _detect_column_split(
     # to produce a large secondary gap further to the right (e.g. x=[55,237,…]
     # with a gap at 55→237 and an unrelated indent gap at 271→389, which is
     # entirely within the right column and should not veto the sidebar split).
+    #
+    # Vertical-span exemption: a gap whose right side (x ≥ right_edge) only
+    # spans a small fraction of the body height is a localised multi-column
+    # footer row (e.g. EDUCATION | SKILLS | INTERESTS at the page bottom) rather
+    # than a true 3rd body column.  Only count gaps where the right-side content
+    # spans ≥ 30 % of the page height towards the adjacent-gap count.
     _first_right: int | None = None
     _adjacent_sig = 0
+    _body_top_3col = page_height * 0.15 if page_height > 0 else 0.0
+    _body_bot_3col = page_height * 0.90 if page_height > 0 else float("inf")
     for _j in range(len(x0s) - 1):
+        _gap_size = x0s[_j + 1] - x0s[_j]
+        _right_cand = x0s[_j + 1]
         if (
-            x0s[_j + 1] - x0s[_j] >= min_gap
-            and page_width * 0.20 <= x0s[_j + 1] <= page_width * 0.70
+            _gap_size >= min_gap
+            and page_width * 0.20 <= _right_cand <= page_width * 0.70
         ):
-            if _first_right is None:
-                _first_right = x0s[_j + 1]
-                _adjacent_sig = 1
-            elif x0s[_j] <= _first_right:
-                _adjacent_sig += 1
+            # Only count as a body-column boundary when content at this x
+            # spans a meaningful fraction of the page height.  Localised
+            # bottom-row sub-columns (< 30 % span) are excluded.
+            _gap_is_body_col = True
+            if page_height > 0:
+                _rc = [
+                    b for b in blocks
+                    if b.get("type") == 0
+                    and round(b["bbox"][0]) >= _right_cand
+                    and b["bbox"][1] >= _body_top_3col
+                    and b["bbox"][3] <= _body_bot_3col
+                ]
+                if _rc:
+                    _ry_span = (
+                        max(b["bbox"][3] for b in _rc)
+                        - min(b["bbox"][1] for b in _rc)
+                    ) / page_height
+                    _gap_is_body_col = _ry_span >= 0.30
+                else:
+                    _gap_is_body_col = False
+            if _gap_is_body_col:
+                if _first_right is None:
+                    _first_right = _right_cand
+                    _adjacent_sig = 1
+                elif x0s[_j] <= _first_right:
+                    _adjacent_sig += 1
     if _adjacent_sig >= 2:
         return None
     # Blocks spanning ≥ 45 % of the page width are treated as cross-column
@@ -1499,7 +1626,7 @@ def _detect_column_split(
     for i in range(len(x0s) - 1):
         gap = x0s[i + 1] - x0s[i]
         right_edge = x0s[i + 1]
-        if gap >= min_gap and page_width * 0.20 <= right_edge <= page_width * 0.70:
+        if gap >= min_gap and page_width * 0.20 <= right_edge <= page_width * 0.80:
             # Require the right-side content cluster to span a meaningful
             # fraction of the page height so that a handful of right-aligned
             # header items (contact, date) don't trigger false column detection.
@@ -1532,7 +1659,7 @@ def _detect_column_split(
             # cross-column design elements, not evidence of a single column.
             bridge_x1_threshold = right_edge * 1.05
             bridging = any(
-                b["bbox"][0] <= x0s[i]
+                round(b["bbox"][0]) <= x0s[i]
                 and b["bbox"][2] >= bridge_x1_threshold
                 and b["bbox"][1] >= top_cutoff
                 and (b["bbox"][2] - b["bbox"][0]) < wide_block_min
@@ -1566,6 +1693,103 @@ def _detect_column_split(
                     return x0_mid
                 # No non-wide, non-footer content left of the gap: only full-width
                 # blocks or footer items on the left — not a real sidebar column.
+
+    # Secondary detection: right sidebar by vertical content band.
+    # Used when the gap-based method fails because wide body text blocks bridge
+    # the gap (e.g. experience paragraphs that physically span into the right
+    # sidebar x-zone even though they visually stay in the left column).
+    # NOTE: the tertiary (parallel-column) detection runs after this one and
+    # is only reached when both the primary gap detection and this secondary
+    # sidebar detection fail.
+    #
+    # Look for body spans with x0 in [45%, 85%] of page width that collectively
+    # span a significant vertical extent AND are not simply right-aligned dates
+    # (date columns pair their items tightly with left-column content at the same Y).
+    if page_height > 0:
+        _body_h = max(page_height - top_cutoff, 1.0)
+        _sbar_lo = page_width * 0.45
+        _sbar_hi = page_width * 0.85
+        _sbar_spans: list[tuple[float, float]] = []  # (x0, y0)
+        _left_y_buckets: set[int] = set()
+        for _blk in blocks:
+            if _blk.get("type") != 0 or _blk["bbox"][1] < top_cutoff:
+                continue
+            for _line in _blk.get("lines", []):
+                for _span in _line.get("spans", []):
+                    if not _span.get("text", "").strip():
+                        continue
+                    _sx0 = _span["bbox"][0]
+                    _sy0 = _span["bbox"][1]
+                    if _sy0 < top_cutoff:
+                        continue
+                    if _sbar_lo <= _sx0 <= _sbar_hi:
+                        _sbar_spans.append((_sx0, _sy0))
+                    elif _sx0 < page_width * 0.40:
+                        _left_y_buckets.add(round(_sy0 / 10))
+
+        if len(_sbar_spans) >= 3:
+            _sbar_ys = [y for _, y in _sbar_spans]
+            _sbar_coverage = (max(_sbar_ys) - min(_sbar_ys)) / _body_h
+            if _sbar_coverage >= 0.25:
+                # Guard: reject if the majority of sidebar spans are Y-paired
+                # with left-column content — that pattern is a date column, not
+                # a sidebar (dates appear alongside role headers at the same Y).
+                _paired = sum(
+                    1 for _, y in _sbar_spans
+                    if round(y / 10) in _left_y_buckets
+                )
+                if _paired / len(_sbar_spans) < 0.45:
+                    # Require at least 3 distinct Y buckets (20 pt grid).
+                    _y_buckets = {round(y / 20) for _, y in _sbar_spans}
+                    if len(_y_buckets) >= 3:
+                        _min_x0 = min(x for x, _ in _sbar_spans)
+                        _split = max(_min_x0 - 15.0, page_width * 0.20)
+                        if _split <= page_width * 0.85:
+                            return _split
+    # Tertiary detection: parallel two-column layout.
+    # Detects templates where PyMuPDF merges same-y left+right spans into
+    # single wide blocks (e.g. EDUCATION left / EDUCATION right at identical
+    # y-coordinates).  Right-column paragraphs have no section headings, so
+    # _redistribute_parallel_body (called after _group_sections) re-assigns
+    # them to the left-column sections by y-range.
+    if page_height > 0:
+        _wide_min = page_width * 0.40
+        _left_zone = page_width * 0.40
+        _right_zone = page_width * 0.50
+        _par_gaps: list[tuple[float, float]] = []  # (left_cluster_x1, right_cluster_x0)
+        for _blk in blocks:
+            if _blk.get("type") != 0 or _blk["bbox"][1] < top_cutoff:
+                continue
+            if (_blk["bbox"][2] - _blk["bbox"][0]) < _wide_min:
+                continue
+            _lx1s: list[float] = []
+            _rx0s: list[float] = []
+            for _line in _blk.get("lines", []):
+                for _span in _line.get("spans", []):
+                    if not _span.get("text", "").strip():
+                        continue
+                    _sx0, _sx1 = _span["bbox"][0], _span["bbox"][2]
+                    if _sx0 < _left_zone:
+                        _lx1s.append(_sx1)
+                    elif _sx0 > _right_zone:
+                        _rx0s.append(_sx0)
+            if _lx1s and _rx0s:
+                _par_gaps.append((max(_lx1s), min(_rx0s)))
+        if len(_par_gaps) >= 3:
+            _sorted_left = sorted(l for l, _ in _par_gaps)
+            _sorted_right = sorted(r for _, r in _par_gaps)
+            _med_left = _sorted_left[len(_sorted_left) // 2]
+            _med_right = _sorted_right[len(_sorted_right) // 2]
+            if _med_right - _med_left >= page_width * 0.05:
+                _split = (_med_left + _med_right) / 2.0
+                if page_width * 0.25 <= _split <= page_width * 0.75:
+                    log.debug(
+                        "PARALLEL_COLUMNS_DETECTED split_x=%.1f (%.0f%% of page) "
+                        "from %d wide-block gaps",
+                        _split, _split / page_width * 100, len(_par_gaps),
+                    )
+                    return _split
+
     return None
 
 
@@ -1584,6 +1808,12 @@ def _extract_paragraphs(
     paras: list[ParaModel] = []
     prev_block_y1: float | None = None
     hf_texts_lower = {t.lower() for t in hf_texts}
+    # Track whether we have seen the first known section heading.  Paragraphs
+    # before it (candidate name, job title) are header_paras whose accent colors
+    # are part of the template design and must be preserved.  Body paragraphs
+    # after the first section heading have their text_color stripped so LLM-
+    # generated content doesn't accidentally inherit template accent colors.
+    _seen_section_heading = False
     # layout.column_split_x is the visual sidebar boundary (drawing right-edge);
     # used as the authoritative right-column indent origin.
     layout_split_x = layout.column_split_x  # may be None
@@ -1649,8 +1879,42 @@ def _extract_paragraphs(
                 [b for b in blocks if b.get("type") == 0 and b["bbox"][0] >= split_x],
                 key=lambda b: b["bbox"][1],
             )
-            blocks = left_blks + right_blks
-            right_col_start_idx = len(left_blks)
+            # Parallel-body detection: when right-column body content (section
+            # headings) starts significantly above the first left-column body
+            # block (parallel date rows), all-left-then-all-right ordering
+            # puts dates before their section heading, breaking section parsing.
+            # In that case, keep the header area left-then-right but interleave
+            # the body blocks by y so section headings precede their parallel
+            # left-column companions.
+            _hdr_y = page.rect.height * 0.25
+            _left_body = [b for b in left_blks if b["bbox"][1] >= _hdr_y]
+            _right_body = [b for b in right_blks if b["bbox"][1] >= _hdr_y]
+            _left_body_min_y = (
+                min(b["bbox"][1] for b in _left_body)
+                if _left_body else float("inf")
+            )
+            # Interleave when right-body content starts 20+ pt above first left-body block
+            _parallel_body = _left_body and any(
+                b["bbox"][1] < _left_body_min_y - 20 for b in _right_body
+            )
+            if _parallel_body:
+                _left_hdr = [b for b in left_blks if b["bbox"][1] < _hdr_y]
+                _right_hdr = [b for b in right_blks if b["bbox"][1] < _hdr_y]
+                # Merge header blocks by y so right-column header content
+                # (title at y=83) is processed before left-column items that
+                # appear lower (contact block at y=158 whose phone span has
+                # col_id=right).  Without this, phone lands in right_raw
+                # before the title, pushing it to the wrong column position.
+                _hdr_merged = sorted(_left_hdr + _right_hdr, key=lambda b: b["bbox"][1])
+                _body = sorted(
+                    _left_body + _right_body,
+                    key=lambda b: (round(b["bbox"][1]), 0 if b["bbox"][0] < split_x else 1),
+                )
+                blocks = _hdr_merged + _body
+                right_col_start_idx = 0  # reset spacing at first block (header already sorted)
+            else:
+                blocks = left_blks + right_blks
+                right_col_start_idx = len(left_blks)
 
         # Merged-header-band detection: when NO right-column text block exists
         # in the top 22 % of the page the template uses a full-width header
@@ -1733,11 +1997,11 @@ def _extract_paragraphs(
 
             # Collect all spans and per-line texts
             all_spans: list[dict] = []
-            line_entries: list[tuple[str, list[dict], float, float, float]] = []  # (text, spans, line_y0, line_x0, line_y1)
+            line_entries: list[tuple[str, list[dict], float, float, float, float]] = []  # (text, spans, line_y0, line_x0, line_y1, line_x1)
 
             for line in blk.get("lines", []):
                 spans = line.get("spans", [])
-                line_text = "".join(s.get("text", "") for s in spans).strip()
+                line_text, _norm_artifact = _normalize_spans(spans)
                 if line_text:
                     # Collect per-line y0/y1 for accurate _has_bullet_dot matching
                     # and per-line space_before computation.
@@ -1745,6 +2009,7 @@ def _extract_paragraphs(
                     _line_y0 = float(_line_bbox[1]) if _line_bbox else 0.0
                     _line_y1 = float(_line_bbox[3]) if _line_bbox else _line_y0 + 12.0
                     _line_x0 = float(_line_bbox[0]) if _line_bbox else float(blk["bbox"][0])
+                    _line_x1 = float(_line_bbox[2]) if _line_bbox else float(blk["bbox"][2])
                     # Coalesce same-y-row fragments: PDFs with font-switch mid-line
                     # (e.g. hyperlinks, styled email addresses) produce multiple
                     # PyMuPDF "lines" at identical y bounds for one visual text row.
@@ -1767,17 +2032,18 @@ def _extract_paragraphs(
                         and _line_x0 - _prev_x1 < 20.0
                     ):
                         # Merge into the previous entry: sort by x0, concatenate.
-                        prev_text, prev_spans, prev_y0, prev_x0, prev_y1 = line_entries[-1]
+                        prev_text, prev_spans, prev_y0, prev_x0, prev_y1, prev_x1 = line_entries[-1]
                         if _line_x0 >= prev_x0:
                             merged_text = prev_text + " " + line_text
                             merged_x0 = prev_x0
                         else:
                             merged_text = line_text + " " + prev_text
                             merged_x0 = _line_x0
-                        line_entries[-1] = (merged_text.strip(), prev_spans + spans, prev_y0, merged_x0, prev_y1)
+                        merged_x1 = max(prev_x1, _line_x1)
+                        line_entries[-1] = (merged_text.strip(), prev_spans + spans, prev_y0, merged_x0, prev_y1, merged_x1)
                         all_spans.extend(spans)
                     else:
-                        line_entries.append((line_text, spans, _line_y0, _line_x0, _line_y1))
+                        line_entries.append((line_text, spans, _line_y0, _line_x0, _line_y1, _line_x1))
                         all_spans.extend(spans)
 
             if not line_entries:
@@ -1858,7 +2124,7 @@ def _extract_paragraphs(
             # inter-section spacing baked into the source PDF is preserved in
             # the output DOCX (critical for the evaluator's block-splitting).
             prev_line_y1_in_block: float | None = None
-            for line_idx, (line_text, line_spans, line_y0, line_x0, line_y1) in enumerate(line_entries):
+            for line_idx, (line_text, line_spans, line_y0, line_x0, line_y1, line_x1) in enumerate(line_entries):
                 # Skip per-line H/F matches (case-insensitive)
                 if (
                     line_text in hf_texts
@@ -1931,6 +2197,12 @@ def _extract_paragraphs(
                     inline_image_bytes=icon_png,
                     inline_image_size_pt=icon_size_pt,
                     y_top_pt=line_y0,
+                    x_pt=line_x0,
+                    y_pt=line_y0,
+                    width_pt=max(0.0, line_x1 - line_x0),
+                    height_pt=max(0.0, line_y1 - line_y0),
+                    page_num=page.number,
+                    block_id=f"p{page.number}_b{blk_idx}",
                 )
                 pm = ParaModel(
                     text=line_text,
@@ -1939,13 +2211,24 @@ def _extract_paragraphs(
                     paragraph_profile=profile,
                 )
                 pm.semantic = _infer_semantic(pm)
+                _geo_log.debug(
+                    "GEOMETRY_CAPTURED block=%s page=%d x=%.0f y=%.0f w=%.0f h=%.0f "
+                    "col=%s semantic=%s text=%.40r",
+                    profile.block_id, page.number,
+                    profile.x_pt, profile.y_pt, profile.width_pt, profile.height_pt,
+                    profile.column_id, pm.semantic, line_text,
+                )
                 # Content paragraphs (bullets, body text, date lines) should not carry
                 # text_color from the PDF template — those colors come from hyperlinks
                 # or author styling and must not bleed onto LLM-generated content.
                 # Section headings and role_headers keep their accent color (design intent).
+                # Header paragraphs before the first section heading (candidate name,
+                # job title) also keep their color — it is template design, not content.
                 # Bullet/paragraph colors are stripped here; any color that bleeds via
                 # clone_as archetypes is caught by the post-render sweep in pipeline.py.
-                if pm.semantic in ("bullet", "paragraph", "role_meta") and pm.paragraph_profile:
+                if pm.semantic == "section_heading":
+                    _seen_section_heading = True
+                if pm.semantic in ("bullet", "paragraph", "role_meta") and pm.paragraph_profile and _seen_section_heading:
                     pm.paragraph_profile.text_color = None
                 # Role headers can have mixed-bold text (e.g. "Title | Company | Date"
                 # where only the title is bold).  Build per-run (text, bold) pairs
@@ -2110,6 +2393,13 @@ def _infer_semantic(pm: ParaModel) -> str:
     # Section heading: bold, short, title-case, 2+ words, larger or spaced.
     # Exclude commas: company/location lines ("Software Inc, Vancouver") have
     # commas; resume section headings do not.
+    # Exclude lines ending with a preposition/conjunction ("Graduated with",
+    # "University of") and lines ending with a mid-sentence period followed
+    # by more text ("Design." fragments from body sentences).
+    _HEADING_TRAILING_STOPWORDS = frozenset({
+        "with", "and", "the", "for", "of", "in", "at", "to", "by",
+        "or", "a", "an", "on", "as", "is", "are", "was", "were",
+    })
     if (
         bold
         and len(text) <= 60
@@ -2118,7 +2408,10 @@ def _infer_semantic(pm: ParaModel) -> str:
         and not text.startswith(("-", "•", "·", "–", "*"))
     ):
         words = text.split()
-        if len(words) >= 2:
+        _last_word = words[-1].lower().rstrip(".,;:") if words else ""
+        # Sentence fragments end with "." — real headings never do.
+        _ends_with_period = bool(words) and words[-1].endswith(".")
+        if len(words) >= 2 and _last_word not in _HEADING_TRAILING_STOPWORDS and not _ends_with_period:
             cap_ratio = (
                 sum(1 for w in words if w and w[0].isupper()) / len(words)
             )
@@ -2418,10 +2711,18 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 pre_header_meta.clear()
             state = "header"
         elif state == "init":
-            if s == "paragraph" and not has_pipe_role_headers:
+            # Allow Pattern B (date already buffered → paragraph is the title)
+            # even when pipe-format role_headers exist elsewhere in this section.
+            # Sections can mix formats: the first role may lack a pipe separator
+            # while later roles use "Title | Company" (e.g. sample 27).
+            _allow_with_pipe = bool(pre_header_meta)
+            if s == "paragraph" and (not has_pipe_role_headers or _allow_with_pipe):
                 _txt_init = pm.text.strip()
                 _can_promote = (
-                    has_explicit_bullets
+                    # When pipe-format roles exist, only promote via an explicit
+                    # buffered date (Pattern B) — suppress heuristics that could
+                    # mis-classify preamble text as a role title.
+                    (not has_pipe_role_headers and has_explicit_bullets)
                     # Pattern B: a date line was already buffered — this paragraph
                     # is the role title that follows the date.
                     or bool(pre_header_meta)
@@ -2429,7 +2730,8 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                     # starts with a capital letter (job titles start with capitals;
                     # preamble/description fragments start with lowercase).
                     or (
-                        has_role_meta
+                        not has_pipe_role_headers
+                        and has_role_meta
                         and _peek(idx + 1) == "role_meta"
                         and bool(_txt_init) and _txt_init[0].isupper()
                     )
@@ -2456,9 +2758,28 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 else:
                     # Not promotable — buffer as pre-role meta so it is not lost.
                     pre_header_meta.append(pm)
-            elif s == "role_meta" and not has_pipe_role_headers:
-                # Pattern B: date appears before the title — buffer it.
+            elif s == "paragraph" and has_pipe_role_headers and _peek(idx + 1) == "role_meta":
+                # Company/employer name preceding a date line in a section that
+                # uses pipe-format role_headers.  Buffer so it becomes a meta line
+                # for the upcoming role (e.g. "Company Name, Inc., New York, NY"
+                # immediately before "Jan 2015 - present" in sample 5).
                 pre_header_meta.append(pm)
+            elif s == "role_meta":
+                # Pattern B: date appears before the title — buffer it.
+                # Buffer even when pipe-format role headers exist elsewhere in
+                # this section (mixed-format sections need date signal for the
+                # non-pipe roles that precede the pipe-format ones).
+                pre_header_meta.append(pm)
+            elif s == "bullet" and pre_header_meta and not has_pipe_role_headers:
+                # Pattern B continuation: date was buffered and the role title
+                # carries bullet styling (common when a PDF template uses the
+                # same bullet list style for the title line as for the bullets
+                # below it).  Promote this bullet as the role header.
+                header = pm
+                meta.extend(pre_header_meta)
+                pre_header_meta.clear()
+                used_pattern_b = True
+                state = "header"
         elif state == "header":
             if s == "role_meta":
                 if used_pattern_b:
@@ -2636,6 +2957,13 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                     pm.semantic = "role_header"
                     header = pm
                     state = "header"
+                elif has_pipe_role_headers and _peek(idx + 1) == "role_meta":
+                    # Company/employer name appearing before the next role's date
+                    # line in a pipe-format section.  Flush the current role and
+                    # buffer the company name so it becomes meta for the next role.
+                    _flush()
+                    pre_header_meta.append(pm)
+                    state = "init"
                 elif len(bullets) >= 2:
                     # Established list (≥2 bullets): promote as continuation.
                     pm.semantic = "bullet"
@@ -2668,10 +2996,208 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
     return roles
 
 
+def _merge_split_section_headings(paras: list[ParaModel]) -> list[ParaModel]:
+    """Merge consecutive short ALL-CAPS paragraph pairs that form a known heading.
+
+    Handles templates where a section heading like "WORK HISTORY" is split
+    across two PDF text blocks: ["WORK", "HISTORY"].  Each word alone is not
+    recognised as a section heading, but together they are.
+
+    Only paragraph-typed (non-heading, non-bullet) items are candidates.
+    The check is safe because the combined text must appear verbatim in
+    _ALL_HEADING_NAMES_NOSPACE, making accidental merges very unlikely.
+    """
+    result: list[ParaModel] = []
+    _alpha_upper = re.compile(r"^[A-Z\s\xa0]+$")
+    for pm in paras:
+        _txt = pm.text.strip()
+        if (
+            pm.semantic == "paragraph"
+            and _txt
+            and len(_txt) < 20
+            and _alpha_upper.match(_txt)
+            and result
+            and result[-1].semantic == "paragraph"
+        ):
+            _prev_txt = result[-1].text.strip()
+            if (
+                _prev_txt
+                and len(_prev_txt) < 20
+                and _alpha_upper.match(_prev_txt)
+                and _normalize_heading_text(_prev_txt + _txt) in _ALL_HEADING_NAMES_NOSPACE
+            ):
+                _prev = result.pop()
+                _merged = _prev.with_text(_prev_txt + " " + _txt)
+                _merged.semantic = "section_heading"
+                result.append(_merged)
+                continue
+        result.append(pm)
+    return result
+
+
+def _rescue_cross_col_paras(
+    left_secs: "list[ResumeSection]",
+    right_secs: "list[ResumeSection]",
+) -> None:
+    """Fix region ownership when PDFs store blocks in column-cell order.
+
+    Some PDFs (e.g. templates with internal Education-Summary sub-tables)
+    store their right sub-column blocks *after* the sidebar section heading
+    in the document's byte-order.  This causes `_group_sections` to assign
+    those paragraphs to the wrong section (e.g. Education bullets land in
+    Contact Info body).
+
+    Detection: a body paragraph whose y_top_pt is ≥ 30 pt *above* its
+    section heading's y_top_pt was placed there by column-cell ordering, not
+    by semantic proximity.  We re-attribute it to the left-column section
+    whose y-range best contains the paragraph.
+
+    Operates in-place; removed paragraphs' column_id is set to "left".
+    """
+    if not left_secs or not right_secs:
+        return
+
+    # Build y-extent for each left section (heading y + body para y-values).
+    left_extents: list[tuple[float, float, "ResumeSection"]] = []
+    for ls in left_secs:
+        ys: list[float] = []
+        if ls.heading.paragraph_profile and ls.heading.paragraph_profile.y_top_pt:
+            ys.append(ls.heading.paragraph_profile.y_top_pt)
+        for pm in ls.body_paras:
+            if pm.paragraph_profile and pm.paragraph_profile.y_top_pt:
+                ys.append(pm.paragraph_profile.y_top_pt)
+        if ys:
+            left_extents.append((min(ys), max(ys), ls))
+
+    if not left_extents:
+        return
+
+    for rs in right_secs:
+        heading_y = (
+            rs.heading.paragraph_profile.y_top_pt
+            if rs.heading.paragraph_profile else 0.0
+        )
+        normal_body: list["ParaModel"] = []
+        for pm in rs.body_paras:
+            para_y = pm.paragraph_profile.y_top_pt if pm.paragraph_profile else 0.0
+            if para_y > 0 and heading_y > 0 and para_y < heading_y - 30.0:
+                # Paragraph is significantly above its section heading →
+                # mis-assigned due to column-cell ordering.  Find the best
+                # left-column owner by y-range containment.
+                best: "ResumeSection | None" = None
+                for y_min, y_max, ls in left_extents:
+                    # Allow 40 pt tolerance on each side.
+                    if y_min - 40.0 <= para_y <= y_max + 40.0:
+                        best = ls
+                        break
+                if best is not None:
+                    if pm.paragraph_profile is not None:
+                        pm.paragraph_profile.column_id = "left"
+                    best.body_paras.append(pm)
+                    continue  # do not keep in right section
+            normal_body.append(pm)
+        rs.body_paras = normal_body
+
+
+def _redistribute_parallel_body(
+    right_paras: list[ParaModel],
+    left_secs: list[ResumeSection],
+) -> None:
+    """Assign headingless right-column paragraphs to left-column sections by y-position.
+
+    For parallel two-column layouts where section headings only appear in the
+    left column, _group_sections returns all right-column content in right_hdrs
+    (no right sections found). This function assigns each right-column paragraph
+    to the left section whose heading y is closest and at or below the
+    paragraph's y. Paragraphs at y=0 (geometry not captured) go to the first
+    section. Operates in-place.
+    """
+    if not right_paras or not left_secs:
+        return
+
+    # Build (heading_y, section) pairs sorted ascending by heading y.
+    anchors: list[tuple[float, ResumeSection]] = []
+    for sec in left_secs:
+        hy = 0.0
+        if sec.heading.paragraph_profile:
+            hy = sec.heading.paragraph_profile.y_top_pt or 0.0
+        anchors.append((hy, sec))
+    anchors.sort(key=lambda t: t[0])
+
+    for pm in right_paras:
+        para_y = 0.0
+        if pm.paragraph_profile:
+            para_y = pm.paragraph_profile.y_top_pt or 0.0
+
+        # Walk anchors in ascending y order; take the last one whose heading
+        # y ≤ para_y + 20 pt (tolerance for slight y-misalignment between
+        # heading text and the first right-column line at the same band).
+        target_sec = anchors[0][1]
+        for hy, sec in anchors:
+            if hy <= para_y + 20.0:
+                target_sec = sec
+        target_sec.body_paras.append(pm)
+
+
+def _fix_sibling_section_body_attribution(sections: "list[ResumeSection]") -> None:
+    """Re-attribute body_paras among same-column sections at the same heading y.
+
+    When multiple right-column sections have headings at the same y position
+    (e.g. 'SKILLS' at x=49.8 and 'INTERESTS' at x=220.5 both at y=543.4),
+    _group_sections assigns ALL body_paras to the LAST sibling because sections
+    are opened sequentially in extraction order.  This function redistributes
+    body_paras to the sibling whose heading x is closest to each para's x.
+    Operates in-place.
+    """
+    if len(sections) < 2:
+        return
+
+    # Group sections by (column_id, bucketed_y) — only reshuffle within same col.
+    _y_groups: "dict" = {}
+    for _s in sections:
+        _pp = _s.heading.paragraph_profile
+        if _pp is None:
+            continue
+        _hy = _pp.y_top_pt or 0.0
+        _hcol = _pp.column_id or ""
+        _ykey = round(_hy / 5.0) * 5  # 5 pt bucket
+        _gkey = (_hcol, _ykey)
+        _y_groups.setdefault(_gkey, []).append(_s)
+
+    for _grp in _y_groups.values():
+        if len(_grp) < 2:
+            continue
+        _grp.sort(
+            key=lambda _s: (_s.heading.paragraph_profile.indent_left_pt or 0.0)
+            if _s.heading.paragraph_profile else 0.0
+        )
+        _hxs = [
+            (_s.heading.paragraph_profile.indent_left_pt or 0.0)
+            if _s.heading.paragraph_profile else 0.0
+            for _s in _grp
+        ]
+        # Collect ALL body_paras, then redistribute by x-proximity to heading x.
+        _all_body: "list" = []
+        for _s in _grp:
+            _all_body.extend(_s.body_paras)
+            _s.body_paras = []
+        for _pm in _all_body:
+            _px = (_pm.paragraph_profile.indent_left_pt or 0.0) if _pm.paragraph_profile else 0.0
+            _best_idx = 0
+            _best_dist = abs(_px - _hxs[0])
+            for _i, _hx in enumerate(_hxs[1:], 1):
+                _d = abs(_px - _hx)
+                if _d < _best_dist:
+                    _best_dist = _d
+                    _best_idx = _i
+            _grp[_best_idx].body_paras.append(_pm)
+
+
 def _group_sections(
     paras: list[ParaModel],
 ) -> tuple[list[ParaModel], list[ResumeSection]]:
     """Split flat paragraph list into header_paras + sections."""
+    paras = _merge_split_section_headings(paras)
     header_paras: list[ParaModel] = []
     sections: list[ResumeSection] = []
     current: ResumeSection | None = None
@@ -2695,8 +3221,22 @@ def _group_sections(
             # comparison so ALL-CAPS, letter-spaced, and numbered headings are
             # matched the same way as in _infer_semantic.
             if not found_section and _normalize_heading_text(pm.text) not in _ALL_HEADING_NAMES_NOSPACE:
-                header_paras.append(pm)
-                continue
+                # Try combining with the last header_para if it is also a
+                # section_heading — handles split headings like "WORK" + "HISTORY"
+                # → "WORK HISTORY" that are each unrecognised individually.
+                if (
+                    header_paras
+                    and header_paras[-1].semantic == "section_heading"
+                    and _normalize_heading_text(header_paras[-1].text + pm.text)
+                    in _ALL_HEADING_NAMES_NOSPACE
+                ):
+                    _prev = header_paras.pop()
+                    pm = _prev.with_text(_prev.text.strip() + " " + pm.text.strip())
+                    pm.semantic = "section_heading"
+                    # Fall through to section processing below.
+                else:
+                    header_paras.append(pm)
+                    continue
 
             # Two-column / table PDF layout: the experience section label
             # ("WORK EXPERIENCE") appears alone as a heading with no body
@@ -3159,6 +3699,7 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
             # Filter contact/footer items (phone, email) from the label list;
             # they are not section headings and would create spurious sections.
             layout.section_row_table = True
+            layout.table_layout_mode = "synchronized_rows"
             label_left = [pm for pm in merged_left_raw if not _FOOTER_ITEM_RE.search(pm.text)]
             merged = _interleave_section_label_column(label_left, right_raw)
             above_hdrs, above_secs = _group_sections(above_raw)
@@ -3169,6 +3710,67 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
             above_hdrs, above_secs = _group_sections(above_raw)
             left_hdrs,  left_secs  = _group_sections(left_raw)
             right_hdrs, right_secs = _group_sections(right_raw)
+            # Cross-column ownership rescue: PDFs that store blocks in
+            # column-cell order (not y-order) may place the right sub-column
+            # of an Education Summary table *after* the Contact Info heading
+            # in the block sequence.  Detect body paragraphs whose y_top_pt is
+            # significantly above their section heading's y and re-associate
+            # them with the contextual left-column section.
+            _rescue_cross_col_paras(left_secs, right_secs)
+            # Sibling-section body attribution: multiple sections in the same column
+            # at the same heading y (e.g. SKILLS and INTERESTS both at y=543) cause
+            # _group_sections to place ALL body_paras under the last sibling.  Fix by
+            # redistributing body_paras to the sibling with the closest heading x.
+            _fix_sibling_section_body_attribution(right_secs)
+            # Parallel-body redistribution: when the right column has no
+            # section headings (parallel-body layout where labels appear only
+            # on the left), redistribute right-column paragraphs into the left
+            # sections by y-range so they render as body content, not headers.
+            if not right_secs and right_hdrs and left_secs:
+                _redistribute_parallel_body(right_hdrs, left_secs)
+                right_hdrs = []
+            # Reverse parallel-body: left_hdrs has orphan role_meta (date) lines
+            # that belong to the right-column experience section.  This occurs
+            # when the template places dates in the left column alongside role
+            # titles in the right column, and the EXPERIENCE heading is only in
+            # the right column — so _group_sections(left_raw) never sees it and
+            # the dates fall into left_hdrs instead of experience body_paras.
+            #
+            # Guard 1 (primary): the left column must have NO experience section
+            # of its own.  If it does, the columns are independent and moving
+            # dates across would corrupt both sections.
+            #
+            # Guard 2 (y-overlap): orphan dates must start at or after the right
+            # EXPERIENCE heading y — dates that precede the heading belong to
+            # another section (e.g. education dates at the top of the left column).
+            if not any(s.semantic_type == "experience" for s in left_secs):
+                _exp_sec_r = next(
+                    (s for s in right_secs if s.semantic_type == "experience"), None
+                )
+                if _exp_sec_r is not None:
+                    def _para_y(pm: "ParaModel") -> float:
+                        pp = pm.paragraph_profile
+                        return pp.y_top_pt if pp and pp.y_top_pt else 0.0
+                    _exp_hdr_y = _para_y(_exp_sec_r.heading)
+                    _orphan_dates = [
+                        hp for hp in left_hdrs
+                        if hp.semantic == "role_meta" and _para_y(hp) >= _exp_hdr_y - 20.0
+                    ]
+                    if _orphan_dates:
+                        combined = list(_exp_sec_r.body_paras) + _orphan_dates
+                        combined.sort(key=lambda pm: (
+                            _para_y(pm),
+                            0 if pm.paragraph_profile and pm.paragraph_profile.column_id == "left" else 1,
+                        ))
+                        _exp_sec_r.body_paras = combined
+                        _finalise(_exp_sec_r)
+                        # All experience content is now in roles; clear body_paras so
+                        # the renderer does not double-render preamble filler alongside
+                        # role content (preamble paras that fall before the first date
+                        # are not consumed by _group_roles and would otherwise leak).
+                        _exp_sec_r.body_paras = []
+                        _orphan_date_ids = {id(hp) for hp in _orphan_dates}
+                        left_hdrs = [hp for hp in left_hdrs if id(hp) not in _orphan_date_ids]
             header_paras = above_hdrs + left_hdrs + right_hdrs
             sections     = above_secs + left_secs + right_secs
     else:
@@ -3184,6 +3786,9 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
         # Store on layout so the renderer can create a full-width header band
         # even for single-column PDFs (column_split_x=None).
         layout.header_bg_color = _hdr_bg_color
+        # A full-width dark header above independent body columns → header_body_split.
+        if layout.column_split_x is not None:
+            layout.table_layout_mode = "header_body_split"
         for _pm in header_paras:
             _pp = _pm.paragraph_profile
             if _pp is None:
@@ -3279,8 +3884,10 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     # Exception: paragraphs on a dark background (background_color set to a
     # non-white value) keep their text_color so white-on-dark text remains
     # visible after rendering.
-    def _clear_content_colors(paras: "list[ParaModel]") -> None:
+    def _clear_content_colors(paras: "list[ParaModel]", keep_template_colors: bool = False) -> None:
         for pm in paras:
+            if keep_template_colors:
+                continue  # header_paras are template design elements; preserve accent colors
             if pm.semantic in ("section_heading", "role_header") and pm.paragraph_profile:
                 continue  # keep accent colors on structural headings
             if pm.paragraph_profile:
@@ -3291,7 +3898,7 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
                     continue
                 pm.paragraph_profile.text_color = None
 
-    _clear_content_colors(header_paras)
+    _clear_content_colors(header_paras, keep_template_colors=True)
     for _sec in sections:
         _clear_content_colors(_sec.body_paras)
         for _role in _sec.roles:
@@ -3366,7 +3973,258 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     # Solid-color overlays from vector drawing regions (sidebars, header/footer bands).
     # Prepended so they render behind raster images and text.
     vector_images = _extract_decorative_vector_images(doc[0])
-    resume_doc.page_images = vector_images + raster_images
+    # Thin stroke-only rules (section dividers, decorative lines).
+    line_images = _extract_vector_lines(doc[0])
+
+    # Fix A: When a two-column layout with left column background color is detected,
+    # filter out vector images representing that column background.  The two-column
+    # table renderer (_render_pdf_two_col) already applies the color as w:shd cell
+    # shading; re-inserting the same region as a floating image creates a z-order
+    # conflict where a second dark shape appears over the content (sample 32).
+    # "body_decor" in the left-column area is also filtered — in templates like
+    # sample 32 the sidebar background spans two separate vector rects (a header
+    # portion and a body portion), and the body portion gets classified as body_decor.
+    if resume_doc.layout.column_split_x is not None:
+        _split_x = resume_doc.layout.column_split_x
+        _page_h = doc[0].rect.height
+        _before = len(vector_images)
+        # Always filter tall body_decor images in the column area — these are
+        # decorative background fills (e.g. sample 32's black lower-left rect) that
+        # belong to the original template design but should not appear as floating
+        # images over rendered content, regardless of whether cell shading is active.
+        vector_images = [
+            img for img in vector_images
+            if not (
+                img.category == "body_decor"
+                and img.x_pt + img.width_pt <= _split_x * 1.2
+                and img.height_pt >= _page_h * 0.30
+            )
+        ]
+        # Additional filtering when cell shading is active: the table renderer
+        # (_render_pdf_two_col) applies left_col_bg_color as w:shd cell shading,
+        # so floating images covering the same area add no value and create z-order
+        # conflicts (double-rendering the column background).
+        if resume_doc.layout.left_col_bg_color:
+            vector_images = [
+                img for img in vector_images
+                if not (img.category == "full_page_bg")
+                and not (
+                    img.category in ("sidebar_bg", "body_decor")
+                    and img.x_pt + img.width_pt <= _split_x * 1.2
+                    and img.height_pt >= _page_h * 0.30
+                ) and not (
+                    img.category in ("header_band", "footer_band")
+                    and img.height_pt >= _page_h * 0.30
+                )
+            ]
+        if len(vector_images) < _before:
+            log.debug(
+                "VECTOR_BG_FILTERED: removed %d column-bg images",
+                _before - len(vector_images),
+            )
+
+    resume_doc.page_images = vector_images + line_images + raster_images
+
+    # Fix 15: Infer column_split_x from a tall narrow sidebar image when text-gap
+    # detection failed.  Templates with sparse sidebar content (a few contact lines)
+    # produce insufficient text density for gap detection, but a sidebar background
+    # vector shape is still extracted.  Use its dimensions to establish the column split.
+    # Handles both left-side sidebars (x_pt near 0) and right-side sidebars (x_pt+w near pw).
+    if resume_doc.layout.column_split_x is None:
+        _page0 = doc[0]
+        _pw = _page0.rect.width
+        _ph = _page0.rect.height
+        _sidebar_img = None
+        _sidebar_side: str = "left"
+        for _img in resume_doc.page_images:
+            if _img.category != "sidebar_bg":
+                continue
+            if _img.height_pt < _ph * 0.70:   # must cover most of page height
+                continue
+            if _img.width_pt > _pw * 0.35:    # must be narrow
+                continue
+            if _img.x_pt < _pw * 0.08:        # left-side sidebar
+                _sidebar_img = _img
+                _sidebar_side = "left"
+                break
+            if _img.x_pt + _img.width_pt > _pw * 0.92:  # right-side sidebar
+                _sidebar_img = _img
+                _sidebar_side = "right"
+                break
+
+        if _sidebar_img is not None:
+            # Content-verification guard: count paragraphs that would land in the
+            # sidebar zone.  A decorative edge-stripe (sample 15) has 0 content
+            # paragraphs in its zone; a true sidebar has ≥3.  Suppress the inference
+            # when fewer than 3 paragraphs are found in the sidebar zone so decorative
+            # background accents don't create false two-column layouts.
+            _all_doc_paras_check = list(resume_doc.header_paras) + list(resume_doc.all_paras)
+            if _sidebar_side == "left":
+                _check_split = _sidebar_img.x_pt + _sidebar_img.width_pt
+                _in_zone = sum(
+                    1 for _pm in _all_doc_paras_check
+                    if _pm.paragraph_profile and 0 < _pm.paragraph_profile.body_text_x0_pt < _check_split
+                )
+            else:
+                _check_split = _sidebar_img.x_pt
+                _in_zone = sum(
+                    1 for _pm in _all_doc_paras_check
+                    if _pm.paragraph_profile and _pm.paragraph_profile.body_text_x0_pt >= _check_split
+                )
+            if _in_zone < 3:
+                log.debug(
+                    "SIDEBAR_INFERENCE_SUPPRESSED: only %d para(s) in sidebar zone — likely decorative",
+                    _in_zone,
+                )
+                _sidebar_img = None
+
+        if _sidebar_img is not None:
+            # For a left sidebar: split = right edge; left cell = sidebar, right cell = body.
+            # For a right sidebar: split = left edge; left cell = body, right cell = sidebar.
+            if _sidebar_side == "left":
+                _inferred_split = _sidebar_img.x_pt + _sidebar_img.width_pt
+                _left_col_w = _inferred_split
+                _right_col_w = _pw - _inferred_split
+                _bg_attr = "left_col_bg_color"
+            else:
+                _inferred_split = _sidebar_img.x_pt
+                _left_col_w = _inferred_split
+                _right_col_w = _pw - _inferred_split
+                _bg_attr = "right_col_bg_color"
+
+            resume_doc.layout.column_split_x = _inferred_split
+            resume_doc.layout.left_col_width_twips = int(_left_col_w * 20)
+            resume_doc.layout.right_col_width_twips = int(_right_col_w * 20)
+            if resume_doc.layout.table_layout_mode is None:
+                resume_doc.layout.table_layout_mode = "sidebar_layout"
+            # Extract sidebar color from center pixel of the solid-color PNG
+            try:
+                import fitz as _fitz_local
+                import io as _io_local
+                _spix = _fitz_local.Pixmap(_io_local.BytesIO(_sidebar_img.image_bytes))
+                _spx = _spix.pixel(_spix.width // 2, _spix.height // 2)
+                _sidebar_hex = f"{_spx[0]:02x}{_spx[1]:02x}{_spx[2]:02x}"
+                if (_spx[0] + _spx[1] + _spx[2]) / 3 < 240:
+                    setattr(resume_doc.layout, _bg_attr, _sidebar_hex)
+            except Exception:
+                pass
+            # Re-assign column_ids for all paragraphs using body_text_x0_pt vs split.
+            # Right-column indent is adjusted to be column-relative.
+            # Paragraphs without a valid body_text_x0_pt default to the BODY column
+            # ("left" for right-sidebar layouts, "left" for left-sidebar layouts
+            # since the body content is always "left" in the renderer's view).
+            # This prevents them from falling into the sidebar column via the
+            # renderer's column_id=None → right fallback.
+            _body_col = "left"   # the wide body cell is always the "left" column
+            _all_doc_paras = list(resume_doc.header_paras) + list(resume_doc.all_paras)
+            for _pm in _all_doc_paras:
+                _pp = _pm.paragraph_profile
+                if _pp is None:
+                    continue
+                if _pp.body_text_x0_pt <= 0.0:
+                    # No valid x position — default to body column
+                    _pp.column_id = _body_col
+                    continue
+                _x = _pp.body_text_x0_pt
+                if _x < _inferred_split:
+                    _pp.column_id = "left"
+                else:
+                    _pp.column_id = "right"
+                    _pp.indent_left_pt = max(0.0, _x - _inferred_split)
+            # Re-sort all_paras: left column sections before right column sections
+            resume_doc.all_paras.sort(
+                key=lambda _pm: (
+                    1 if (_pm.paragraph_profile and _pm.paragraph_profile.column_id == "left")
+                    else 2 if (_pm.paragraph_profile and _pm.paragraph_profile.column_id == "right")
+                    else 0
+                )
+            )
+            # Remove the sidebar image — column cell shading renders the background
+            resume_doc.page_images = [
+                img for img in resume_doc.page_images if img is not _sidebar_img
+            ]
+            log.debug(
+                "SIDEBAR_COLUMN_INFERRED: side=%s split_x=%.1f from sidebar_bg %.0fx%.0f %s=%r",
+                _sidebar_side, _inferred_split,
+                _sidebar_img.width_pt, _sidebar_img.height_pt,
+                _bg_attr, getattr(resume_doc.layout, _bg_attr),
+            )
+
     from tailor.compiler.models import assign_stable_ids
     assign_stable_ids(resume_doc)
+
+    # --- Section-anchor h_rules to nearest section heading below them ---
+    # Every h_rule whose y is within 80 pt above a section heading is associated
+    # with that heading.  The renderer will later emit it as a w:pBdr/w:top on
+    # the heading paragraph instead of a floating image, so the rule travels with
+    # its section after DOCX reflow rather than staying at the original PDF y.
+    _sec_ys: list[tuple[float, str]] = []
+    for _sec in resume_doc.sections:
+        _hh = _sec.heading.paragraph_profile
+        if _hh and _hh.y_top_pt > 0:
+            _sec_ys.append((_hh.y_top_pt, _sec.section_id))
+    _sec_ys.sort(key=lambda t: t[0])
+
+    _anchored_count = 0
+    for _img in resume_doc.page_images:
+        if _img.category != "h_rule":
+            continue
+        for _sy, _sid in _sec_ys:
+            if _sy > _img.y_pt:
+                _gap = _sy - _img.y_pt
+                if _gap <= 80.0:
+                    _img.anchor_next_section_id = _sid
+                    _img.gap_to_anchor_pt = _gap
+                    _anchored_count += 1
+                    log.debug(
+                        "HRULE_ANCHORED: y=%.1f → %s gap=%.1f",
+                        _img.y_pt, _sid, _gap,
+                    )
+                break  # nearest section found (anchored or too far)
+
+    if _anchored_count:
+        log.debug("HRULE_ANCHOR_SUMMARY: %d/%d h_rules anchored",
+                  _anchored_count,
+                  sum(1 for _i in resume_doc.page_images if _i.category == "h_rule"))
+
+    # --- PDF asset preservation diagnostics ---
+    from collections import Counter as _Counter
+    _img_cats = dict(_Counter(img.category for img in resume_doc.page_images))
+    _sidebar_inferred = (
+        resume_doc.layout.column_split_x is not None
+        and not any(img.category == "sidebar_bg" for img in resume_doc.page_images)
+        # sidebar image was removed after inference
+    )
+    resume_doc.pdf_diagnostics = {
+        "raster_images_raw": len(raster_images),
+        "vector_images_raw": len(vector_images),
+        "line_images_raw": len(line_images),
+        "page_images_final": len(resume_doc.page_images),
+        "image_categories": _img_cats,
+        "column_split_x": resume_doc.layout.column_split_x,
+        "table_layout_mode": resume_doc.layout.table_layout_mode,
+        "header_bg_color": resume_doc.layout.header_bg_color,
+        "footer_bg_color": resume_doc.layout.footer_bg_color,
+        "left_col_bg_color": resume_doc.layout.left_col_bg_color,
+        "right_col_bg_color": resume_doc.layout.right_col_bg_color,
+        "sidebar_detected": resume_doc.layout.column_split_x is not None,
+        "sidebar_inferred": _sidebar_inferred,
+        "page_bg_detected": "full_page_bg" in _img_cats,
+    }
+    log.info(
+        "PDF_ASSET_DIAGNOSTICS: raster=%d vector=%d lines=%d final=%d cats=%s "
+        "col_split=%.1f mode=%r hdr_bg=%r left_bg=%r sidebar=%s bg=%s",
+        resume_doc.pdf_diagnostics["raster_images_raw"],
+        resume_doc.pdf_diagnostics["vector_images_raw"],
+        resume_doc.pdf_diagnostics["line_images_raw"],
+        resume_doc.pdf_diagnostics["page_images_final"],
+        resume_doc.pdf_diagnostics["image_categories"],
+        resume_doc.layout.column_split_x or 0.0,
+        resume_doc.pdf_diagnostics["table_layout_mode"],
+        resume_doc.pdf_diagnostics["header_bg_color"],
+        resume_doc.pdf_diagnostics["left_col_bg_color"],
+        "inferred" if _sidebar_inferred else ("yes" if resume_doc.layout.column_split_x else "no"),
+        "yes" if resume_doc.pdf_diagnostics["page_bg_detected"] else "no",
+    )
+
     return resume_doc

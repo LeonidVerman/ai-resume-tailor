@@ -297,6 +297,15 @@ def compact_skills(
     return non_empty
 
 
+# Never trim an LLM role below this many bullets.  A small template bullet
+# count is a weak density signal: a single "bullet" is usually a placeholder
+# description para ("This is the place for a summary of your key
+# responsibilities…", sample 14) or one glued paragraph holding several
+# visual lines (sample 23) — trimming to it silently drops most of the LLM
+# content while the overflow-reflow machinery could have carried it.
+_MIN_ROLE_BULLET_CAP = 4
+
+
 def compact_experience_bullets(
     llm_roles: list[LlmRole],
     container: "TemplateContainer",
@@ -309,11 +318,10 @@ def compact_experience_bullets(
     (avg ≤ 3 bullets/role) a stricter headroom factor is applied.
 
     Rules:
-    - Matched role (same position in list): max = orig_count, floor = 1
-    - Unmatched role (LLM has more roles): max = avg original bullets, floor = 1
-    - Compact template: floor raised to at least 1, ceiling kept to orig_count
-    - Non-compact template with medium risk: allow up to orig_count * 1.25
-    - Non-compact template with high risk: cap to orig_count
+    - Matched role (same position in list): max = orig_count + 1 headroom,
+      floored at _MIN_ROLE_BULLET_CAP
+    - Unmatched role (LLM has more roles): max = avg original bullets, same floor
+    - orig_count == 0: density unknown — no trimming at all
 
     Returns a new list; original LlmRole objects are reused or replaced.
     """
@@ -326,10 +334,21 @@ def compact_experience_bullets(
     result: list[LlmRole] = []
     for i, llm_role in enumerate(llm_roles):
         orig_count = orig_counts[i] if i < len(orig_counts) else int(round(avg_orig))
-        # Compact templates: strict cap to preserve visual rhythm
-        # Normal templates: allow 1 extra bullet beyond original
-        headroom = 0 if compact_template else 1
-        max_bullets = max(1, orig_count + headroom)
+        if orig_count == 0:
+            # 0 means the template parser couldn't attribute any bullet paras
+            # to this role (slots are unclaimed placeholder paragraphs), so
+            # the template density is unknown — trimming here silently drops
+            # LLM content that the updater could place (samples 15/17).
+            result.append(llm_role)
+            continue
+        # Allow 1 extra bullet beyond the original slot count for all
+        # templates (compact-template 0-headroom caused content-injection
+        # hard fails; LibreOffice handles the extra line naturally), and
+        # never trim below _MIN_ROLE_BULLET_CAP — a 1-2 para template role is
+        # a placeholder or glued block, not a density budget (samples
+        # 14/18/23).
+        headroom = 1
+        max_bullets = max(orig_count + headroom, _MIN_ROLE_BULLET_CAP)
 
         if len(llm_role.bullets) > max_bullets:
             log.debug(
@@ -705,6 +724,10 @@ def _has_intro_prose_content(section: "ResumeSection") -> bool:
     # (e.g. a Websites section containing only "linkedin.com/in/…" links).
     if all("://" in p or " " not in p for p in non_empty_texts):
         return False
+    # Reject keyword lists that use '•' as an inline separator
+    # (e.g. "Senior Architect • Principal Developer • Senior App Developer").
+    if any(t.count("•") > 1 for t in non_empty_texts):
+        return False
     comma_density = total_text.count(",") / max(1, len(total_text))
     return comma_density < 0.15
 
@@ -967,7 +990,11 @@ def apply_layout_fitting(
                     # linear (native columns): overflow is handled by the two-column
                     # table renderer; only apply per-line char limits, not count cap.
                     if tpl_class == "table_sidebar":
-                        target = max(container.orig_para_count, 3)
+                        # +1 headroom: the updater anchors one overflow line
+                        # as an in-column extra without breaking the cell
+                        # (sample 6's 'Project Execution' skills line was the
+                        # only casualty of the exact cap).
+                        target = max(container.orig_para_count, 3) + 1
                     else:
                         # Allow all lines through; updater injects overflow as extra
                         # layout_blocks so they appear in-column, not at end-of-doc.

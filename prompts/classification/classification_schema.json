@@ -3,89 +3,179 @@
   "strict": true,
   "schema": {
     "type": "object",
-    "required": ["document_id", "classification_version", "source_kind", "sections"],
+    "required": [
+      "document_id",
+      "classification_version",
+      "source_kind",
+      "sections"
+    ],
     "additionalProperties": false,
     "properties": {
-      "document_id": { "type": "string" },
-      "classification_version": { "type": "string" },
-      "source_kind": { "type": "string" },
+      "document_id": {
+        "type": "string"
+      },
       "sections": {
         "type": "array",
-        "items": { "$ref": "#/$defs/section" }
+        "items": {
+          "$ref": "#/$defs/section"
+        }
+      },
+      "classification_version": {
+        "type": "string"
+      },
+      "source_kind": {
+        "type": "string"
       }
     },
     "$defs": {
       "block": {
         "type": "object",
-        "required": ["block_id", "para_id", "semantic_type", "rewrite_policy", "new"],
+        "required": [
+          "block_id",
+          "para_id",
+          "semantic_type",
+          "rewrite_policy",
+          "new"
+        ],
         "additionalProperties": false,
         "properties": {
-          "block_id": { "type": "string" },
-          "para_id": { "type": "string" },
+          "block_id": {
+            "type": "string"
+          },
+          "para_id": {
+            "type": "string"
+          },
           "semantic_type": {
             "type": "string",
             "enum": [
-              "summary_paragraph", "skills_paragraph", "role_header",
-              "role_meta", "bullet", "education_entry", "project_entry",
-              "additional_item", "other_paragraph"
+              "summary_paragraph",
+              "skills_paragraph",
+              "role_header",
+              "role_meta",
+              "bullet",
+              "education_entry",
+              "project_entry",
+              "additional_item",
+              "other_paragraph",
+              "role_achievement_bullet",
+              "role_responsibility_bullet",
+              "role_intro",
+              "role_highlight",
+              "role_project_label",
+              "role_project_context",
+              "role_tech_stack",
+              "role_key_technologies",
+              "role_tools",
+              "role_nested_detail",
+              "role_freeform_note"
             ]
           },
           "rewrite_policy": {
             "type": "string",
-            "enum": ["rewrite_text", "preserve"]
+            "enum": [
+              "rewrite_text",
+              "preserve"
+            ]
           },
-          "new": { "type": "boolean" }
+          "new": {
+            "type": "boolean"
+          }
         }
       },
       "role": {
         "type": "object",
-        "required": ["role_id", "header_blocks", "meta_blocks", "body_blocks"],
+        "required": [
+          "role_id",
+          "header_blocks",
+          "meta_blocks",
+          "body_blocks"
+        ],
         "additionalProperties": false,
         "properties": {
-          "role_id": { "type": "string" },
+          "role_id": {
+            "type": "string"
+          },
           "header_blocks": {
             "type": "array",
-            "items": { "$ref": "#/$defs/block" }
+            "items": {
+              "$ref": "#/$defs/block"
+            }
           },
           "meta_blocks": {
             "type": "array",
-            "items": { "$ref": "#/$defs/block" }
+            "items": {
+              "$ref": "#/$defs/block"
+            }
           },
           "body_blocks": {
             "type": "array",
-            "items": { "$ref": "#/$defs/block" }
+            "items": {
+              "$ref": "#/$defs/block"
+            }
           }
         }
       },
       "section": {
         "type": "object",
         "required": [
-          "section_id", "raw_title", "display_title", "semantic_type",
-          "rewrite_policy", "preserve_heading", "preserve_body_structure",
-          "blocks", "roles"
+          "section_id",
+          "raw_title",
+          "display_title",
+          "semantic_type",
+          "rewrite_policy",
+          "preserve_heading",
+          "preserve_body_structure",
+          "blocks",
+          "roles"
         ],
         "additionalProperties": false,
         "properties": {
-          "section_id": { "type": "string" },
-          "raw_title": { "type": "string" },
-          "display_title": { "type": "string" },
+          "section_id": {
+            "type": "string"
+          },
+          "raw_title": {
+            "type": "string"
+          },
+          "display_title": {
+            "type": "string"
+          },
           "semantic_type": {
             "type": "string",
-            "enum": ["summary", "skills", "experience", "education", "projects", "additional", "other"]
+            "enum": [
+              "summary",
+              "skills",
+              "experience",
+              "education",
+              "projects",
+              "additional",
+              "other"
+            ]
           },
           "rewrite_policy": {
             "type": "string",
-            "enum": ["rewrite_body", "rewrite_bullets_only", "preserve"]
+            "enum": [
+              "rewrite_body",
+              "rewrite_bullets_only",
+              "preserve"
+            ]
           },
-          "preserve_heading": { "type": "boolean" },
-          "preserve_body_structure": { "type": "boolean" },
+          "preserve_heading": {
+            "type": "boolean"
+          },
+          "preserve_body_structure": {
+            "type": "boolean"
+          },
           "blocks": {
             "type": "array",
-            "items": { "$ref": "#/$defs/block" }
+            "items": {
+              "$ref": "#/$defs/block"
+            }
           },
           "roles": {
             "type": "array",
-            "items": { "$ref": "#/$defs/role" }
+            "items": {
+              "$ref": "#/$defs/role"
+            }
           }
         }
       }

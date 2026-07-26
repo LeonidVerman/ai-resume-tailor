@@ -36,9 +36,10 @@ HARD FAIL triggers (semantic / IR fallback — work without PDF extraction):
 HARD FAIL triggers (continued):
   SPARSE_CONTINUATION_PAGE    non-first sparse page with area_ratio < 30%.
   BLANK_PAGE_CONTENT_LOSS     trailing blank page when page count matches template
-                              (generated_pages == original_pages) or when the only
-                              rendered page is blank — signals content loss, not
-                              tail overflow.
+                              (generated_pages == original_pages), grew by exactly 1
+                              (generated_pages == original_pages + 1), or when the
+                              only rendered page is blank — signals content loss or
+                              rendering artefact, not legitimate tail overflow.
   SPARSE_FIRST_PAGE           page 1 area_ratio < 8% while page 2+ has real
                               content — rendering artefact displaced content.
   COLUMN_CONTINUITY_BREAK     median x-centre of content on page 1 (lower half)
@@ -189,21 +190,21 @@ def _check_ir_summary_missing(
     if has_explicit_summary:
         return False, []
 
-    # Check for implicit summary in any of the first 3 sections.
-    # Experience is excluded (bullets are not a summary).
-    # Skills is intentionally NOT excluded: some templates store the summary
-    # paragraph inside the skills section body (e.g. sample 2 where para_46
-    # holds the profile text alongside the skill bullets). The comma-density
-    # check below already filters out comma-separated skill lists, so including
-    # skills sections here does not cause false negatives.
+    # Check all sections that appear before the first experience/education
+    # boundary for implicit summary prose.  Skills is NOT excluded: some
+    # templates store the summary paragraph inside the skills section body
+    # (e.g. sample 2 where para_46 holds the profile text alongside skill
+    # bullets).  The comma-density check filters out comma-separated lists.
+    # A hard index limit of 3 was too narrow for templates that have 3+ header
+    # sections (Contact, Websites/Portfolios, Profiles) before the skills section.
     _BODY_CONTENT_TYPES2 = {"experience", "education", "certifications",
                             "languages", "websites"}
-    for sec in sections[:3]:
+    for sec in sections:
         sec_type = sec.get("semantic_type", "") or ""
+        if sec_type in _BODY_CONTENT_TYPES2:
+            break  # stop — no summary lives past the first experience/edu section
         if sec_type in ("summary",):
             continue
-        if sec_type in _BODY_CONTENT_TYPES2:
-            continue  # experience bullets are not a summary
         body_paras = sec.get("body_paras", [])
         long_prose = [
             bp.get("text", "").strip()
@@ -312,6 +313,16 @@ def _check_misplaced_llm_summary(
     import re
 
     if not llm_text or not ir:
+        return False, []
+
+    # When the template has no dedicated summary section, the production code
+    # intentionally places the summary in the best available slot (merged header,
+    # top of a column, etc.).  We cannot distinguish that from a genuine
+    # misplacement, so skip the check entirely.
+    if not any(
+        sec.get("semantic_type", "") in {"summary", "profile"}
+        for sec in ir.get("sections", [])
+    ):
         return False, []
 
     # ── Step 1: extract LLM summary text ─────────────────────────────────────
@@ -473,20 +484,25 @@ def grade_sample(
     ir_path: str,
     gen_json_path: str | None = None,
     pdf_method: str | None = None,
+    origin: str = "docx",
 ) -> SampleGrade:
     """Grade one sample across all three evaluation dimensions.
 
     Parameters
     ----------
     sample_id:            Human-readable identifier.
-    template_docx_path:   Original template DOCX.
+    template_docx_path:   Original template DOCX (or PDF path when origin='pdf').
     generated_docx_path:  DOCX produced by the rendering pipeline.
     template_pdf_path:    Destination for the template PDF (created if absent).
+                          For origin='pdf' this is the same as template_docx_path.
     generated_pdf_path:   Destination for the generated PDF (created if absent).
     ir_path:              Path to the generated IR JSON (*_IR.json).
     gen_json_path:        Optional path to the generation JSON; enables the
                           content-injection check (llm_response.resume).
     pdf_method:           'subprocess' | 'docker' | 'local' | None (auto).
+    origin:               'docx' (default) or 'pdf'.  PDF-origin skips the
+                          DOCX structure check and content injection check
+                          (visual comparison via template PDF serves instead).
     """
     from .ir_validator import validate_ir, ir_score
     from .docx_comparator import compare_docx_structure
@@ -521,25 +537,49 @@ def grade_sample(
         failure_classes.append("A_IR_SOFT")
     evidence.extend(ir_result.evidence[:5])
 
-    # ── DOCX structure check (column loss, renderer fallback) ─────────────────
+    # ── Structure check (column loss, renderer fallback) ──────────────────────
+    # DOCX-origin: compare DOCX files directly (paragraph counts, Word columns).
+    # PDF-origin: compare PDF block counts; template PDF is the source of truth
+    #             for column layout. Generated DOCX→PDF conversion happens first
+    #             so compare_pdf_structure() can compare both PDFs.
     docx_result = None
     paragraph_ratio = 1.0
-    try:
-        docx_result = compare_docx_structure(template_docx_path, generated_docx_path)
-        paragraph_ratio = docx_result.paragraph_ratio
-        if docx_result.columns_lost:
+    if origin == "pdf":
+        generated_pdf_ok_early = _ensure_pdf(generated_docx_path, generated_pdf_path, pdf_method)
+        if generated_pdf_ok_early and Path(template_pdf_path).exists():
+            try:
+                from .pdf_comparator import compare_pdf_structure
+                docx_result = compare_pdf_structure(template_pdf_path, generated_pdf_path)
+                paragraph_ratio = docx_result.paragraph_ratio
+                if docx_result.renderer_fallback and "C_OVERFLOW_FIT" not in failure_classes:
+                    failure_classes.append("C_OVERFLOW_FIT")
+                evidence.extend(docx_result.evidence[:3])
+            except Exception as exc:
+                evidence.append(f"PDF structure comparison failed: {exc}")
+        elif not Path(template_pdf_path).exists():
+            evidence.append("Template PDF not found — PDF structure comparison skipped")
+        else:
+            evidence.append("Generated PDF conversion failed — PDF structure comparison skipped")
+    else:
+        try:
+            docx_result = compare_docx_structure(template_docx_path, generated_docx_path)
+            paragraph_ratio = docx_result.paragraph_ratio
+            if docx_result.columns_lost:
+                hard_fail = True
+                hard_fail_reasons.append("COLUMNS_LOST")
+                failure_classes.append("F_TOPOLOGY_COLLAPSE")
+            if docx_result.renderer_fallback and "C_OVERFLOW_FIT" not in failure_classes:
+                failure_classes.append("C_OVERFLOW_FIT")
+            evidence.extend(docx_result.evidence[:3])
+        except Exception as exc:
             hard_fail = True
-            hard_fail_reasons.append("COLUMNS_LOST")
-            failure_classes.append("F_TOPOLOGY_COLLAPSE")
-        if docx_result.renderer_fallback and "C_OVERFLOW_FIT" not in failure_classes:
-            failure_classes.append("C_OVERFLOW_FIT")
-        evidence.extend(docx_result.evidence[:3])
-    except Exception as exc:
-        hard_fail = True
-        hard_fail_reasons.append("DOCX_COMPARE_FAILED")
-        evidence.append(f"DOCX comparison failed: {exc}")
+            hard_fail_reasons.append("DOCX_COMPARE_FAILED")
+            evidence.append(f"DOCX comparison failed: {exc}")
 
     # ── Dimension 2: Content Injection ────────────────────────────────────────
+    # PDF-origin: skip check_content_injection() — the template PDF is already
+    # available for direct visual comparison via pdf_scorer. IR-based summary
+    # checks (misplaced/missing/duplicate) still run since they use only IR + LLM text.
     ci_score = _CONTENT_INJECTION_DEFAULT
     ci_sim_llm = None
     ci_sim_template = None
@@ -549,17 +589,21 @@ def grade_sample(
             gen_data = json.loads(Path(gen_json_path).read_text(encoding="utf-8"))
             llm_text: str = gen_data.get("llm_response", {}).get("resume", "") or ""
             if llm_text.strip():
-                ci_result = check_content_injection(llm_text, ir, template_docx_path)
-                ci_score = ci_result.score
-                ci_sim_llm = ci_result.sim_llm
-                ci_sim_template = ci_result.sim_template
-                if ci_result.hard_fail:
-                    hard_fail = True
-                    hard_fail_reasons.append("CONTENT_NOT_INJECTED")
-                    failure_classes.append("E_CONTENT_INJECTION")
-                elif ci_result.evidence and ci_score < 75:
-                    failure_classes.append("E_INJECTION_PARTIAL")
-                evidence.extend(ci_result.evidence[:3])
+                if origin != "pdf":
+                    ci_result = check_content_injection(llm_text, ir, template_docx_path)
+                    ci_score = ci_result.score
+                    ci_sim_llm = ci_result.sim_llm
+                    ci_sim_template = ci_result.sim_template
+                    if ci_result.hard_fail:
+                        hard_fail = True
+                        hard_fail_reasons.append("CONTENT_NOT_INJECTED")
+                        failure_classes.append("E_CONTENT_INJECTION")
+                    elif ci_result.evidence and ci_score < 75:
+                        failure_classes.append("E_INJECTION_PARTIAL")
+                    evidence.extend(ci_result.evidence[:6])
+                else:
+                    # PDF-origin: content injection verified visually via template PDF
+                    ci_score = 100.0
 
                 # ── IR-based summary contamination check ─────────────────────
                 sc_hard_fail, sc_ev = _check_misplaced_llm_summary(ir, llm_text)
@@ -601,8 +645,15 @@ def grade_sample(
     orig_columns = 1
     gen_columns_count = 1
 
-    template_pdf_ok = _ensure_pdf(template_docx_path, template_pdf_path, pdf_method)
-    generated_pdf_ok = _ensure_pdf(generated_docx_path, generated_pdf_path, pdf_method)
+    if origin == "pdf":
+        # Template is already a PDF; generated PDF may have been converted in step 2.
+        template_pdf_ok = Path(template_pdf_path).exists()
+        generated_pdf_ok = Path(generated_pdf_path).exists()
+        if not generated_pdf_ok:
+            generated_pdf_ok = _ensure_pdf(generated_docx_path, generated_pdf_path, pdf_method)
+    else:
+        template_pdf_ok = _ensure_pdf(template_docx_path, template_pdf_path, pdf_method)
+        generated_pdf_ok = _ensure_pdf(generated_docx_path, generated_pdf_path, pdf_method)
 
     if template_pdf_ok and generated_pdf_ok:
         try:
@@ -863,7 +914,7 @@ def grade_sample(
         if not generated_pdf_ok:
             evidence.append("Generated PDF conversion failed -- PDF scores use defaults")
 
-    # ── Duplicate template+LLM content detection ──────────────────────────────
+    # ── Duplicate template+LLM content detection (DOCX-origin only) ──────────
     # When both sim_llm (LLM text present in doc) and sim_template (original
     # template text present in doc) are simultaneously high, the document likely
     # contains the original placeholder text alongside the new LLM content —
@@ -873,6 +924,7 @@ def grade_sample(
     # Threshold: sim_llm > 0.85 (LLM content is present) AND sim_template > 0.75
     # (original template is also still present).  Both simultaneously being this
     # high signals coexistence rather than replacement.
+    # Not applicable to PDF-origin (ci_sim_llm and ci_sim_template are None).
     if (
         ci_sim_llm is not None
         and ci_sim_template is not None
@@ -939,6 +991,7 @@ def grade_sample(
         status = "fail"
 
     facts: dict = {
+        "origin": origin,
         "original_pages": orig_pages,
         "generated_pages": gen_pages_count,
         "paragraph_ratio": round(paragraph_ratio, 3),

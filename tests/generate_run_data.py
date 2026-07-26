@@ -8,17 +8,22 @@ For each sample the script:
   2. Uploads the sample resume DOCX
   3. Generates a candidate profile draft via LLM autofill
   4. Saves the draft as the user's profile (PUT)
-  5. Polls until classification_jsonb is filled (every 5 s, timeout 60 s)
+  5. Polls until classification_jsonb is filled (every 5 s, timeout 600 s)
   6. Runs generation against the configured job description
   7. Logs in as admin, downloads the run-data JSON
   8. Saves it to tests/samples/generation/ with the sample-number prefix,
      replacing any previous file for the same sample+job combination
 
+  With --classification-only, steps 6-8 are skipped.  Only the classifier
+  debug file is written (to tmp/artefacts/generate_run_test/).
+
 Usage
 -----
-  python generate_run_data.py             # all samples 1-40
-  python generate_run_data.py 4           # sample 4 only
-  python generate_run_data.py 4 16 18     # samples 4, 16, 18
+  python generate_run_data.py                         # all samples 1-40
+  python generate_run_data.py 4                       # sample 4 only
+  python generate_run_data.py 4 16 18                 # samples 4, 16, 18
+  python generate_run_data.py --classification-only   # all samples, classify only
+  python generate_run_data.py --classification-only 4 16 18
 
 Configuration (environment variables, all optional)
 ---------------------------------------------------
@@ -30,10 +35,13 @@ Configuration (environment variables, all optional)
   JOB_DESCRIPTION_ID default: 97
 """
 
+import io
+import json
 import os
 import re
 import sys
 import time
+import zipfile
 from pathlib import Path
 
 import requests
@@ -46,6 +54,7 @@ SCRIPT_DIR = Path(__file__).parent
 REPO_ROOT = SCRIPT_DIR.parent
 DOCX_DIR = SCRIPT_DIR / "samples" / "resume" / "docx"
 GENERATION_DIR = SCRIPT_DIR / "samples" / "generation"
+CLASSIFIER_DIR = REPO_ROOT / "tmp" / "artefacts" / "generate_run_test"
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -59,7 +68,7 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "87654321")
 JOB_DESCRIPTION_ID = int(os.environ.get("JOB_DESCRIPTION_ID", "97"))
 
 CLASSIFICATION_POLL_INTERVAL = 5   # seconds
-CLASSIFICATION_TIMEOUT = 180       # seconds
+CLASSIFICATION_TIMEOUT = 600       # seconds
 
 # ---------------------------------------------------------------------------
 # API helpers
@@ -125,8 +134,8 @@ def save_profile(token: str, draft: dict) -> bool:
     return resp.json()["onboarding_completed"]
 
 
-def poll_classification(admin_token: str, resume_id: int) -> None:
-    """Poll until classification_jsonb is present; hard-fail after CLASSIFICATION_TIMEOUT s."""
+def poll_classification(admin_token: str, resume_id: int) -> dict:
+    """Poll until classification_jsonb is present; return the envelope; hard-fail after CLASSIFICATION_TIMEOUT s."""
     deadline = time.time() + CLASSIFICATION_TIMEOUT
     while True:
         resp = requests.get(
@@ -135,7 +144,7 @@ def poll_classification(admin_token: str, resume_id: int) -> None:
             timeout=15,
         )
         if resp.status_code == 200:
-            return
+            return resp.json()
         if resp.status_code != 404:
             raise RuntimeError(
                 f"Classification check failed: HTTP {resp.status_code} — {resp.text}"
@@ -145,6 +154,38 @@ def poll_classification(admin_token: str, resume_id: int) -> None:
                 f"Classification not available after {CLASSIFICATION_TIMEOUT}s for resume {resume_id}"
             )
         time.sleep(CLASSIFICATION_POLL_INTERVAL)
+
+
+def save_classifier_file(sample_num: int, api_filename: str, run_id: int, classification_envelope: dict) -> Path:
+    """Save classifier input+output to CLASSIFIER_DIR as <stem>-classifier.json."""
+    # Derive the same stem used for the generation file: everything before -{run_id}-
+    gen_name = f"{sample_num}-{api_filename}"
+    stem = _prefix_before_run_id(gen_name, run_id)
+    dest_name = f"{stem}-{run_id}-classifier.json"
+
+    CLASSIFIER_DIR.mkdir(parents=True, exist_ok=True)
+    dest = CLASSIFIER_DIR / dest_name
+    dest.write_text(
+        json.dumps(classification_envelope, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return dest
+
+
+def save_classifier_file_only(resume_path: Path, classification_envelope: dict) -> Path:
+    """Save classifier output when running in --classification-only mode.
+
+    Uses the resume DOCX stem (which already includes the sample number) as the
+    filename base so multiple runs for the same sample overwrite each other.
+    """
+    dest_name = f"{resume_path.stem}-classifier.json"
+    CLASSIFIER_DIR.mkdir(parents=True, exist_ok=True)
+    dest = CLASSIFIER_DIR / dest_name
+    dest.write_text(
+        json.dumps(classification_envelope, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return dest
 
 
 def run_generation(token: str, resume_id: int) -> int:
@@ -164,7 +205,13 @@ def run_generation(token: str, resume_id: int) -> int:
 
 
 def download_run_data(admin_token: str, run_id: int) -> tuple[str, bytes]:
-    """Download run-data JSON; return (api_filename, raw_bytes)."""
+    """Download run-data; return (json_filename, raw_json_bytes).
+
+    The API may return a raw JSON file or a ZIP archive.  When a ZIP is
+    received the JSON debug file inside (identified by run_id in its name)
+    is extracted automatically so callers always see a plain JSON filename
+    and bytes regardless of transport format.
+    """
     resp = requests.get(
         f"{BASE}/admin/run-data/download/{run_id}",
         headers=_auth_headers(admin_token),
@@ -177,7 +224,31 @@ def download_run_data(admin_token: str, run_id: int) -> tuple[str, bytes]:
     m = re.search(r'filename="([^"]+)"', cd)
     if not m:
         raise RuntimeError(f"No filename in Content-Disposition: {cd!r}")
-    return m.group(1), resp.content
+    outer_filename = m.group(1)
+    content = resp.content
+
+    # If the response is a ZIP, extract the JSON run-data file from inside it.
+    is_zip = outer_filename.lower().endswith(".zip") or content[:2] == b"PK"
+    if is_zip:
+        with zipfile.ZipFile(io.BytesIO(content)) as zf:
+            run_id_str = str(run_id)
+            # Prefer JSON entries whose name contains the run_id
+            candidates = [
+                name for name in zf.namelist()
+                if name.endswith(".json") and run_id_str in name
+            ]
+            if not candidates:
+                candidates = [name for name in zf.namelist() if name.endswith(".json")]
+            if not candidates:
+                raise RuntimeError(
+                    f"No JSON file found in zip {outer_filename!r}. "
+                    f"Contents: {zf.namelist()}"
+                )
+            json_path = candidates[0]
+            json_name = json_path.split("/")[-1].split("\\")[-1]
+            return json_name, zf.read(json_path)
+
+    return outer_filename, content
 
 
 def _prefix_before_run_id(filename: str, run_id: int) -> str:
@@ -222,7 +293,12 @@ def find_resume_file(sample_num: int) -> Path:
     return matches[0]
 
 
-def process_sample(sample_num: int, user_token: str, admin_token: str) -> None:
+def process_sample(
+    sample_num: int,
+    user_token: str,
+    admin_token: str,
+    classification_only: bool = False,
+) -> None:
     print(f"\n[Sample {sample_num}]")
 
     resume_path = find_resume_file(sample_num)
@@ -242,8 +318,13 @@ def process_sample(sample_num: int, user_token: str, admin_token: str) -> None:
         raise RuntimeError("onboarding_completed=False — profile setup is incomplete for this user")
 
     print("  Waiting for classification...")
-    poll_classification(admin_token, resume_id)
+    classification_envelope = poll_classification(admin_token, resume_id)
     print("  Classification ready")
+
+    if classification_only:
+        cls_dest = save_classifier_file_only(resume_path, classification_envelope)
+        print(f"  Classifier: {cls_dest.name}")
+        return
 
     print("  Running generation...")
     run_id = run_generation(user_token, resume_id)
@@ -255,6 +336,9 @@ def process_sample(sample_num: int, user_token: str, admin_token: str) -> None:
     dest = save_generation_file(sample_num, run_id, api_filename, raw)
     print(f"  Saved: {dest.name}")
 
+    cls_dest = save_classifier_file(sample_num, api_filename, run_id, classification_envelope)
+    print(f"  Classifier: {cls_dest.name}")
+
 
 # ---------------------------------------------------------------------------
 # Entry point
@@ -262,6 +346,10 @@ def process_sample(sample_num: int, user_token: str, admin_token: str) -> None:
 
 def main() -> None:
     args = sys.argv[1:]
+
+    classification_only = "--classification-only" in args
+    args = [a for a in args if a != "--classification-only"]
+
     if args:
         try:
             sample_numbers = [int(a) for a in args]
@@ -271,11 +359,12 @@ def main() -> None:
     else:
         sample_numbers = list(range(1, 41))
 
-    print(f"Service URL : {SERVICE_URL}")
-    print(f"User        : {USER_LOGIN}")
-    print(f"Admin       : {ADMIN_LOGIN}")
-    print(f"JD ID       : {JOB_DESCRIPTION_ID}")
-    print(f"Samples     : {sample_numbers}")
+    print(f"Service URL         : {SERVICE_URL}")
+    print(f"User                : {USER_LOGIN}")
+    print(f"Admin               : {ADMIN_LOGIN}")
+    print(f"JD ID               : {JOB_DESCRIPTION_ID}")
+    print(f"Samples             : {sample_numbers}")
+    print(f"Classification only : {classification_only}")
 
     print("\nLogging in...")
     user_token, user_id = login(USER_LOGIN, USER_PASSWORD)
@@ -286,7 +375,7 @@ def main() -> None:
     failed: list[tuple[int, str]] = []
     for num in sample_numbers:
         try:
-            process_sample(num, user_token, admin_token)
+            process_sample(num, user_token, admin_token, classification_only=classification_only)
         except Exception as exc:
             print(f"  ERROR: {exc}", file=sys.stderr)
             failed.append((num, str(exc)))

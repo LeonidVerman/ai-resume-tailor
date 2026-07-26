@@ -11,6 +11,7 @@ programmatically.
 """
 from __future__ import annotations
 
+import base64
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any
@@ -21,8 +22,8 @@ class PageImageBlock:
     """A raster image extracted from a PDF page, with page-relative position.
 
     All coordinates are in PDF points (72 pt per inch), measured from the
-    page top-left corner (y increases downward).  Not serialised to JSON —
-    runtime-only, like ``ParagraphProfile.inline_image_bytes``.
+    page top-left corner (y increases downward).  Serialised to JSON via
+    ``to_dict`` / ``from_dict`` (image_bytes stored as base64).
     """
 
     image_bytes: bytes   # raw PNG bytes
@@ -30,9 +31,46 @@ class PageImageBlock:
     y_pt: float          # top edge from page top
     width_pt: float      # display width on page (points)
     height_pt: float     # display height on page (points)
-    # 'profile_photo' | 'header_footer_decor' | 'body_decor'
+    # 'profile_photo' | 'header_footer_decor' | 'body_decor' | 'full_page_bg' | 'sidebar_bg' | 'header_band' | 'footer_band'
     category: str = "body_decor"
     page_index: int = 0
+    # Section-anchored divider fields (h_rule only).  Set by parse_pdf() when the
+    # rule is clearly associated with a section heading below it (gap ≤ 80 pt).
+    # anchor_next_section_id matches ResumeSection.section_id; gap_to_anchor_pt is
+    # the PDF y distance from the rule top to the section heading top.
+    anchor_next_section_id: str | None = None
+    gap_to_anchor_pt: float | None = None
+
+    def to_dict(self) -> dict:
+        d: dict = {
+            "image_bytes_b64": base64.b64encode(self.image_bytes).decode("ascii"),
+            "x_pt": self.x_pt,
+            "y_pt": self.y_pt,
+            "width_pt": self.width_pt,
+            "height_pt": self.height_pt,
+            "category": self.category,
+            "page_index": self.page_index,
+        }
+        if self.anchor_next_section_id is not None:
+            d["anchor_next_section_id"] = self.anchor_next_section_id
+        if self.gap_to_anchor_pt is not None:
+            d["gap_to_anchor_pt"] = self.gap_to_anchor_pt
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "PageImageBlock":
+        _gap = d.get("gap_to_anchor_pt")
+        return cls(
+            image_bytes=base64.b64decode(d["image_bytes_b64"]),
+            x_pt=float(d["x_pt"]),
+            y_pt=float(d["y_pt"]),
+            width_pt=float(d["width_pt"]),
+            height_pt=float(d["height_pt"]),
+            category=d.get("category", "body_decor"),
+            page_index=int(d.get("page_index", 0)),
+            anchor_next_section_id=d.get("anchor_next_section_id"),
+            gap_to_anchor_pt=float(_gap) if _gap is not None else None,
+        )
 
 
 @dataclass
@@ -67,6 +105,15 @@ class ParagraphProfile:
     # Absolute Y position of the block top in PDF points (runtime-only; not serialised).
     # Set by _extract_paragraphs for section-label-column pairing in parse_pdf.
     y_top_pt: float = 0.0
+    # Serialised geometry fields — page-absolute PDF coordinates for the line/span.
+    # Set by _extract_paragraphs; preserved in IR JSON so renderers and downstream
+    # stages can use original layout positions without re-parsing the PDF.
+    x_pt: float = 0.0        # left edge of line/span in PDF points
+    y_pt: float = 0.0        # top edge of line/span in PDF points
+    width_pt: float = 0.0    # width of line/span
+    height_pt: float = 0.0   # height of line
+    page_num: int = 0         # 0-based page index
+    block_id: str | None = None  # stable block identifier: "p{page}_b{blk_idx}"
 
     def to_dict(self) -> dict:
         return {
@@ -82,7 +129,13 @@ class ParagraphProfile:
             "text_color": self.text_color,
             "background_color": self.background_color,
             "column_id": self.column_id,
-            # inline_image_bytes and body_text_x0_pt are NOT serialised (runtime-only)
+            # inline_image_bytes, body_text_x0_pt, text_runs, y_top_pt: runtime-only, not serialised
+            "x_pt": self.x_pt,
+            "y_pt": self.y_pt,
+            "width_pt": self.width_pt,
+            "height_pt": self.height_pt,
+            "page_num": self.page_num,
+            "block_id": self.block_id,
         }
 
     @classmethod
@@ -100,6 +153,12 @@ class ParagraphProfile:
             text_color=d.get("text_color"),
             background_color=d.get("background_color"),
             column_id=d.get("column_id"),
+            x_pt=float(d.get("x_pt", 0.0)),
+            y_pt=float(d.get("y_pt", 0.0)),
+            width_pt=float(d.get("width_pt", 0.0)),
+            height_pt=float(d.get("height_pt", 0.0)),
+            page_num=int(d.get("page_num", 0)),
+            block_id=d.get("block_id"),
         )
 
 
@@ -141,6 +200,7 @@ class ParaModel:
     text: str
     style: ParaStyle
     # Semantic values: section_heading | role_header | role_meta | bullet | paragraph | empty
+    # Classification-propagated adjunct types: role_intro | role_key_technologies | role_tech_stack
     semantic: str
     # Set for PDF-sourced paragraphs; None for DOCX-sourced paragraphs.
     paragraph_profile: ParagraphProfile | None = None
@@ -153,11 +213,19 @@ class ParaModel:
         para_id is preserved so the layout_blocks renderer can match the updated
         paragraph back to its original XML prototype by stable ID.
         """
+        from copy import copy as _copy
+        pp = self.paragraph_profile
+        # text_runs encode the run structure of the *original* text. When text
+        # changes the old runs no longer apply — clear them so build_para_element
+        # uses pm.text instead of stale PDF-parsed run spans.
+        if pp is not None and pp.text_runs is not None:
+            pp = _copy(pp)
+            pp.text_runs = None
         p = ParaModel(
             text=new_text,
             style=self.style,
             semantic=self.semantic,
-            paragraph_profile=self.paragraph_profile,
+            paragraph_profile=pp,
         )
         p.para_id = self.para_id
         # Preserve runtime-only y_top_pt so the PDF two-column Y-sort can place
@@ -244,6 +312,13 @@ class RoleEntry:
     bullets: list[ParaModel] = field(default_factory=list)
     role_id: str = ""         # normalised header text; used as anchor for updater matching
     role_id_stable: str = ""  # synthetic positional ID assigned by assign_stable_ids()
+    # Timeline left-right binding for newspaper two-column layouts.
+    # Set by _build_role_layout_bindings() in docx_parser when a narrow date
+    # sidebar is detected.  None for all other layouts.
+    # Keys: kind, row_index, left_para_ids, left_text, left_leading_spacer_ids,
+    #       left_trailing_spacer_ids, right_anchor_para_id, right_para_ids,
+    #       column_width_twips, preserve_left_verbatim, right_rewrite_policy.
+    layout_binding: "dict | None" = None
 
     def to_dict(self) -> dict:
         return {
@@ -253,6 +328,7 @@ class RoleEntry:
             "bullets": [p.to_dict() for p in self.bullets],
             "role_id": self.role_id,
             "role_id_stable": self.role_id_stable,
+            "layout_binding": self.layout_binding,
         }
 
     @classmethod
@@ -264,6 +340,7 @@ class RoleEntry:
             bullets=[ParaModel.from_dict(p) for p in d.get("bullets", [])],
             role_id=d.get("role_id", ""),
             role_id_stable=d.get("role_id_stable", ""),
+            layout_binding=d.get("layout_binding"),
         )
 
 
@@ -278,6 +355,16 @@ class ResumeSection:
     roles: list[RoleEntry] = field(default_factory=list)        # experience sections only
     # Stable synthetic ID assigned by assign_stable_ids(); "" until assigned.
     section_id: str = ""
+    # Container semantics assigned by infer_container_semantics().
+    # Values: "independent_vertical_stack" | "synchronized_row" |
+    #         "local_column_pair" | "paired_sidebar_region" |
+    #         "rewriteable_region" | "preserve_region" | None
+    container_type: str | None = None
+    # Render mode for PDF two-column sections. Classified from template_ir geometry
+    # by _classify_section_render_mode() before apply_tailored() and copied to the
+    # updated document so the renderer can use it even after paragraph_profile is lost.
+    # Values: "FULL_WIDTH" | "PARALLEL_BODY" | "SINGLE_COLUMN" | None
+    render_mode: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -287,6 +374,8 @@ class ResumeSection:
             "body_paras": [p.to_dict() for p in self.body_paras],
             "roles": [r.to_dict() for r in self.roles],
             "section_id": self.section_id,
+            "container_type": self.container_type,
+            "render_mode": self.render_mode,
         }
 
     @classmethod
@@ -298,6 +387,8 @@ class ResumeSection:
             body_paras=[ParaModel.from_dict(p) for p in d.get("body_paras", [])],
             roles=[RoleEntry.from_dict(r) for r in d.get("roles", [])],
             section_id=d.get("section_id", ""),
+            container_type=d.get("container_type"),
+            render_mode=d.get("render_mode"),
         )
 
 
@@ -322,6 +413,10 @@ class LayoutProfile:
     section_row_table: bool = False          # True when left column is section-label only (one row per section)
     header_bg_color: str | None = None       # hex RRGGBB for full-width dark header band (single-col PDFs)
     footer_bg_color: str | None = None       # hex RRGGBB for full-width dark footer band (single-col PDFs)
+    # Semantic table layout mode (B1): inferred from structural cues; None for non-two-column docs.
+    # Values: "synchronized_rows" | "sidebar_layout" | "header_body_split" |
+    #         "asymmetric_columns" | "independent_columns"
+    table_layout_mode: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -341,6 +436,7 @@ class LayoutProfile:
             "section_row_table": self.section_row_table,
             "header_bg_color": self.header_bg_color,
             "footer_bg_color": self.footer_bg_color,
+            "table_layout_mode": self.table_layout_mode,
         }
 
     @classmethod
@@ -362,6 +458,7 @@ class LayoutProfile:
             section_row_table=bool(d.get("section_row_table", False)),
             header_bg_color=d.get("header_bg_color"),
             footer_bg_color=d.get("footer_bg_color"),
+            table_layout_mode=d.get("table_layout_mode"),
         )
 
 
@@ -469,8 +566,14 @@ class ResumeDocument:
     # template and rendered as a dark band at the bottom.  Empty for most templates.
     footer_paras: list[ParaModel] = field(default_factory=list)
     # Raster images extracted from the source PDF (profile photos, decorative
-    # headers/footers, etc.).  Runtime-only — not serialised to JSON.
+    # headers/footers, etc.).  Serialised via PageImageBlock.to_dict/from_dict
+    # (image_bytes stored as base64) so backgrounds survive DB round-trips.
     page_images: list["PageImageBlock"] = field(default_factory=list)
+    # Diagnostics populated by parse_pdf() — runtime-only, not serialised.
+    # Keys: raster_images_raw, vector_images_raw, page_images_final, image_categories,
+    #       column_split_x, table_layout_mode, header_bg_color, left_col_bg_color,
+    #       sidebar_detected, sidebar_inferred, page_bg_detected.
+    pdf_diagnostics: "dict | None" = field(default=None, repr=False)
     body_items: list[Any] | None = None  # list[ParaModel | TableBlock]; None for PDF/deserialised
     label_column_fixed: bool = False     # True when label-column layout reordering was applied
     table_column_layout_fixed: bool = False  # True when newspaper/table multi-column fix applied
@@ -495,6 +598,8 @@ class ResumeDocument:
             d["table_column_layout_fixed"] = True
         if self.layout_blocks is not None:
             d["layout_blocks"] = [b.to_dict() for b in self.layout_blocks]
+        if self.page_images:
+            d["page_images"] = [img.to_dict() for img in self.page_images]
         return d
 
     @classmethod
@@ -529,6 +634,10 @@ class ResumeDocument:
                 for b in lb_data
             ]
 
+        page_images = [
+            PageImageBlock.from_dict(p) for p in d.get("page_images", [])
+        ]
+
         return cls(
             header_paras=header_paras,
             sections=sections,
@@ -538,6 +647,7 @@ class ResumeDocument:
             label_column_fixed=bool(d.get("label_column_fixed", False)),
             table_column_layout_fixed=bool(d.get("table_column_layout_fixed", False)),
             layout_blocks=layout_blocks,
+            page_images=page_images,
         )
 
 

@@ -1,206 +1,48 @@
-You are repairing invalid resume template classification output.
+REPAIR CLASSIFICATION — v6.3-role-normalization
 
-Your task:
-Return corrected JSON for the provided invalid sections only.
+Repair invalid experience role structures.
 
-This is a classification repair task.
-It is NOT a resume writing task.
+INVALID:
+- role_header inside body_blocks
+- role_meta inside body_blocks
+- empty body_blocks despite nearby experience content
+- duplicated para_ids across header_blocks/meta_blocks
 
-Return JSON only.
-No explanations.
-No comments.
-No markdown.
+ROLE SPLIT REPAIR
 
-==================================================
-CORE RULES
-==================================================
+If role_header or role_meta appears after body content:
+- split role
+- close previous role
+- create new role
 
-1. Preserve all IDs exactly:
-- document_id
-- section_id
-- role_id
-- para_id
+HEADER/META NORMALIZATION
 
-2. Do not rewrite resume text.
+A paragraph may belong to only one canonical ownership category:
+- header_blocks
+OR
+- meta_blocks
 
-3. Do not invent sections.
+Do not duplicate ownership unless structurally unavoidable.
 
-4. Repair only the provided invalid sections.
+GENERIC META RULES
 
-5. If a section cannot be repaired safely, downgrade that section to:
-- semantic_type = "other"
-- rewrite_policy = "preserve"
+Company/location/date/context paragraphs:
+- are not technical sections
+- must not become role_tools / role_key_technologies / role_tech_stack
 
-6. Valid structure is more important than aggressive classification.
+PRESERVE RULES
 
-==================================================
-ALLOWED VALUES
-==================================================
+Preserve:
+- technology stack blocks
+- key technologies blocks
+- tools blocks
+- project labels
+- nested detail blocks
+- contextual project paragraphs
+- highlights
 
-section.semantic_type:
-- summary
-- skills
-- experience
-- education
-- projects
-- additional
-- other
+Do not downgrade preserved adjunct blocks into rewriteable bullets.
 
-section.rewrite_policy:
-- rewrite_body
-- rewrite_bullets_only
-- preserve
+REWRITE RULES
 
-block.semantic_type:
-- summary_paragraph
-- skills_paragraph
-- role_header
-- role_meta
-- bullet
-- education_entry
-- project_entry
-- additional_item
-- other_paragraph
-
-block.rewrite_policy:
-- rewrite_text
-- preserve
-
-==================================================
-SECTION CONTRACTS
-==================================================
-
-SUMMARY
-If semantic_type = "summary":
-- rewrite_policy = "rewrite_body"
-- roles[] must be empty
-- all blocks must be:
-  - summary_paragraph
-  - rewrite_text
-- preserve_heading = false
-- preserve_body_structure = false
-
-SKILLS
-If semantic_type = "skills":
-- rewrite_policy = "rewrite_body"
-- roles[] must be empty
-- all blocks must be:
-  - skills_paragraph
-  - rewrite_text
-- preserve_heading = false
-- preserve_body_structure = false
-
-EXPERIENCE
-If semantic_type = "experience":
-- rewrite_policy = "rewrite_bullets_only"
-- blocks[] must be empty
-- roles[] must be populated
-
-For each role:
-- header_blocks:
-  - semantic_type = "role_header"
-  - rewrite_policy = "preserve"
-- meta_blocks:
-  - semantic_type = "role_meta"
-  - rewrite_policy = "preserve"
-- body_blocks:
-  - semantic_type = "bullet"
-  - rewrite_policy = "rewrite_text"
-
-Experience normalization rules:
-- role title / position name -> header
-- compact employment metadata -> meta
-- dates -> meta
-- company / employer -> meta
-- location -> meta
-- sentence-like responsibility / achievement text -> body
-- do not place sentence-like text into meta
-- do not place date-only text into header
-- do not place metadata into body unless no safer structure exists
-
-EDUCATION
-If semantic_type = "education":
-- rewrite_policy = "preserve"
-- roles[] must be empty
-- all blocks must be:
-  - education_entry (ONLY — never other_paragraph, never role_header, never role_meta)
-  - preserve
-
-Any block in an education section that is role_header, role_meta, other_paragraph,
-summary_paragraph, or skills_paragraph MUST be converted to education_entry.
-This includes pipe-format degree/date lines (e.g. "BACHELOR OF SCIENCE | MAY 2014")
-which the parser may have labelled role_header — inside education they are education_entry.
-
-PROJECTS
-If semantic_type = "projects":
-- rewrite_policy = "preserve"
-- roles[] must be empty
-- all blocks must be:
-  - project_entry OR other_paragraph
-  - preserve
-
-ADDITIONAL
-If semantic_type = "additional":
-- rewrite_policy = "preserve"
-- roles[] must be empty
-- all blocks must be:
-  - additional_item OR other_paragraph
-  - preserve
-
-OTHER
-If semantic_type = "other":
-- rewrite_policy = "preserve"
-- roles[] must be empty
-- all blocks must be:
-  - other_paragraph
-  - preserve
-
-==================================================
-REPAIR PRIORITIES
-==================================================
-
-When repairing experience sections, fix these problems first:
-1. wrong block type in meta
-2. wrong block policy in meta
-3. wrong block type in header
-4. wrong block type in body
-5. mixed semantics across header/meta/body
-
-Prefer conservative normalization.
-
-If unsure:
-- preserve the section structure conservatively
-- or downgrade the section to other/preserve
-
-==================================================
-INPUT
-==================================================
-
-You will receive JSON like:
-
-{
-  "document_id": "...",
-  "source_kind": "...",
-  "invalid_sections": [
-    {
-      "parser_section": {...},
-      "classified_section": {...},
-      "validation_errors": [...]
-    }
-  ]
-}
-
-==================================================
-OUTPUT
-==================================================
-
-Return JSON only in this shape:
-
-{
-  "document_id": "...",
-  "sections": [
-    {
-      ...corrected section json...
-    }
-  ]
-}
+Only normal responsibility/achievement bullets should become rewrite_text blocks.

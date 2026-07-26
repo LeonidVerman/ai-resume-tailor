@@ -1,0 +1,1024 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "CONTACT",
+        "paragraphs": [
+          {
+            "para_id": "para_8",
+            "text": "111 1st Avenue",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_9",
+            "text": "Redmond, WA 65432",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_10",
+            "text": "909.555.0100",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_11",
+            "text": "kristi@example.com",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_12",
+            "text": "www.interestingsite.com",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_13",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_14",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_15",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Communication",
+        "paragraphs": [
+          {
+            "para_id": "para_17",
+            "text": "I have received several awards for my outstanding communication skills, including recognition for providing exceptional patient education and counseling.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_18",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_19",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_20",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Leadership",
+        "paragraphs": [
+          {
+            "para_id": "para_22",
+            "text": "I received the \"Outstanding Nursing Student\" award during my time in nursing school, and I have been recognized for my contributions to patient safety and satisfaction in my current role.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Education",
+        "paragraphs": [
+          {
+            "para_id": "para_24",
+            "text": "Bellows College | Madison, WI",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_25",
+            "text": "Bachelors of Science in Nursing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_26",
+            "text": "Relevant coursework: Anatomy and physiology, pharmacology, nursing ethics, and patient care management.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_27",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_28",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_29",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "Experience",
+        "paragraphs": [
+          {
+            "para_id": "para_38",
+            "text": "Registered Nurse | Pediatrics | Wholeness Healthcare",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_39",
+            "text": "November 20XX–October 20XX",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_40",
+            "text": "Registered Nurse | General Practice | Wholeness Healthcare",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_41",
+            "text": "December 20XX–November 20XX",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_42",
+            "text": "Registered Nurse | General Practice | Tyler Stein MD",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_43",
+            "text": "September 20XX–August 20XX",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_44",
+            "text": "I have a proven track record of delivering high-quality care while maintaining patient safety and satisfaction",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_38"
+            ],
+            "meta_para_ids": [
+              "para_39"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_40"
+            ],
+            "meta_para_ids": [
+              "para_41"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_42"
+            ],
+            "meta_para_ids": [
+              "para_43"
+            ],
+            "bullet_para_ids": [
+              "para_44"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_6",
+        "raw_title": "References",
+        "paragraphs": [
+          {
+            "para_id": "para_49",
+            "text": "[Available upon request]",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_50",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "CONTACT",
+        "paragraphs": [
+          {
+            "para_id": "para_7",
+            "text": "CONTACT",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_8",
+            "text": "111 1st Avenue",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_9",
+            "text": "Redmond, WA 65432",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_10",
+            "text": "909.555.0100",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_11",
+            "text": "kristi@example.com",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_12",
+            "text": "www.interestingsite.com",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_13",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_14",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_15",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Communication",
+        "paragraphs": [
+          {
+            "para_id": "para_16",
+            "text": "Communication",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_17",
+            "text": "I have received several awards for my outstanding communication skills, including recognition for providing exceptional patient education and counseling.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_18",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_19",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_20",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Leadership",
+        "paragraphs": [
+          {
+            "para_id": "para_21",
+            "text": "Leadership",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_22",
+            "text": "I received the \"Outstanding Nursing Student\" award during my time in nursing school, and I have been recognized for my contributions to patient safety and satisfaction in my current role.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Education",
+        "paragraphs": [
+          {
+            "para_id": "para_23",
+            "text": "Education",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_24",
+            "text": "Bellows College | Madison, WI",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_25",
+            "text": "Bachelors of Science in Nursing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_26",
+            "text": "Relevant coursework: Anatomy and physiology, pharmacology, nursing ethics, and patient care management.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_27",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_28",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_29",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "Experience",
+        "paragraphs": [
+          {
+            "para_id": "para_30",
+            "text": "Experience",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_38",
+            "text": "Registered Nurse | Pediatrics | Wholeness Healthcare",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_39",
+            "text": "November 20XX–October 20XX",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_40",
+            "text": "Registered Nurse | General Practice | Wholeness Healthcare",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_41",
+            "text": "December 20XX–November 20XX",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_42",
+            "text": "Registered Nurse | General Practice | Tyler Stein MD",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_43",
+            "text": "September 20XX–August 20XX",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_44",
+            "text": "I have a proven track record of delivering high-quality care while maintaining patient safety and satisfaction",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_38"
+            ],
+            "meta_para_ids": [
+              "para_39"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_40"
+            ],
+            "meta_para_ids": [
+              "para_41"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_42"
+            ],
+            "meta_para_ids": [
+              "para_43"
+            ],
+            "bullet_para_ids": [
+              "para_44"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_6",
+        "raw_title": "References",
+        "paragraphs": [
+          {
+            "para_id": "para_48",
+            "text": "References",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_49",
+            "text": "[Available upon request]",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_50",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_7",
+        "text_preview": "CONTACT"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_16",
+        "text_preview": "Communication"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_21",
+        "text_preview": "Leadership"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_23",
+        "text_preview": "Education"
+      },
+      {
+        "section_id": "sec_5",
+        "para_id": "para_30",
+        "text_preview": "Experience"
+      },
+      {
+        "section_id": "sec_6",
+        "para_id": "para_48",
+        "text_preview": "References"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 0
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "CONTACT",
+        "display_title": "Contact",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_8",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_9",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_10",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_11",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_12",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Communication",
+        "display_title": "Communication",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_6",
+            "para_id": "para_17",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Leadership",
+        "display_title": "Leadership",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_7",
+            "para_id": "para_22",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Education",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_8",
+            "para_id": "para_24",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_9",
+            "para_id": "para_25",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_10",
+            "para_id": "para_26",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "Experience",
+        "display_title": "Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_11",
+                "para_id": "para_38",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_12",
+                "para_id": "para_39",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_13",
+                "para_id": "para_40",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_14",
+                "para_id": "para_41",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_15",
+                "para_id": "para_42",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_43",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_17",
+                "para_id": "para_44",
+                "semantic_type": "role_freeform_note",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_6",
+        "raw_title": "References",
+        "display_title": "References",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_18",
+            "para_id": "para_49",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": true,
+    "errors": [],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_5",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_6",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "repair_input": null,
+  "repair_response": null,
+  "validation_after_repair": null,
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "CONTACT",
+        "display_title": "Contact",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_8",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_9",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_10",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_11",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_12",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Communication",
+        "display_title": "Communication",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_6",
+            "para_id": "para_17",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Leadership",
+        "display_title": "Leadership",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_7",
+            "para_id": "para_22",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Education",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_8",
+            "para_id": "para_24",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_9",
+            "para_id": "para_25",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_10",
+            "para_id": "para_26",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "Experience",
+        "display_title": "Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_11",
+                "para_id": "para_38",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_12",
+                "para_id": "para_39",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_13",
+                "para_id": "para_40",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_14",
+                "para_id": "para_41",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_15",
+                "para_id": "para_42",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_43",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_17",
+                "para_id": "para_44",
+                "semantic_type": "role_freeform_note",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_6",
+        "raw_title": "References",
+        "display_title": "References",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_18",
+            "para_id": "para_49",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "status": "valid",
+  "validation_error_count": 0,
+  "invalid_section_count_before_repair": 0,
+  "invalid_section_count_after_repair": 0,
+  "repaired_section_count": 0,
+  "downgraded_section_count": 0,
+  "invalid_section_ids": [],
+  "recovery_applied": false
+}

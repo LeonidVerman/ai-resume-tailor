@@ -41,10 +41,11 @@ When classification is None the function behaves identically to before.
 """
 from __future__ import annotations
 
+import difflib
 import logging
 import re
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from dataclasses import dataclass, field, replace as _dc_replace
+from typing import TYPE_CHECKING, Any
 
 from tailor.compiler.models import (
     ParaModel,
@@ -54,6 +55,7 @@ from tailor.compiler.models import (
     RoleEntry,
     TableBlock,
 )
+from tailor.compiler.text_parser import _ALL_KNOWN as _KNOWN_HEADING_NAMES
 from tailor.compiler.text_parser import LlmRole, LlmSection
 
 if TYPE_CHECKING:
@@ -61,7 +63,87 @@ if TYPE_CHECKING:
 
 _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 _log = logging.getLogger(__name__)
+
+# Template placeholder phrases.  Content carrying these must NEVER be
+# preserved verbatim — even when classification marks the block preserve
+# (the new taxonomy sometimes labels placeholder paras role_intro/preserve,
+# which kept "Summarize your key responsibilities…" in the render while the
+# real bullets were pushed out as extras — sample 6/7/14 duplication).
+_TEMPLATE_PLACEHOLDER_MARKERS: tuple[str, ...] = (
+    "summarize your key",
+    "key responsibilities",
+    "add your experience",
+    "describe your experience",
+    "this is the place for a summary",
+    "state your career goals",
+    "lorem ipsum",
+)
+
+
+def _is_placeholder_text(text: str) -> bool:
+    t = text.lower()
+    return any(m in t for m in _TEMPLATE_PLACEHOLDER_MARKERS)
+
+
+def _similar_to_any_line(text: str, lines: "list[str]", threshold: float = 0.62) -> bool:
+    """True when *text* is a near-duplicate of (or covered by) *lines*.
+
+    Used to make preserve policies yield: a preserved template bullet whose
+    text the LLM visibly rewrote ("Prepare project worksheets…" vs
+    "Prepared project worksheets… to support planning") would otherwise
+    render right next to its own rewrite (samples 22/24 duplication).
+
+    Three signals:
+    - substring either way (wrap-split fragments, sample 21)
+    - SequenceMatcher ratio ≥ threshold (tense/word tweaks)
+    - token-prefix coverage: ≥85%% of the text's content words (compared by
+      4-char prefix, absorbing -ed/-ing morphology) appear across *lines* —
+      catches glued template lines the LLM split into several bullets
+      (sample 28) and short lines rewritten with a long tail (sample 23
+      "Oversees engineering projects").
+    """
+    t = " ".join(text.split()).lower()
+    if not t:
+        return False
+    for l in lines:
+        ln = " ".join(l.split()).lower()
+        if not ln:
+            continue
+        if t in ln or ln in t:
+            return True
+        if difflib.SequenceMatcher(None, t, ln).ratio() >= threshold:
+            return True
+    t_words = [w for w in re.findall(r"[a-z0-9]+", t) if len(w) > 2]
+    if len(t_words) >= 3:
+        union_prefixes = set()
+        for l in lines:
+            for w in re.findall(r"[a-z0-9]+", l.lower()):
+                if len(w) > 2:
+                    union_prefixes.add(w[:4])
+        covered = sum(1 for w in t_words if w[:4] in union_prefixes)
+        if covered / len(t_words) >= 0.85:
+            return True
+    return False
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
+_MONTH_NAME_RE = re.compile(
+    r"\b(January|February|March|April|May|June|July|August|September|"
+    r"October|November|December)\b",
+    re.IGNORECASE,
+)
+# Matches standalone date-column fragment paras (sample 35-style templates where
+# dates live in header_paras before the Experience heading in document order).
+_DATE_COL_PARA_RE = re.compile(
+    r"^\s*(?:"
+    r"(?:January|February|March|April|May|June|July|August|September|"
+    r"October|November|December)"
+    r"(?:\s+\d{4})?(?:\s*[–\-]+\s*(?:(?:January|February|March|April|May|"
+    r"June|July|August|September|October|November|December)(?:\s+\d{4})?)?)?"
+    r"|\d{4}(?:\s*[–\-]+\s*\d{0,4})?"
+    r"|(?:current|present)"
+    r"|(?:Full[\s\-]?time|Part[\s\-]?time|Contract)"
+    r")\s*$",
+    re.IGNORECASE,
+)
 
 # Semantic types that are NEVER modified regardless of LLM output (spec §3).
 # Only "summary", "experience", and "skills" are editable (spec §1).
@@ -98,6 +180,7 @@ class _MatchResult:
 def _match_sections(
     orig: list[ResumeSection],
     llm: list[LlmSection],
+    strict: bool = True,
 ) -> _MatchResult:
     """Match original sections to LLM sections.
 
@@ -105,6 +188,12 @@ def _match_sections(
     unmatched original section (structural mismatch that cannot be recovered).
     When all originals are matched and extra LLM sections remain, those extras
     are returned in _MatchResult.extras for the caller to handle.
+
+    With strict=False the ValueError is suppressed: unmatched originals are
+    kept verbatim (they simply have no pair) and unmatched LLM sections are
+    handled as extras.  Used as a degraded retry so one unmatchable section
+    no longer discards every matched pair (sample 28 lost 100% of the LLM
+    content to a single mismatch).
     """
     used_llm: set[int] = set()
     used_orig: set[int] = set()
@@ -188,10 +277,18 @@ def _match_sections(
         ]
         all_orig_matched = len(unmatched_content_orig) == 0
         if not all_orig_matched:
-            # Hard fail: LLM both dropped a real content section and invented one.
-            raise ValueError(
-                f"LLM output contains section '{llm[unmatched_llm[0]].heading}' "
-                f"that cannot be matched to any section in the original document."
+            if strict:
+                # Hard fail: LLM both dropped a real content section and invented one.
+                raise ValueError(
+                    f"LLM output contains section '{llm[unmatched_llm[0]].heading}' "
+                    f"that cannot be matched to any section in the original document."
+                )
+            _log.debug(
+                "SECTION_MAP_DEGRADED: %d unmatched content original(s) kept "
+                "verbatim (%s); %d unmatched LLM section(s) handled as extras",
+                len(unmatched_content_orig),
+                ", ".join(repr(orig[oi].title) for oi in unmatched_content_orig),
+                len(unmatched_llm),
             )
         # All content originals matched — extras are new sections added by the LLM.
         # Drop extras that belong to locked types (e.g. Education, Certifications):
@@ -385,6 +482,7 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
         bullets=new_bullets,
         role_id=orig.role_id,
         role_id_stable=orig.role_id_stable if layout_bound else "",
+        layout_binding=orig.layout_binding,
     )
 
 
@@ -539,6 +637,7 @@ def _update_experience_section(
                             meta_lines=list(updated.meta_lines) + [_company_pm],
                             bullets=updated.bullets,
                             role_id=updated.role_id,
+                            layout_binding=updated.layout_binding,
                         )
                 updated_roles.append(updated)
             # Template roles with no LLM counterpart are kept verbatim
@@ -567,6 +666,7 @@ def _update_experience_section(
                 body_paras=clean_body_d,
                 roles=updated_roles,
                 section_id=orig.section_id,
+                container_type=orig.container_type,
             )
         # Reparse found no role structure — preserve original roles verbatim to
         # prevent the zip(orig.roles, llm.roles=[]) fallthrough wiping all roles.
@@ -582,6 +682,7 @@ def _update_experience_section(
             body_paras=orig.body_paras,
             roles=list(orig.roles),
             section_id=orig.section_id,
+            container_type=orig.container_type,
         )
 
     # Normal path: pipe-separated LLM roles matched by position.
@@ -718,6 +819,7 @@ def _update_experience_section(
         body_paras=clean_body,
         roles=updated_roles,
         section_id=orig.section_id,
+        container_type=orig.container_type,
     )
 
 
@@ -864,8 +966,37 @@ def _update_body_section(
     # Separate body paragraphs into content targets and decorative preservations.
     # Decorative paras (mixed run fonts) are preserved verbatim and never used as
     # LLM-text targets; they act like empty spacers in the mapping.
+    def _is_structural_body_para(p: "ParaModel") -> bool:
+        """Foreign structural paras inside a body section are never slots.
+
+        Scrambled two-column templates interleave the other column's content
+        into a section's body (sample 38: KEY SKILLS contains the
+        "\\nPROFESSIONAL EXPERIENCE" heading para, the "Senior Software
+        Engineer" title, and the "Brightline Technologies | …" role header).
+        Writing LLM lines into them destroys section headings and role
+        headers; preserve them verbatim like decorative paras.
+        """
+        t = p.text.strip()
+        if not t:
+            return False
+        if p.semantic == "role_header":
+            return True
+        if t.lower() in _KNOWN_HEADING_NAMES:
+            return True
+        if (
+            len(t) <= 40
+            and ":" not in t
+            and "," not in t
+            and _is_role_like_heading(t)
+        ):
+            return True
+        return False
+
     non_empty = [p for p in orig.body_paras if p.text.strip()]
-    content_paras = [p for p in non_empty if not _is_decorative_para(p)]
+    content_paras = [
+        p for p in non_empty
+        if not _is_decorative_para(p) and not _is_structural_body_para(p)
+    ]
 
     # Derive the cloning archetype from real content paragraphs (clean font).
     # Fall back to heading only when the section has no content paragraphs at all.
@@ -881,6 +1012,9 @@ def _update_body_section(
 
     # Build updated versions of each content para (paired by position with LLM lines).
     _is_skills = orig.semantic_type == "skills"
+    # Whitespace-normalized lowercase join of all LLM lines — used to detect
+    # template skill items already covered by the injected content.
+    _llm_joined_lower = " ".join(" ".join(l.split()) for l in llm_lines).lower()
 
     # For PDF-origin skills sections, compute the dominant font size to guard against
     # anomalous sizes from PDF extraction artifacts (e.g. 15.8pt when body is 9.3pt).
@@ -944,8 +1078,19 @@ def _update_body_section(
     for p in orig.body_paras:
         if not p.text.strip():
             new_body.append(p)
-        elif _is_decorative_para(p):
-            new_body.append(p)
+        elif _is_decorative_para(p) or _is_structural_body_para(p):
+            # A preserved structural para whose text is already covered by
+            # the injected LLM lines would render as a duplicate (sample 18:
+            # template 'Licensed Civil Engineer' next to the LLM's identical
+            # skills line) — blank it; the LLM copy carries the content.
+            if (
+                _is_skills
+                and _is_structural_body_para(p)
+                and " ".join(p.text.split()).lower() in _llm_joined_lower
+            ):
+                new_body.append(p.with_text(""))
+            else:
+                new_body.append(p)
         elif content_cursor < len(updated):
             new_body.append(updated[content_cursor])
             content_cursor += 1
@@ -963,18 +1108,31 @@ def _update_body_section(
             # verbatim — they carry either the original design element text
             # (e.g. 'Leonid Verman') or the LLM summary text injected earlier
             # by _find_intro_prose_para.  Clearing them erases the name/summary.
+            # Narrowed: a para whose text is already covered by the injected
+            # LLM lines is a leftover skill item, not a name/summary — keeping
+            # it duplicates content the LLM line already carries (sample 17:
+            # 'Statistical Analysis' survives next to the joined skills line).
             if _is_skills and p.semantic == "paragraph":
-                new_body.append(p)  # preserve name / summary / non-skill para
+                _pt = " ".join(p.text.split()).lower()
+                if _pt and _pt in _llm_joined_lower:
+                    new_body.append(p.with_text(""))
+                else:
+                    new_body.append(p)  # preserve name / summary / non-skill para
             else:
                 new_body.append(p.with_text(""))
         # else (non-layout-bound): LLM produced fewer lines — drop trailing para
 
     # Append any remaining unbound extra paras (LLM content beyond template slots).
     # Register them under the last content para's ID so apply_tailored can inject
-    # matching LayoutParagraphBlock entries.  para_id is left "" here — the
-    # injector assigns IDs only when the anchor block has an xml_proto_xml.
+    # matching LayoutParagraphBlock entries.  When there are no content paras (empty
+    # template section), fall back to the section heading para_id as the anchor so
+    # the content is injected directly after the heading in layout-bound mode.
     _body_extra_injections: "dict[str, list[ParaModel]]" = {}
-    _anchor_pid = content_paras[-1].para_id if content_paras else ""
+    _anchor_pid = (
+        content_paras[-1].para_id
+        if content_paras
+        else (orig.heading.para_id or "") if orig.heading else ""
+    )
     for extra_pm in updated[content_cursor:]:
         if _anchor_pid:
             _body_extra_injections.setdefault(_anchor_pid, []).append(extra_pm)
@@ -1014,10 +1172,33 @@ def _update_body_section(
         body_paras=new_body,
         roles=[],
         section_id=orig.section_id,
+        container_type=orig.container_type,
     )
     if _body_extra_injections:
         result._extra_injections = _body_extra_injections  # type: ignore[attr-defined]
     return result
+
+
+def _heading_like_style(pm: "ParaModel") -> bool:
+    """True when the para's named style is a heading, Title, or Subtitle.
+
+    Checks both the parsed style_name and the xml_proto's pStyle — parsed
+    models sometimes carry the named style only in the proto (sample 12:
+    style_name empty, pStyle val='Subtitle').  Cloning such a para for body
+    text makes the rendered lines re-parse as section headings.
+    """
+    names = [pm.style.style_name or ""]
+    if pm.style.xml_proto is not None:
+        pPr = pm.style.xml_proto.find(f"{{{_W}}}pPr")
+        if pPr is not None:
+            ps = pPr.find(f"{{{_W}}}pStyle")
+            if ps is not None:
+                names.append(ps.get(f"{{{_W}}}val") or "")
+    for n in names:
+        n = n.replace(" ", "").lower()
+        if n.startswith("heading") or n in ("title", "subtitle"):
+            return True
+    return False
 
 
 def _find_body_prototype(
@@ -1034,9 +1215,7 @@ def _find_body_prototype(
     Falls back to any non-empty non-bold body para, then any non-empty body
     para, then the first section heading.
     """
-    def _is_heading_style(p: "ParaModel") -> bool:
-        sn = (p.style.style_name or "").lower()
-        return sn.startswith("heading")
+    _is_heading_style = _heading_like_style
 
     # Preferred: non-other, non-bold, non-heading-style, non-center/right para
     for orig_section, _ in pairs:
@@ -1142,18 +1321,24 @@ def _make_extra_section(
     # 'Heading 3' which is bold in most themes), normalise it here so the
     # injected section body text renders as regular weight.
     def _normalise_body_pm(pm: "ParaModel") -> "ParaModel":
-        sn = (pm.style.style_name or "").lower()
+        # Heading/Title/Subtitle (from style_name OR the xml proto's pStyle)
+        # count as heading-like: leaving their pStyle on body lines makes the
+        # rendered paragraphs re-parse as section headings (sample 12
+        # doc-end skills).
+        _heading_like = _heading_like_style(pm)
         # Also check paragraph_profile.bold for PDF-sourced paragraphs whose
         # style.bold is None even when the paragraph is visually bold.
         _pp_bold = pm.paragraph_profile.bold if pm.paragraph_profile else False
-        if not sn.startswith("heading") and not pm.style.bold and not _pp_bold:
+        if not _heading_like and not pm.style.bold and not _pp_bold:
             return pm
         from dataclasses import replace as _dc_replace
         from copy import deepcopy as _deepcopy
         new_style = _dc_replace(pm.style, bold=False)
+        if _heading_like:
+            new_style = _dc_replace(new_style, style_name=None)
         # If the xml_proto carries a heading pStyle, remove it so the paragraph
         # inherits the document's Normal/body style (typically not bold).
-        if new_style.xml_proto is not None and sn.startswith("heading"):
+        if new_style.xml_proto is not None and _heading_like:
             new_proto = _deepcopy(new_style.xml_proto)
             pPr = new_proto.find(f"{{{_W}}}pPr")
             if pPr is not None:
@@ -1378,6 +1563,7 @@ def _inject_fragmented_experience(
     sections: "list[ResumeSection]",
     original_sections: "list[ResumeSection]",
     llm_exp: LlmSection,
+    matched_section_ids: "set[str] | None" = None,
 ) -> "list[ResumeSection]":
     """Inject LLM experience roles into role-like 'other' sections.
 
@@ -1390,9 +1576,29 @@ def _inject_fragmented_experience(
     The section heading is updated with the LLM role header and the available
     body paragraph slots are filled with bullets.
     """
-    role_like = _find_role_like_other_sections(original_sections)
+    # Use updated sections to detect role-like targets so that sections
+    # promoted to a different semantic_type (e.g. 'summary' by classification)
+    # are not overwritten with experience bullets.
+    role_like = _find_role_like_other_sections(sections)
+    # A role-TITLED section that was already matched to an LLM section is not
+    # an orphaned role fragment — its body carries that section's content.
+    # Sample 38: the template's 'Senior Software Engineer' section holds the
+    # summary prose and matched the LLM summary; injecting role bullets there
+    # clobbered the summary and duplicated role 1's content.
+    if matched_section_ids:
+        for _skip in [s for s in role_like if s.section_id in matched_section_ids]:
+            _log.debug(
+                "FRAGMENTED_EXPERIENCE_SKIPPED_MATCHED: %r already matched "
+                "to an LLM section", _skip.title[:40],
+            )
+        role_like = [
+            s for s in role_like if s.section_id not in matched_section_ids
+        ]
     if not role_like or not llm_exp.roles:
         return sections
+    # Build a lookup of original body structure keyed by section_id so the
+    # replacement can use the clean template slot layout (not updated content).
+    _orig_by_id = {s.section_id: s for s in original_sections}
 
     _log.debug(
         "FRAGMENTED_EXPERIENCE_DETECTED: %d role-like sections, %d LLM roles",
@@ -1405,10 +1611,28 @@ def _inject_fragmented_experience(
         if i >= len(llm_exp.roles):
             break
         llm_role = llm_exp.roles[i]
-        # Update heading with LLM role header text
-        new_heading = _strip_col_break_para(sec.heading.with_text(llm_role.header))
+        # Keep the template heading verbatim when it equals the LLM role
+        # header's title segment ('Senior Software Engineer' == first pipe
+        # segment of 'Senior Software Engineer | Brightline Technologies |
+        # ... | May 2017 – Present').  Overwriting it with the full pipe
+        # header fabricates a section title the template never had (sample
+        # 38); the company/date paras exist elsewhere in the template and
+        # stay verbatim.  A differing title (e.g. template 'Backend
+        # Engineer' vs LLM 'Senior Backend Engineer') keeps the original
+        # replace behaviour.
+        _norm_frag = lambda s: re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+        _llm_title_seg = llm_role.header.split("|")[0]
+        _new_title = llm_role.header
+        if _norm_frag(sec.title) and _norm_frag(sec.title) == _norm_frag(_llm_title_seg):
+            _new_title = sec.title
+            new_heading = _strip_col_break_para(sec.heading)
+        else:
+            new_heading = _strip_col_break_para(sec.heading.with_text(llm_role.header))
+        # Use original body_para slots for clean slot structure (the updated
+        # section may have LLM content already occupying the slots).
+        orig_sec = _orig_by_id.get(sec.section_id, sec)
         # Fill available body_para slots with bullets, pack overflow into last slot
-        body = list(sec.body_paras)
+        body = list(orig_sec.body_paras)
         bullet_slots = [j for j, bp in enumerate(body) if bp.para_id and not bp.text.startswith('\n')]
         # First slot can carry a newline/spacer — skip those, prefer content slots
         if not bullet_slots:
@@ -1423,7 +1647,7 @@ def _inject_fragmented_experience(
                 body[slot_j] = body[slot_j].with_text(packed)
 
         updated_sec = ResumeSection(
-            title=llm_role.header,
+            title=_new_title,
             heading=new_heading,
             semantic_type="other",
             body_paras=body,
@@ -1433,7 +1657,7 @@ def _inject_fragmented_experience(
         replacement[sec.section_id] = updated_sec
         _log.debug(
             "FRAGMENTED_EXPERIENCE_SYNTHESIZED: %r -> %r",
-            sec.title[:40], llm_role.header[:40],
+            sec.title[:40], _new_title[:40],
         )
 
     # Rebuild sections with replacements applied
@@ -1449,6 +1673,24 @@ def _inject_fragmented_experience(
 
 # Strategy 1: LLMs sometimes format roles as "Title — Company" (em/en/figure dash).
 _ROLE_BODY_SEP_RE = re.compile(r'\s—\s|\s–\s|\s‒\s')
+# Matches a trailing date-range paren, e.g. "(September 2023 – Present)".
+# Used by _is_title_line_with_date_paren to exclude job-title lines from dash_bounds.
+_TITLE_DATE_PAREN_RE = re.compile(r'\([^)]*(?:–|—|‒)[^)]*\)\s*$')
+
+
+def _is_title_line_with_date_paren(ln: str) -> bool:
+    """True when *ln* is a job-title line whose only em/en-dash is in a trailing paren.
+
+    Excludes "Senior Software Engineer (September 2023 – Present)" (title-only,
+    dash is inside the date paren) while preserving "Wardiere Inc. – Software
+    Engineering (2014–Present)" (has a main-body separator dash before the paren).
+    """
+    m = _TITLE_DATE_PAREN_RE.search(ln)
+    if m is None:
+        return False
+    # If there is a main-body separator (space–dash–space) in the prefix, the
+    # line is a legitimate role boundary — keep it.
+    return not _ROLE_BODY_SEP_RE.search(ln[:m.start()])
 
 # Strategy 2: standalone date-line boundaries.
 #   A "date line" is a line whose entire content is a date range, e.g.
@@ -1461,7 +1703,9 @@ _MONTH_PAT = (
 )
 _YEAR_SLOT_PAT = r"(?:19\d{2}|20\d{2}|19[Xx]{2}|20[Xx]{2})"  # real or XX placeholder
 _DATE_WORD_PAT = r"(?:Present|Current|Now|Ongoing)"
-_SINGLE_DATE_PAT = rf"(?:{_MONTH_PAT}\.?\s+{_YEAR_SLOT_PAT}|{_YEAR_SLOT_PAT})"
+# "Jan 2021", "Jan. 2021", and slash-separated "Jan / 2021" / "Jan/2021"
+# (sample 39's "Jan / 2021-Ongoing" date lines).
+_SINGLE_DATE_PAT = rf"(?:{_MONTH_PAT}\.?\s*(?:/\s*)?{_YEAR_SLOT_PAT}|{_YEAR_SLOT_PAT})"
 _DATE_SEP_LOOSE_PAT = r"(?:\s*[-–—‒]\s*|\s+to\s+|\s+through\s+)"
 _DATE_RANGE_PAT = (
     rf"(?:{_SINGLE_DATE_PAT}"
@@ -1475,12 +1719,58 @@ _STANDALONE_DATE_LINE_RE = re.compile(
 _BULLET_MARKER_RE = re.compile(
     r"^\s*[-•‣◦⁃▸⦿●*–—‒]\s+"
 )
+# Strategy 3: "ALL-CAPS COMPANY - LOCATION" boundaries.
+# Matches lines like "TIMMERMAN INDUSTRIES - 123 Anywhere St., Any City"
+# where the company name is predominantly uppercase and uses ASCII " - " separator.
+_CAPS_COMPANY_SEP_RE = re.compile(r'^[A-Z][A-Z\s\d&,\.\']{2,}\s+-\s+\S')
+
+# Strategy 3: role-header lines with a trailing parenthesised date range,
+# e.g. "Project Manager (2023 - Present)".  Neither a standalone date line
+# nor a dash boundary, so Strategies 1-2 miss this format entirely.
+_PAREN_DATE_HEADER_RE = re.compile(
+    rf"^(?P<title>[^(]{{3,80}}?)\s*\(\s*(?P<dates>{_DATE_RANGE_PAT})\s*\)\s*$",
+    re.IGNORECASE,
+)
+
+
+def _uniform_pre_header_count(body_lines: list[str], boundaries: list[int]) -> int:
+    """Number of header lines (title/company) preceding each boundary line.
+
+    Some LLM outputs place the role title and company BEFORE the boundary::
+
+        Software Engineer
+        Tropang True Po
+        January 2020 - Present
+        - bullet...
+
+    Detected when the first boundary is preceded by exactly 1-2 short,
+    non-sentence lines and every boundary has the same number of such lines
+    directly before it.  Returns 0 when the layout does not match (dates-first
+    templates keep the header-after-date behaviour).
+    """
+    h = boundaries[0]
+    if h not in (1, 2):
+        return 0
+    for prev, nxt in zip(boundaries, boundaries[1:]):
+        if nxt - h <= prev:
+            return 0
+    for b in boundaries:
+        for ln in body_lines[b - h: b]:
+            s = ln.strip()
+            if (
+                not s
+                or len(s) > 80
+                or s.endswith((".", "!", "?"))
+                or _BULLET_MARKER_RE.match(ln)
+            ):
+                return 0
+    return h
 
 
 def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
     """Re-parse experience body_lines into LlmRole objects.
 
-    Tries two strategies in order:
+    Tries three strategies in order:
 
     1. Em/en/figure-dash boundaries — lines containing " — ", " – ", or " ‒ "
        (existing behaviour; handles "Title — Company" format).
@@ -1488,7 +1778,12 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
     2. Standalone date-line boundaries — lines whose entire content is a date
        range (e.g. "Jan 20XX - Current", "March 2020 – December 2022", "2019–2021").
        The line immediately after the date line becomes the role header; subsequent
-       non-date lines up to the next boundary become bullets.
+       non-date lines up to the next boundary become bullets.  When 1-2 short
+       header lines uniformly PRECEDE each date line, those supply header/meta
+       instead (title-company-date format).
+
+    3. Paren-date role headers — "Title (YYYY - Present)" lines start roles;
+       only tried when strategies 1-2 find no boundaries at all.
 
     Returns [] when no role structure is detectable so callers can fall back safely.
     """
@@ -1499,6 +1794,7 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
         i for i, ln in enumerate(body_lines)
         if _ROLE_BODY_SEP_RE.search(ln)
         and not _STANDALONE_DATE_LINE_RE.match(ln.strip())
+        and not _is_title_line_with_date_paren(ln)
     ]
     date_bounds = [
         i for i, ln in enumerate(body_lines)
@@ -1534,22 +1830,108 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
         )
         return roles
 
+    # Strategy 3: "ALL-CAPS COMPANY - LOCATION\nJob Title (Year)" format.
+    # Detects company lines that are predominantly uppercase letters and use
+    # ASCII " - " as a separator before the location.
+    company_bounds = [
+        i for i, ln in enumerate(body_lines)
+        if _CAPS_COMPANY_SEP_RE.match(ln.strip())
+    ]
+    if company_bounds:
+        roles = _roles_from_company_location_boundaries(body_lines, company_bounds)
+        _log.debug(
+            "EXPERIENCE_LLM_ROLES_REPARSED: body_lines=%d company_boundaries=%d "
+            "reparsed_roles=%d pattern=caps_company",
+            len(body_lines), len(company_bounds), len(roles),
+        )
+        return roles
+
+    # Strategy 4 — "Title (YYYY - Present)" role-header lines without an
+    # ALL-CAPS company line.  Only tried when the earlier strategies found
+    # nothing, so existing formats are unaffected.
+    paren_bounds = [
+        i for i, ln in enumerate(body_lines)
+        if _PAREN_DATE_HEADER_RE.match(ln.strip())
+    ]
+    if paren_bounds:
+        roles = _roles_from_paren_date_headers(body_lines, paren_bounds)
+        _log.debug(
+            "EXPERIENCE_LLM_ROLES_REPARSED: body_lines=%d paren_boundaries=%d "
+            "reparsed_roles=%d pattern=paren_date",
+            len(body_lines), len(paren_bounds), len(roles),
+        )
+        return roles
+
     return []
+
+
+_COLON_KEY_RE = re.compile(r'^[A-Za-z][\w\s]{0,25}:')
 
 
 def _roles_from_dash_boundaries(
     body_lines: list[str], boundaries: list[int]
 ) -> list[LlmRole]:
-    """Em/en-dash boundary parser (factored out of original _reparse function)."""
+    """Em/en-dash boundary parser (factored out of original _reparse function).
+
+    Handles two common LLM formats:
+
+    A. "Company – Location" boundary (classic):
+       Each boundary line IS the role identifier; title/date may follow it.
+
+    B. "Title-first" format — "Title\\nCompany; Date – Date; Location":
+       The job title appears on the line immediately before the boundary.
+       In this case the boundary line (company; date) becomes a meta line
+       and the preceding title line becomes the role header.  The title line
+       is also removed from the preceding role's bullet list to avoid
+       misattribution.
+    """
+    # Detect title-first format: find boundaries that have a job-title-like
+    # line immediately before them (last non-empty line, no year, no dash, no
+    # bullet marker, no "Key: value" colon-prefix, no trailing sentence punctuation).
+    # Regular bullet text ends with "." and is long; job titles are short and bare.
+    _title_at: dict[int, str] = {}
+    for bi in boundaries:
+        j = bi - 1
+        while j >= 0 and not body_lines[j].strip():
+            j -= 1
+        if j < 0:
+            continue
+        prev = body_lines[j].strip()
+        if (
+            prev
+            and len(prev) <= 80
+            and not _ROLE_BODY_SEP_RE.search(prev)
+            and not _YEAR_RE.search(prev)
+            and not prev.startswith(("-", "•", "*", "f "))
+            and not _COLON_KEY_RE.match(prev)
+            and prev[-1:] not in ".!?,"
+        ):
+            _title_at[bi] = prev
+
     roles: list[LlmRole] = []
     for idx, boundary_i in enumerate(boundaries):
         end_i = boundaries[idx + 1] if idx + 1 < len(boundaries) else len(body_lines)
-        header = body_lines[boundary_i]
-        meta: list[str] = []
+        boundary_line = body_lines[boundary_i]
+        pre_title = _title_at.get(boundary_i, "")
+        next_title = _title_at.get(boundaries[idx + 1], "") if idx + 1 < len(boundaries) else ""
+
+        if pre_title:
+            # Title-first: pre-boundary line is the role header; boundary
+            # line (company/date) becomes the first meta entry.
+            header = pre_title
+            meta: list[str] = [boundary_line.strip()] if boundary_line.strip() else []
+        else:
+            header = boundary_line
+            meta = []
+
         bullets: list[str] = []
         for line in body_lines[boundary_i + 1: end_i]:
             s = line.strip()
             if not s:
+                continue
+            # Skip the title line that belongs to the next role — it appears at
+            # the end of the current role's range in title-first format.
+            if next_title and s == next_title:
                 continue
             if (
                 _YEAR_RE.search(s)
@@ -1563,20 +1945,70 @@ def _roles_from_dash_boundaries(
     return roles
 
 
-def _roles_from_date_boundaries(
+def _roles_from_company_location_boundaries(
     body_lines: list[str], boundaries: list[int]
 ) -> list[LlmRole]:
-    """Date-line boundary parser: each standalone date line starts a new role."""
+    """ALL-CAPS COMPANY - LOCATION boundary parser.
+
+    Handles "COMPANY NAME - Location\\nJob Title (Year)\\n- bullets" format where
+    the company line is predominantly uppercase and uses ASCII hyphen-space separator.
+    The company line becomes a meta line; the next non-empty line becomes the header.
+    """
     roles: list[LlmRole] = []
     for idx, boundary_i in enumerate(boundaries):
         end_i = boundaries[idx + 1] if idx + 1 < len(boundaries) else len(body_lines)
+        company_line = body_lines[boundary_i].strip()
+
+        header = company_line  # fallback when no title line follows
+        meta: list[str] = [company_line]
+        bullets: list[str] = []
+        saw_title = False
+
+        for line in body_lines[boundary_i + 1: end_i]:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            clean = _BULLET_MARKER_RE.sub("", stripped).strip()
+            if not saw_title:
+                header = clean if clean else stripped
+                saw_title = True
+            else:
+                bullets.append(clean if clean else stripped)
+
+        roles.append(LlmRole(header=header, meta_lines=meta, bullets=bullets))
+    return roles
+
+
+def _roles_from_date_boundaries(
+    body_lines: list[str], boundaries: list[int]
+) -> list[LlmRole]:
+    """Date-line boundary parser: each standalone date line starts a new role.
+
+    When each date line is uniformly preceded by 1-2 header lines (title /
+    company BEFORE the date), those lines supply the header and meta and every
+    line after the date is a bullet.  Otherwise the line after the date is the
+    header (dates-first template format).
+    """
+    roles: list[LlmRole] = []
+    pre_h = _uniform_pre_header_count(body_lines, boundaries)
+    for idx, boundary_i in enumerate(boundaries):
+        if idx + 1 < len(boundaries):
+            end_i = boundaries[idx + 1] - pre_h
+        else:
+            end_i = len(body_lines)
         date_text = body_lines[boundary_i].strip()
 
         header = date_text  # fallback when no title line follows
         meta: list[str] = [date_text]
         bullets: list[str] = []
         saw_header = False
+        if pre_h:
+            pre = [body_lines[j].strip() for j in range(boundary_i - pre_h, boundary_i)]
+            header = pre[0]
+            meta = pre[1:] + [date_text]
+            saw_header = True
 
+        first_content = True
         for line in body_lines[boundary_i + 1: end_i]:
             stripped = line.strip()
             if not stripped:
@@ -1586,9 +2018,52 @@ def _roles_from_date_boundaries(
             if not saw_header:
                 header = clean if clean else stripped
                 saw_header = True
+            elif (
+                pre_h
+                and first_content
+                and len(stripped) <= 60
+                and not stripped.endswith((".", "!", "?"))
+            ):
+                # Title-before-date layout: a short non-sentence line directly
+                # after the date is the company/location line ("Pineapple
+                # Enterprises  Santa Monica, CA", sample 39), not a bullet.
+                meta.append(stripped)
+                first_content = False
             else:
                 bullets.append(clean if clean else stripped)
+                first_content = False
 
+        roles.append(LlmRole(header=header, meta_lines=meta, bullets=bullets))
+    return roles
+
+
+def _roles_from_paren_date_headers(
+    body_lines: list[str], boundaries: list[int]
+) -> list[LlmRole]:
+    """Paren-date header parser: "Project Manager (2023 - Present)" starts a role."""
+    roles: list[LlmRole] = []
+    pre_h = _uniform_pre_header_count(body_lines, boundaries)
+    for idx, boundary_i in enumerate(boundaries):
+        if idx + 1 < len(boundaries):
+            end_i = boundaries[idx + 1] - pre_h
+        else:
+            end_i = len(body_lines)
+        m = _PAREN_DATE_HEADER_RE.match(body_lines[boundary_i].strip())
+        assert m is not None  # boundaries were selected by this regex
+        header = m.group("title").strip()
+        meta: list[str] = [m.group("dates").strip()]
+        if pre_h:
+            meta = [
+                body_lines[j].strip()
+                for j in range(boundary_i - pre_h, boundary_i)
+            ] + meta
+        bullets: list[str] = []
+        for line in body_lines[boundary_i + 1: end_i]:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            clean = _BULLET_MARKER_RE.sub("", stripped).strip()
+            bullets.append(clean if clean else stripped)
         roles.append(LlmRole(header=header, meta_lines=meta, bullets=bullets))
     return roles
 
@@ -1643,19 +2118,34 @@ def _update_role_bullets_only(
     # strip meta_lines that look like description sentences (not dates/company/location).
     # These are plain-text descriptions that the PDF parser placed in meta_lines
     # because no explicit bullet markers were detected; keeping them alongside the
-    # new LLM bullets would duplicate the content.  A line is treated as a
-    # description (not a date/location) when it ends with a sentence-closing mark
-    # ('. ', '? ', '! ') or a plain period at end-of-string AND is not a date-like
-    # string.
+    # new LLM bullets would duplicate the content.  A line is a description when:
+    #   - it ends with a sentence-closing mark (period, comma, !, ?) AND
+    #   - it has >= 4 words (distinguishes sentences from short company names) AND
+    #   - it contains no year / date indicator
+    # Commas are included because placeholder sentences often end mid-clause
+    # (e.g. "Be concise," split across two lines).
     kept_meta = list(orig.meta_lines)
     if not orig.bullets and new_bullets and orig.meta_lines:
         import re as _re
-        _DATE_HINT = _re.compile(r"\b\d{4}\b|\bPresent\b|\bCurrent\b|\bNow\b", _re.IGNORECASE)
-        _SENTENCE_END = _re.compile(r"[.!?]\s*$")
+        _DATE_HINT = _re.compile(
+            r"\b\d{4}\b|\bPresent\b|\bCurrent\b|\bNow\b|20[Xx]{2}", _re.IGNORECASE
+        )
+        _SENTENCE_END = _re.compile(r"[.!?,]\s*$")
         cleaned = []
         for m in orig.meta_lines:
             t = m.text.strip()
-            if _SENTENCE_END.search(t) and not _DATE_HINT.search(t):
+            _n_words = len(t.split())
+            _has_date = bool(_DATE_HINT.search(t))
+            # A line is a description placeholder when it has no date hint AND
+            # (a) ends with sentence-closing punctuation (including comma) and
+            #     has >= 4 words, OR
+            # (b) is very long (>= 7 words) regardless of terminal punctuation
+            #     (catches lines that continue a sentence begun on a prior line).
+            _looks_like_sentence = not _has_date and (
+                (bool(_SENTENCE_END.search(t)) and _n_words >= 4)
+                or _n_words >= 7
+            )
+            if _looks_like_sentence:
                 _log.debug(
                     "ROLE_META_DESCRIPTION_STRIP: stripped description-like meta %r",
                     t[:60],
@@ -1665,14 +2155,45 @@ def _update_role_bullets_only(
         if cleaned != orig.meta_lines:
             kept_meta = cleaned
 
+    _hdr = _strip_col_break_para(orig.header)
+    # PDF-origin headers may have the company name split to header_extra when
+    # the PDF line broke at "|" (e.g. "Title |" + "Company" as a separate line).
+    # In rewrite_bullets_only mode the header is preserved verbatim, but the
+    # "complete" header (as it appeared in the original DOCX) includes company.
+    # Merge header_extra back so the rendered output matches the DOCX pipeline.
+    #
+    # Exception: timeline_left_role_right roles (DOCX newspaper-column layout)
+    # store semantic intro content (e.g. "Highlights: ...") in header_extra, not
+    # PDF layout fragments.  Merging them produces corrupt right-cell headers
+    # like "Senior Backend Engineer ... | Highlights: Continuing work on ...".
+    _skip_header_extra_merge = (
+        (orig.layout_binding or {}).get("kind") == "timeline_left_role_right"
+    )
+    kept_hx = list(orig.header_extra)
+    # Merge header_extra into the header ONLY for the PDF pipe-break case
+    # (header text ends with '|': "Title |" + "Company" were one source
+    # line).  DOCX templates keep title and company as SEPARATE paragraphs
+    # by design — merging glues them ("DEVOPS ENGINEER | Kalayaan National
+    # Bank", sample 21) and the dropped hx para renders blank.
+    if orig.header_extra and not _skip_header_extra_merge:
+        h = _hdr.text.strip()
+        if h.endswith("|"):
+            extra_text = " | ".join(
+                he.text.strip() for he in orig.header_extra if he.text.strip()
+            )
+            if extra_text:
+                _hdr = _hdr.with_text(h + " " + extra_text)
+                kept_hx = []
     return RoleEntry(
         # Strip any column break from the role header — the section heading
         # (or Summary heading) handles right-column placement; a second break
         # on the first role header would cause a spurious column jump.
-        header=_strip_col_break_para(orig.header),
+        header=_hdr,
+        header_extra=kept_hx,
         meta_lines=kept_meta,
         bullets=new_bullets,
         role_id=orig.role_id,
+        layout_binding=orig.layout_binding,
     )
 
 
@@ -1902,8 +2423,17 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
     for _si, section in enumerate(_sections):
         if section.semantic_type in _LOCKED_SEMANTIC_TYPES:
             continue
-        if section.semantic_type == "experience":
+        if section.semantic_type in ("experience",):
+            # Experience bullets are never a summary placeholder.
             continue
+        # NOTE: "skills" is intentionally NOT excluded.  _update_body_section
+        # preserves paragraph-semantic body_paras in skills sections verbatim
+        # by reference (layout_bound path, lines "if _is_skills and p.semantic
+        # == 'paragraph': new_body.append(p)").  In-place modification of
+        # such a para therefore propagates to the already-rebuilt section, and
+        # the renderer patches the original table-block XML via para_id so the
+        # summary renders at its original cell-3 position (not in cell-1 with
+        # the skill bullets).  Sample 2: para_46 is the profile/summary para.
         # Skip named semantic sections that should never receive summary injection.
         if section.title.strip().lower() in _PROTECTED_INTRO_PROSE_TITLES:
             continue
@@ -2040,9 +2570,23 @@ def _extract_company_tokens(text: str) -> frozenset[str]:
     """
     # Drop parenthesised date ranges like "(2014-Now)", "(2010–2013)"
     text = re.sub(r"\([^)]*(?:19|20)\d{2}[^)]*\)", "", text)
-    # Split on role separators — keep only the first (company) segment
+    # Split on role separators — keep only the company segment
     parts = re.split(r"\s[–—\-]\s|\|", text)
-    company_part = parts[0].strip().lower()
+    # "Title | Company | Date" headers carry the company in the segment just
+    # BEFORE the first date-bearing segment, not the first segment.  Taking
+    # parts[0] there yields title tokens, which mispair roles that share a
+    # title word (sample 17: VALENTI role matched the DURAFAME header).
+    _date_idx = next(
+        (
+            i for i, p in enumerate(parts)
+            if _YEAR_RE.search(p) or re.search(r"(?:19|20)[Xx]{2}", p)
+        ),
+        None,
+    )
+    if _date_idx is not None and _date_idx >= 2:
+        company_part = parts[_date_idx - 1].strip().lower()
+    else:
+        company_part = parts[0].strip().lower()
     # Remove punctuation
     company_part = re.sub(r"[^\w\s]", " ", company_part)
     # Split concatenated year+word tokens (e.g. "2023ginyard" → "2023 ginyard")
@@ -2146,6 +2690,7 @@ def _rebuild_date_first_roles(section: "ResumeSection") -> "list[RoleEntry]":
 def _rebuild_roles_from_classification(
     section: "ResumeSection",
     cls_sec: "ClassificationSection",
+    llm_roles: "list[LlmRole] | None" = None,
 ) -> "list[RoleEntry]":
     """Rebuild RoleEntry list from classification block para_id assignments.
 
@@ -2162,19 +2707,33 @@ def _rebuild_roles_from_classification(
     }
 
     roles: list[RoleEntry] = []
+    _headerless_cls_roles: list = []
     for cls_role in cls_sec.roles:
-        header_para: "ParaModel | None" = None
-        for block in cls_role.header_blocks:
-            p = para_map.get(block.para_id)
-            if p is not None:
-                header_para = p
-                break
+        # Prefer a header block that is NOT a bare date line: the new
+        # classification sometimes lists the date para first in
+        # header_blocks ([para_22 'Jan 20XX - Current', para_23 'Office
+        # manager, …'], sample 6) — picking the date makes the date line the
+        # role identity and extras anchor into the date column.
+        _hdr_cands = [
+            para_map[b.para_id]
+            for b in cls_role.header_blocks
+            if b.para_id in para_map
+        ]
+        header_para: "ParaModel | None" = next(
+            (
+                p for p in _hdr_cands
+                if not _STANDALONE_DATE_LINE_RE.match(p.text.strip())
+            ),
+            _hdr_cands[0] if _hdr_cands else None,
+        )
 
         if header_para is None:
             _log.debug(
-                "cls-rebuild: role %r has no resolvable header para — skipped",
+                "cls-rebuild: role %r has no resolvable header para — "
+                "queued for header repair",
                 cls_role.role_id,
             )
+            _headerless_cls_roles.append(cls_role)
             continue
 
         meta_lines = [
@@ -2182,6 +2741,11 @@ def _rebuild_roles_from_classification(
             for b in cls_role.meta_blocks
             if b.para_id in para_map
         ]
+        # Unchosen date-line header blocks stay bound to the role as meta so
+        # they are never claimed as someone else's bullet slot.
+        for _hc in _hdr_cands:
+            if _hc is not header_para and id(_hc) not in {id(m) for m in meta_lines}:
+                meta_lines.append(_hc)
         bullets = [
             para_map[b.para_id]
             for b in cls_role.body_blocks
@@ -2196,6 +2760,518 @@ def _rebuild_roles_from_classification(
             role_id=header_para.text.strip(),
             role_id_stable=header_para.para_id or header_para.text.strip(),
         ))
+
+    _norm_hdr = lambda s: re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+    _llm_headers = [
+        _norm_hdr(lr.header) for lr in (llm_roles or []) if lr.header.strip()
+    ]
+    _llm_meta_norm = {
+        _norm_hdr(m)
+        for lr in (llm_roles or [])
+        for m in lr.meta_lines
+        if m.strip()
+    } - {""}
+    # Pipe-header segments are role-identity material too: for pipe-format
+    # LLM roles ("Sales Associate | Safewest Banking | Aug 20XX – Jan 20XX")
+    # the company/date live inside the header, not meta_lines.  A span para
+    # matching a segment is the next role's company or date line — claiming
+    # it as a bullet slot overwrites it with bullet text (sample 10).
+    for _lr in (llm_roles or []):
+        if "|" in _lr.header:
+            for _seg in _lr.header.split("|"):
+                _seg_n = _norm_hdr(_seg)
+                if _seg_n:
+                    _llm_meta_norm.add(_seg_n)
+
+    def _is_llm_header_line(p: "ParaModel") -> bool:
+        t = p.text.strip()
+        if not t or len(t) > 90 or not _llm_headers:
+            return False
+        # Compare both the full text and, when the line ends with a
+        # parenthesised date range ("Project Engineer(2021 - 2023)"), the
+        # bare title — the LLM header usually omits the date part.
+        candidates = [t]
+        m = _PAREN_DATE_HEADER_RE.match(t)
+        if m:
+            candidates.append(m.group("title").strip())
+        for c in candidates:
+            n = _norm_hdr(c)
+            if any(
+                n == h or difflib.SequenceMatcher(None, n, h).ratio() >= 0.85
+                for h in _llm_headers
+            ):
+                return True
+        return False
+
+    # Repair duplicate headers: classification sometimes assigns the same
+    # header para to two roles (sample 6: role 3's header_blocks point to
+    # role 1's "The Phone Company" para while the real "Southridge Video"
+    # line sits unclaimed with semantic "paragraph").  Reassign the duplicate
+    # role's header to the first unclaimed body para that closely matches an
+    # LLM role header not already represented by another rebuilt role.
+    # Only roles with NO body content are repaired: a duplicate-header role
+    # that already has body_blocks is functioning (sample 36) and re-matching
+    # it would inject its LLM bullets a second time as extras.
+    _seen_header_ids: set[int] = set()
+    _dup_roles: list[RoleEntry] = []
+    for r in roles:
+        if id(r.header) in _seen_header_ids:
+            if not r.bullets:
+                _dup_roles.append(r)
+        else:
+            _seen_header_ids.add(id(r.header))
+    if _dup_roles and _llm_headers:
+        _claimed_ids = {
+            id(p) for r in roles for p in [r.header, *r.meta_lines, *r.bullets]
+        }
+        for r in _dup_roles:
+            _existing_hdrs = {
+                _norm_hdr(r2.header.text) for r2 in roles if r2 is not r
+            }
+            for p in section.body_paras:
+                if id(p) in _claimed_ids or not p.text.strip():
+                    continue
+                if p.semantic not in ("bullet", "paragraph", "role_header"):
+                    continue
+                if not _is_llm_header_line(p):
+                    continue
+                if _norm_hdr(p.text) in _existing_hdrs:
+                    continue
+                _log.debug(
+                    "cls-rebuild: role %r header para duplicates another "
+                    "role's — reassigned to %r (%s)",
+                    r.role_id, p.text.strip()[:40], p.para_id,
+                )
+                r.header = p
+                r.role_id = p.text.strip()
+                r.role_id_stable = p.para_id or p.text.strip()
+                _claimed_ids.add(id(p))
+                break
+
+    # Repair headerless cls roles: the new classification sometimes emits a
+    # role with EMPTY header_blocks (sample 6 role_3 → Southridge Video).
+    # Find an unclaimed para that closely matches an LLM role header not
+    # already represented and build the role there; its slots come from the
+    # meta-promotion / span fallback below.
+    if _headerless_cls_roles and _llm_headers:
+        # Paras claimed as header/meta are off limits; a para claimed as
+        # another role's BULLET is still a candidate — a bullet slot whose
+        # text matches an LLM role header is exactly the misassignment this
+        # repairs (sample 6: Southridge's header para sits in Nod's
+        # body_blocks) — it is stolen from that role's slot list.
+        _hard_claimed = {
+            id(p) for r in roles for p in [r.header, *r.meta_lines]
+        }
+        _bullet_owner = {
+            id(b): r for r in roles for b in r.bullets
+        }
+        for _cls_role in _headerless_cls_roles:
+            _existing_hdrs2 = {_norm_hdr(r2.header.text) for r2 in roles}
+            for p in section.body_paras:
+                if id(p) in _hard_claimed or not p.text.strip():
+                    continue
+                if p.semantic not in ("bullet", "paragraph", "role_header"):
+                    continue
+                if not _is_llm_header_line(p):
+                    continue
+                if _norm_hdr(p.text) in _existing_hdrs2:
+                    continue
+                _owner = _bullet_owner.get(id(p))
+                if _owner is not None:
+                    _owner.bullets = [b for b in _owner.bullets if b is not p]
+                    _log.debug(
+                        "cls-rebuild: stole bullet slot %s from role %r for "
+                        "header repair", p.para_id or "?", _owner.role_id,
+                    )
+                roles.append(RoleEntry(
+                    header=p, header_extra=[], meta_lines=[], bullets=[],
+                    role_id=p.text.strip(),
+                    role_id_stable=p.para_id or p.text.strip(),
+                ))
+                _hard_claimed.add(id(p))
+                _log.debug(
+                    "cls-rebuild: headerless role %r — repaired with header "
+                    "%r (%s)",
+                    _cls_role.role_id, p.text.strip()[:40], p.para_id,
+                )
+                break
+
+    # Repair date-headed roles: classification sometimes emits a role whose
+    # only header block is the bare date line of a date-first layout
+    # (sample 7 role_1 → 'January 20xx - Current') while a real role header
+    # sits unclaimed in another role's body blocks (Southridge as a
+    # preserve note in role_3).  A bare date is never a role identity —
+    # position-matching it to an LLM role dumps that role's bullets into
+    # the date column.  Rebind the role to an unclaimed LLM-header-like
+    # para and demote the date line to meta; the territory release below
+    # returns the date to its rightful neighbour role.
+    if _llm_headers:
+        _date_headed = [
+            r for r in roles
+            if _STANDALONE_DATE_LINE_RE.match(r.header.text.strip())
+        ]
+        if _date_headed:
+            _hard_claimed_d = {
+                id(p) for r in roles for p in [r.header, *r.meta_lines]
+            }
+            _bullet_owner_d = {id(b): r for r in roles for b in r.bullets}
+            for r in _date_headed:
+                _existing_hdrs3 = {
+                    _norm_hdr(r2.header.text) for r2 in roles if r2 is not r
+                }
+                for p in section.body_paras:
+                    if id(p) in _hard_claimed_d or not p.text.strip():
+                        continue
+                    if p.semantic not in ("bullet", "paragraph", "role_header"):
+                        continue
+                    if not _is_llm_header_line(p):
+                        continue
+                    if _norm_hdr(p.text) in _existing_hdrs3:
+                        continue
+                    _owner = _bullet_owner_d.get(id(p))
+                    if _owner is not None:
+                        _owner.bullets = [
+                            b for b in _owner.bullets if b is not p
+                        ]
+                        _log.debug(
+                            "cls-rebuild: stole bullet slot %s from role %r "
+                            "for date-header repair",
+                            p.para_id or "?", _owner.role_id,
+                        )
+                    _date_pm = r.header
+                    r.header = p
+                    r.role_id = p.text.strip()
+                    r.role_id_stable = p.para_id or p.text.strip()
+                    if all(m is not _date_pm for m in r.meta_lines):
+                        r.meta_lines.append(_date_pm)
+                    _hard_claimed_d.add(id(p))
+                    _log.debug(
+                        "cls-rebuild: date-headed role %r — rebound to "
+                        "header %r (%s)",
+                        _date_pm.text.strip()[:30], p.text.strip()[:40],
+                        p.para_id,
+                    )
+                    break
+
+            # Merge fallback: no rebind candidate exists when the cls file
+            # split ONE physical role into a real role plus a date-headed
+            # remainder (sample 21: 'DEVOPS ENGINEER' role AND a
+            # 'June 2012 - March 2014' role holding its bullets).  Fold the
+            # date role into the nearest preceding role: date line → meta,
+            # bullets/meta follow.  Left split, the date role position-
+            # matches an LLM role, its company para becomes a bullet slot,
+            # and the real role looks dateless (LLM date glued onto header).
+            _pos_dh = {id(p): i for i, p in enumerate(section.body_paras)}
+            for r in list(_date_headed):
+                if not _STANDALONE_DATE_LINE_RE.match(r.header.text.strip()):
+                    continue  # rebound above
+                _rpos = _pos_dh.get(id(r.header))
+                if _rpos is None:
+                    continue
+                _target = None
+                _tpos = -1
+                for r2 in roles:
+                    if r2 is r or _STANDALONE_DATE_LINE_RE.match(
+                        r2.header.text.strip()
+                    ):
+                        continue
+                    _hp = _pos_dh.get(id(r2.header))
+                    if _hp is not None and _tpos < _hp < _rpos:
+                        _target, _tpos = r2, _hp
+                if _target is None:
+                    continue
+                _target.meta_lines.append(r.header)
+                for m in r.meta_lines:
+                    if m not in _target.meta_lines:
+                        _target.meta_lines.append(m)
+                _target.bullets.extend(
+                    b for b in r.bullets if b not in _target.bullets
+                )
+                roles.remove(r)
+                _log.debug(
+                    "cls-rebuild: date-headed role %r — merged into "
+                    "preceding role %r (%d bullet slots)",
+                    r.role_id, _target.role_id, len(r.bullets),
+                )
+
+    # A para that is some role's HEADER must never remain another role's
+    # bullet slot (sample 6: Nod's body_blocks include Southridge's header
+    # para — writing a bullet there would destroy the header).
+    _hdr_ids_all = {id(r.header) for r in roles}
+    for r in roles:
+        _kept_b = [b for b in r.bullets if id(b) not in _hdr_ids_all]
+        if len(_kept_b) != len(r.bullets):
+            _log.debug(
+                "cls-rebuild: role %r — released %d bullet slot(s) that are "
+                "role headers", r.role_id, len(r.bullets) - len(_kept_b),
+            )
+            r.bullets = _kept_b
+
+    # Release meta blocks stranded in another role's territory: a meta para
+    # belongs to a role only when no OTHER role's header stands between it
+    # and the role's own header.  Sample 6: classification hands the
+    # (repaired) Southridge role Phone Company's placeholder para as meta —
+    # the claim blocks Phone's span fallback from using its own slot, so its
+    # bullets are cloned as bold extras under the header and the placeholder
+    # survives.  Date lines directly before their own header (date-first
+    # layouts) have no intervening header and are kept.
+    _pos_terr = {id(p): i for i, p in enumerate(section.body_paras)}
+    _hdr_positions = [
+        _pos_terr.get(id(r.header)) for r in roles
+    ]
+    for _ri, r in enumerate(roles):
+        hpos_t = _pos_terr.get(id(r.header))
+        if hpos_t is None or not r.meta_lines:
+            continue
+        _other_hdrs = [
+            hp for _rj, hp in enumerate(_hdr_positions)
+            if _rj != _ri and hp is not None
+        ]
+        kept_terr = []
+        for m in r.meta_lines:
+            mpos = _pos_terr.get(id(m))
+            if mpos is None:
+                kept_terr.append(m)
+                continue
+            lo, hi = (mpos, hpos_t) if mpos < hpos_t else (hpos_t, mpos)
+            if any(lo < op < hi for op in _other_hdrs):
+                _log.debug(
+                    "cls-rebuild: role %r — released meta block %s "
+                    "(stranded in another role's territory)",
+                    r.role_id, m.para_id or "?",
+                )
+            else:
+                kept_terr.append(m)
+        if len(kept_terr) != len(r.meta_lines):
+            r.meta_lines = kept_terr
+        # Same strand rule for bullet slots: a body block with another
+        # role's header between it and its owner's header belongs to that
+        # other role (sample 6: Nod's body_blocks reach past Southridge's
+        # repaired header).  Released paras become claimable by the rightful
+        # role's span fallback below.
+        if r.bullets:
+            kept_bt = []
+            for b in r.bullets:
+                bpos = _pos_terr.get(id(b))
+                if bpos is None:
+                    kept_bt.append(b)
+                    continue
+                lo, hi = (bpos, hpos_t) if bpos < hpos_t else (hpos_t, bpos)
+                if any(lo < op < hi for op in _other_hdrs):
+                    _log.debug(
+                        "cls-rebuild: role %r — released bullet slot %s "
+                        "(stranded in another role's territory)",
+                        r.role_id, b.para_id or "?",
+                    )
+                else:
+                    kept_bt.append(b)
+            if len(kept_bt) != len(r.bullets):
+                r.bullets = kept_bt
+
+    # Trust guard: classification sometimes assigns a role body blocks that
+    # all belong to a LATER role (sample 24: the only cls role pairs the
+    # "Project Manager" header with the Project Engineer's bullets).  When
+    # EVERY body para lies beyond an unclaimed LLM-header-like para that
+    # follows the role's header, the whole span is the next role's content —
+    # drop it so the span fallback below claims the role's own slots instead.
+    # Partial overlaps are left alone: those are mega-role shapes that
+    # _split_cls_mega_role handles.
+    if _llm_headers:
+        _pos = {id(p): i for i, p in enumerate(section.body_paras)}
+        _synth_roles: list[RoleEntry] = []
+        for r in roles:
+            if not r.bullets:
+                continue
+            hpos = _pos.get(id(r.header))
+            if hpos is None:
+                continue
+            own_ids = {id(p) for p in [r.header, *r.meta_lines, *r.bullets]}
+            cut: "int | None" = None
+            for p in section.body_paras[hpos + 1:]:
+                if id(p) not in own_ids and _is_llm_header_line(p):
+                    cut = _pos[id(p)]
+                    break
+            if cut is None:
+                continue
+            if any(_pos.get(id(b), -1) < cut for b in r.bullets):
+                continue
+            # Only drop when the role has fallback content of its own between
+            # header and boundary (slots to re-claim or meta to promote).
+            # Without it, dropping merely orphans the LLM bullets — word-wrap
+            # fragment headers trigger the boundary spuriously (sample 25).
+            if not any(
+                p.text.strip()
+                and (p.semantic in ("bullet", "paragraph") or id(p) in own_ids)
+                for p in section.body_paras[hpos + 1: cut]
+            ):
+                continue
+            _log.debug(
+                "cls-rebuild: role %r — dropped %d body block(s) claimed "
+                "entirely beyond unclaimed role header line %r",
+                r.role_id, len(r.bullets),
+                section.body_paras[cut].text.strip()[:40],
+            )
+            # The boundary para is a role header classification missed
+            # entirely (sample 24: one cls role for two template roles).
+            # Synthesize an IR role there and hand it the dropped paras as
+            # its bullet slots — they lie beyond the boundary and ARE that
+            # role's content region; without this the matching LLM role has
+            # no IR counterpart and its bullets are dropped.
+            _boundary = section.body_paras[cut]
+            _all_hdr_ids = {id(x.header) for x in roles} | {
+                id(x.header) for x in _synth_roles
+            }
+            if id(_boundary) not in _all_hdr_ids:
+                _synth_roles.append(RoleEntry(
+                    header=_boundary,
+                    header_extra=[],
+                    meta_lines=[],
+                    bullets=sorted(
+                        r.bullets, key=lambda p: _pos.get(id(p), 1 << 30)
+                    ),
+                    role_id=_boundary.text.strip(),
+                    role_id_stable=_boundary.para_id or _boundary.text.strip(),
+                ))
+                _log.debug(
+                    "cls-rebuild: synthesized role %r at unclaimed boundary "
+                    "with %d reclaimed slot(s)",
+                    _boundary.text.strip()[:40], len(r.bullets),
+                )
+            r.bullets = []
+            # Meta blocks beyond the cut are misassigned too — keeping them
+            # would push the span fallback's start past the next role's
+            # header, re-claiming the very paras just dropped.
+            kept_meta = [m for m in r.meta_lines if _pos.get(id(m), -1) < cut]
+            if len(kept_meta) != len(r.meta_lines):
+                _log.debug(
+                    "cls-rebuild: role %r — dropped %d meta block(s) beyond "
+                    "the same boundary",
+                    r.role_id, len(r.meta_lines) - len(kept_meta),
+                )
+                r.meta_lines = kept_meta
+        roles.extend(_synth_roles)
+
+    # Trust guard: classification sometimes marks a role's content slots as
+    # meta_blocks/preserve (sample 24: the manager's three description paras
+    # are meta while its body_blocks point at the NEXT role's bullets).  A
+    # meta para that reads as a description sentence (sentence-ending
+    # punctuation, no date hint, content semantic) is really a bullet slot —
+    # promote it so LLM bullets land there instead of being anchored
+    # elsewhere.  Runs after the misassigned-body drop so promoted slots
+    # don't mask a wholesale-misassigned body span.
+    _META_DATE_HINT = re.compile(
+        r"\b\d{4}\b|\b(?:19|20)[Xx]{2}\b|\bPresent\b|\bCurrent\b|\bNow\b",
+        re.IGNORECASE,
+    )
+    _META_SENTENCE_END = re.compile(r"[.!?]\s*$")
+    _pos_all = {id(p): i for i, p in enumerate(section.body_paras)}
+    for r in roles:
+        # Territory bound: only promote meta paras that sit between this
+        # role's header and the next role's header line.  Classification
+        # sometimes stuffs ANOTHER role's placeholder into a role's meta
+        # (sample 6: Phone Company's placeholder in Southridge's meta) —
+        # promoting that would pull this role's bullets into foreign
+        # territory.
+        hpos_r = _pos_all.get(id(r.header))
+        if hpos_r is None:
+            continue
+        _own_r = {id(p) for p in [r.header, *r.meta_lines, *r.bullets]}
+        _bound = len(section.body_paras)
+        for p in section.body_paras[hpos_r + 1:]:
+            if id(p) not in _own_r and p.text.strip() and _is_llm_header_line(p):
+                _bound = _pos_all[id(p)]
+                break
+        promoted = [
+            m for m in r.meta_lines
+            if hpos_r < _pos_all.get(id(m), -1) < _bound
+            and m.semantic in ("bullet", "paragraph")
+            and _META_SENTENCE_END.search(m.text.strip())
+            and not _META_DATE_HINT.search(m.text)
+        ]
+        if promoted:
+            _promoted_ids = {id(m) for m in promoted}
+            r.meta_lines = [
+                m for m in r.meta_lines if id(m) not in _promoted_ids
+            ]
+            r.bullets = sorted(
+                [*r.bullets, *promoted],
+                key=lambda p: _pos_all.get(id(p), 1 << 30),
+            )
+            _log.debug(
+                "cls-rebuild: role %r — promoted %d description-like meta "
+                "block(s) to bullet slots (%s)",
+                r.role_id, len(promoted),
+                ", ".join(p.para_id or "?" for p in promoted),
+            )
+
+    # Fallback: classification sometimes emits roles with empty body_blocks
+    # (or para_ids that don't resolve).  Without bullet slots,
+    # _update_experience_date_first has no targets and silently drops all
+    # LLM content for the role while template description/placeholder
+    # paragraphs survive verbatim (samples 6/7).  Claim the unclaimed
+    # bullet/paragraph body paras between this role's resolved paras and
+    # the next claimed para as the role's bullet slots.  A span para that
+    # closely matches an LLM role header is the NEXT role's header line that
+    # classification left unclaimed — claiming it as a bullet slot would
+    # overwrite the header with LLM bullet text, so stop the span there.
+    if any(not r.bullets for r in roles):
+        pos_by_id = {id(p): i for i, p in enumerate(section.body_paras)}
+        claimed: set[int] = set()
+        for r in roles:
+            for p in [r.header, *r.meta_lines, *r.bullets]:
+                idx = pos_by_id.get(id(p))
+                if idx is not None:
+                    claimed.add(idx)
+        for r in roles:
+            if r.bullets:
+                continue
+            own = [
+                i for i in (pos_by_id.get(id(p)) for p in [r.header, *r.meta_lines])
+                if i is not None
+            ]
+            if not own:
+                continue
+            # Scan from just after the header first: a meta block positioned
+            # deep in the section (e.g. the next role's company line claimed
+            # as this role's meta, sample 24) would otherwise push the span
+            # start past this role's own slots.  Fall back to the old
+            # after-all-own-paras start when the header-adjacent scan finds
+            # nothing (meta lines sitting between the header and the slots).
+            hpos = pos_by_id.get(id(r.header))
+            starts = [hpos + 1] if hpos is not None else []
+            if max(own) + 1 not in starts:
+                starts.append(max(own) + 1)
+            span = []
+            for start in starts:
+                later_claimed = [i for i in claimed if i >= start]
+                end = min(later_claimed) if later_claimed else len(section.body_paras)
+                span = []
+                for p in section.body_paras[start:end]:
+                    # The next role's header line is a hard boundary whatever
+                    # its semantic — role_meta headers ("Project Engineer
+                    # (2021 - 2023)") must stop the span, not be skipped.
+                    if p.text.strip() and _is_llm_header_line(p):
+                        break
+                    if not (p.text.strip() and p.semantic in ("bullet", "paragraph")):
+                        continue
+                    # A para matching an LLM role's meta line (company/
+                    # location) is the NEXT role's territory too — claiming
+                    # it as a slot would overwrite the company line with
+                    # bullet text.
+                    if _norm_hdr(p.text) in _llm_meta_norm:
+                        break
+                    span.append(p)
+                if span:
+                    break
+            if span:
+                r.bullets = span
+                claimed.update(pos_by_id[id(p)] for p in span)
+                _log.debug(
+                    "cls-rebuild: role %r has no body_blocks — claimed %d "
+                    "span para(s) as bullet slots (%s)",
+                    r.role_id, len(span),
+                    ", ".join(p.para_id or "?" for p in span),
+                )
 
     _log.debug(
         "cls-rebuild: section %r → %d roles from classification "
@@ -2217,6 +3293,7 @@ def _match_llm_to_ir_roles(
     by position (fallback).
 
     Matching strategy (logged per role):
+    0. Exact normalized full-header match → exact_header
     1. Jaccard similarity of normalised company tokens > 0.3 → company_similarity
     2. First unmatched LLM role in LLM output order → position
     """
@@ -2230,9 +3307,32 @@ def _match_llm_to_ir_roles(
     used_llm: set[int] = set()
     result: list[int | None] = [None] * len(ir_roles)
 
+    # Pass 0: exact normalized full-header match.  Company tokens alone
+    # cannot separate pipe headers that share a title ("Engineer | Acme" vs
+    # "Engineer | Globex" both tokenize to {engineer}); the LLM usually
+    # echoes template headers verbatim, so an exact match is authoritative.
+    def _norm_header(s: str) -> str:
+        return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+
+    for ir_idx, ir_role in enumerate(ir_roles):
+        target = _norm_header(ir_role.header.text if ir_role.header else "")
+        if not target:
+            continue
+        for llm_idx, llm_role in enumerate(llm_roles):
+            if llm_idx in used_llm:
+                continue
+            if _norm_header(llm_role.header) == target:
+                result[ir_idx] = llm_idx
+                used_llm.add(llm_idx)
+                _log.debug(
+                    "date-first match: IR role %r → LLM[%d] %r (strategy=exact_header)",
+                    ir_role.role_id, llm_idx, llm_role.header,
+                )
+                break
+
     # Pass 1: company similarity
     for ir_idx, ir_tokens in enumerate(ir_token_sets):
-        if not ir_tokens:
+        if result[ir_idx] is not None or not ir_tokens:
             continue
         best_score = 0.0
         best_llm_idx: int | None = None
@@ -2264,6 +3364,57 @@ def _match_llm_to_ir_roles(
                 llm_roles[best_llm_idx].header, best_score,
             )
 
+    # Pass 1.5: date-range match.  Template roles whose identity is a bare
+    # date span ('(2010-2013)' / '(2014-Now)', sample 22) carry no company
+    # tokens, and the positional fallback pairs them wrong whenever the LLM
+    # lists roles in the opposite chronological order.  Match on the year
+    # signature instead: same start year and compatible end (equal end year
+    # or both open-ended).
+    _open_end_re = re.compile(
+        r"\b(now|present|current|ongoing)\b", re.IGNORECASE
+    )
+    _year_re4 = re.compile(r"\b(?:19|20)\d{2}\b")
+
+    def _date_sig(texts: "list[str]") -> "tuple[int, int, bool] | None":
+        years: list[int] = []
+        open_end = False
+        for t in texts:
+            years += [int(m.group(0)) for m in _year_re4.finditer(t)]
+            if _open_end_re.search(t):
+                open_end = True
+        if not years:
+            return None
+        return (min(years), max(years), open_end)
+
+    _llm_sigs = {
+        idx: _date_sig([lr.header, *(lr.meta_lines or [])])
+        for idx, lr in enumerate(llm_roles)
+    }
+    for ir_idx, ir_role in enumerate(ir_roles):
+        if result[ir_idx] is not None:
+            continue
+        ir_sig = _date_sig([
+            p.text for p in [
+                ir_role.header, *ir_role.header_extra, *ir_role.meta_lines,
+            ] if p is not None
+        ])
+        if ir_sig is None:
+            continue
+        cands = [
+            idx for idx, sig in _llm_sigs.items()
+            if idx not in used_llm and sig is not None
+            and sig[0] == ir_sig[0]
+            and (sig[2] == ir_sig[2] or sig[1] == ir_sig[1])
+        ]
+        if len(cands) == 1:
+            result[ir_idx] = cands[0]
+            used_llm.add(cands[0])
+            _log.debug(
+                "date-first match: IR role %r → LLM[%d] %r "
+                "(strategy=date_range)",
+                ir_role.role_id, cands[0], llm_roles[cands[0]].header,
+            )
+
     # Pass 2: positional fallback for unmatched IR roles
     llm_cursor = 0
     for ir_idx in range(len(ir_roles)):
@@ -2289,21 +3440,119 @@ def _match_llm_to_ir_roles(
     return result
 
 
+def _release_identity_slots(
+    ir_role: "RoleEntry", llm_role: "LlmRole"
+) -> None:
+    """Move role-identity paras out of a role's bullet-slot stream.
+
+    The parser sometimes drops a role's company line or date line into
+    ``bullets`` (sample 21: 'Kalayaan National Bank' / 'June 2012 - March
+    2014' became slots and were overwritten by bullet text, after which the
+    dateless-looking role got the LLM date glued onto its header).  Any slot
+    para whose text is a standalone date goes to ``meta_lines``; a slot
+    whose text equals a segment of the matched LLM role's header (pipe/em-
+    dash separated) or one of its meta lines goes to ``header_extra``.
+    Both render template-verbatim per the injection policy.
+    """
+    def _norm_seg(s: str) -> str:
+        return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+
+    segs: set[str] = set()
+    for src in [llm_role.header, *(llm_role.meta_lines or [])]:
+        for part in re.split(r"\||—", src):
+            for variant in (part, re.sub(r"\([^)]*\)", " ", part)):
+                n = _norm_seg(variant)
+                if n:
+                    segs.add(n)
+        n = _norm_seg(src)
+        if n:
+            segs.add(n)
+
+    kept: list = []
+    for b in ir_role.bullets:
+        t = b.text.strip()
+        if not t:
+            kept.append(b)
+            continue
+        if _STANDALONE_DATE_LINE_RE.match(t):
+            ir_role.meta_lines.append(b)
+            _log.debug(
+                "identity-slot release: role %r — date slot %s (%r) → meta",
+                ir_role.role_id, b.para_id or "?", t[:40],
+            )
+            continue
+        if len(t) <= 60 and _norm_seg(t) in segs:
+            ir_role.header_extra.append(b)
+            _log.debug(
+                "identity-slot release: role %r — header-segment slot %s "
+                "(%r) → header_extra",
+                ir_role.role_id, b.para_id or "?", t[:40],
+            )
+            continue
+        kept.append(b)
+    if len(kept) != len(ir_role.bullets):
+        ir_role.bullets = kept
+
+
+def _identity_hx_paras(
+    ir_role: "RoleEntry", llm_role: "LlmRole | None"
+) -> "set[int]":
+    """ids of header_extra paras that are role identity (company/title/date)
+    and must never serve as bullet slots (sample 22: 'Wardiere Inc.' and
+    'SOFTWARE ENGINEERING' hx paras were consumed by the hx slot fallback)."""
+    def _norm_seg(s: str) -> str:
+        return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+
+    segs: set[str] = set()
+    if llm_role is not None:
+        for src in [llm_role.header, *(llm_role.meta_lines or [])]:
+            for part in re.split(r"\||—", src):
+                for variant in (part, re.sub(r"\([^)]*\)", " ", part)):
+                    n = _norm_seg(variant)
+                    if n:
+                        segs.add(n)
+    out: set[int] = set()
+    for p in ir_role.header_extra:
+        t = p.text.strip()
+        if not t:
+            continue
+        if _STANDALONE_DATE_LINE_RE.match(t):
+            out.add(id(p))
+            continue
+        # Short non-sentence lines are identity material (company names,
+        # ALL-CAPS titles) even without an LLM-header echo.
+        if len(t) <= 60 and (
+            _norm_seg(t) in segs
+            or (not t.endswith((".", "!", "?")) and len(t.split()) <= 5)
+        ):
+            out.add(id(p))
+    return out
+
+
 def _update_experience_date_first(
     orig: "ResumeSection",
     llm: "LlmSection",
     rebuilt_roles: "list[RoleEntry]",
+    cls_sec: "ClassificationSection | None" = None,
 ) -> "ResumeSection":
     """Apply LLM bullet content to a date-first experience section.
 
     - Resolves LLM roles from pipe or dash format.
     - Matches them to rebuilt IR roles by company similarity (then position).
     - Updates bullet paragraph texts in-place on body_paras ParaModel objects.
+    - Skips body_blocks whose classification rewrite_policy=preserve (adjuncts).
     - Returns the section with roles=[] so the all_paras builder uses body_paras
       in their original template order (date-first layout preserved).
     - Extra LLM roles beyond IR role count are ignored.
     - IR roles with no LLM counterpart keep their original bullet text.
     """
+    # Build para_id → ClassificationBlock for preserved adjunct detection.
+    _date_first_cls_map: dict[str, Any] = {}
+    if cls_sec is not None:
+        for _cr in cls_sec.roles:
+            for _blk in _cr.body_blocks:
+                if _blk.para_id:
+                    _date_first_cls_map[_blk.para_id] = _blk
     # Resolve LLM role list (pipe or dash format)
     llm_roles = llm.roles
     if not llm_roles and llm.body_lines:
@@ -2320,6 +3569,7 @@ def _update_experience_date_first(
             body_paras=orig.body_paras,
             roles=[],
             section_id=orig.section_id,
+            container_type=orig.container_type,
         )
 
     match_map = _match_llm_to_ir_roles(llm_roles, rebuilt_roles)
@@ -2336,6 +3586,9 @@ def _update_experience_date_first(
         "add your experience",
         "describe your experience",
     )
+    # Contact info (phone/email/url) sometimes lands inside a role's body span
+    # in scrambled templates (sample 25 footer line).  Never blank it.
+    _contact_line_re = re.compile(r"@|\d{3,}|https?://|www\.", re.IGNORECASE)
 
     # Mutate bullet text in-place (the ParaModel objects are shared with body_paras).
     # When the template has no bullet-semantic paragraphs for a role (e.g. only a
@@ -2343,6 +3596,29 @@ def _update_experience_date_first(
     # header_extra paragraphs so LLM content is still injected.
     # _extra_injections: anchor_para_id → [extra ParaModel, ...]
     _extra_injections: "dict[str, list[ParaModel]]" = {}
+    # Header/meta paras of ALL rebuilt roles must never be blanked as surplus
+    # slots: a mega-role split can leave the next role's company line inside
+    # the previous role's bullet list.
+    _body_pos = {id(p): i for i, p in enumerate(orig.body_paras)}
+    _protected_pids = {
+        p.para_id
+        for r in rebuilt_roles
+        for p in [r.header, *r.header_extra, *r.meta_lines]
+        if p is not None and p.para_id
+    }
+    # Company-line guard: classification sometimes misassigns the NEXT role's
+    # company line into the previous role's body_blocks (sample 36 para_124
+    # 'GlobalLogic – Krakow, Poland' inside the T-Systems role).  A surplus
+    # slot whose text shares company tokens with any role header must never
+    # be blanked — losing a company line is worse than keeping a stale one.
+    # Section-wide LLM bullet pool for the preserve-yield near-dup check.
+    _all_llm_bullets: list[str] = [b for _r in llm_roles for b in _r.bullets]
+    _company_guard_tokens: set[str] = set()
+    for _lr in llm_roles:
+        _company_guard_tokens |= _extract_company_tokens(_lr.header)
+    for _rr in rebuilt_roles:
+        if _rr.header is not None:
+            _company_guard_tokens |= _extract_company_tokens(_rr.header.text)
     for ir_idx, ir_role in enumerate(rebuilt_roles):
         llm_idx = match_map[ir_idx]
         if llm_idx is None:
@@ -2355,6 +3631,56 @@ def _update_experience_date_first(
                         "para=%r — no LLM match, placeholder kept verbatim",
                         orig.title, ir_role.role_id, t.para_id,
                     )
+            # Spurious role: its HEADER is itself a covered fragment of the
+            # injected content — blank the whole role (header included), the
+            # copies it holds are duplicates of injected bullets.
+            if (
+                ir_role.header is not None
+                and ir_role.header.text.strip()
+                and ir_role.header.para_id not in _protected_pids
+                and not (_extract_company_tokens(ir_role.header.text) & _company_guard_tokens)
+                and not _contact_line_re.search(ir_role.header.text)
+                and _similar_to_any_line(ir_role.header.text, _all_llm_bullets)
+            ):
+                _log.debug(
+                    "date-first: unmatched role %r — header is a covered "
+                    "fragment, blanking whole role", ir_role.role_id,
+                )
+                ir_role.header.text = ""
+                for t in [*ir_role.meta_lines, *targets]:
+                    if (
+                        t.text.strip()
+                        and t.para_id not in _protected_pids
+                        and not (_extract_company_tokens(t.text) & _company_guard_tokens)
+                        and not _contact_line_re.search(t.text)
+                    ):
+                        t.text = ""
+                continue
+            # Blank the unmatched role's content lines that the LLM already
+            # rewrote elsewhere in the section (near-duplicates) and any
+            # placeholder text.  Spurious classification roles (e.g. a bare
+            # date line heading a second copy of another role's wrap-split
+            # bullets, sample 21) otherwise render the template version
+            # right next to the injected rewrite.
+            for t in targets:
+                if not t.text.strip():
+                    continue
+                if t.para_id in _protected_pids:
+                    continue
+                if _extract_company_tokens(t.text) & _company_guard_tokens:
+                    continue
+                if _contact_line_re.search(t.text):
+                    continue
+                if (
+                    _is_placeholder_text(t.text)
+                    or _similar_to_any_line(t.text, _all_llm_bullets)
+                ):
+                    _log.debug(
+                        "date-first: unmatched role %r — blanked covered "
+                        "para %r (%r)",
+                        ir_role.role_id, t.para_id, t.text[:40],
+                    )
+                    t.text = ""
             _log.debug(
                 "date-first: IR role %r → no match, keeping original bullets",
                 ir_role.role_id,
@@ -2385,26 +3711,105 @@ def _update_experience_date_first(
                     "section=%r role=%r first_bullet=%r — may be a misaligned role title",
                     orig.title, ir_role.role_id, first[:60],
                 )
-        targets = ir_role.bullets if ir_role.bullets else ir_role.header_extra
-        for i, bullet_para in enumerate(targets):
-            if i < len(llm_bullets):
+        _release_identity_slots(ir_role, llm_roles[llm_idx])
+        if ir_role.bullets:
+            targets = ir_role.bullets
+        else:
+            _identity_ids = _identity_hx_paras(ir_role, llm_roles[llm_idx])
+            targets = [
+                p for p in ir_role.header_extra if id(p) not in _identity_ids
+            ]
+        if not targets:
+            if llm_bullets:
+                # No template slot exists for this role (classification gave
+                # it no body_blocks and no span paras could be claimed).
+                # Anchor all LLM bullets as extra paragraphs after the role's
+                # last header/meta para so the content is not silently dropped.
+                _role_paras = sorted(
+                    (
+                        p for p in [ir_role.header, *ir_role.meta_lines]
+                        if p is not None and p.para_id
+                    ),
+                    key=lambda p: _body_pos.get(id(p), -1),
+                )
+                if _role_paras:
+                    anchor = _role_paras[-1]
+                    for extra_text in llm_bullets:
+                        _extra_injections.setdefault(anchor.para_id, []).append(
+                            anchor.clone_as(extra_text, "bullet")
+                        )
+                    _log.debug(
+                        "date-first: role %r has no bullet slots — %d LLM "
+                        "bullet(s) anchored as extras at %r",
+                        ir_role.role_id, len(llm_bullets), anchor.para_id,
+                    )
+                else:
+                    _log.debug(
+                        "EXPERIENCE_BULLETS_DROPPED_NO_ANCHOR: role %r — "
+                        "%d LLM bullet(s) lost (no para_id anchor)",
+                        ir_role.role_id, len(llm_bullets),
+                    )
+            continue
+        # Separate rewriteable from preserved adjuncts for this role.
+        # Placeholder-text paras and paras the LLM visibly rewrote (near-
+        # duplicate of an incoming bullet) are always rewriteable regardless
+        # of the classification's preserve policy.
+        def _preserve_holds(p: "ParaModel") -> bool:
+            blk_ = _date_first_cls_map.get(p.para_id)
+            return (
+                blk_ is not None
+                and blk_.rewrite_policy == "preserve"
+                and not _is_placeholder_text(p.text)
+                # Compare against the whole section's LLM bullets: templates
+                # often repeat near-identical bullet sets across roles, so a
+                # preserved line may duplicate ANOTHER role's rewrite
+                # (sample 22).
+                and not _similar_to_any_line(p.text, _all_llm_bullets)
+            )
+
+        rewriteable_targets = [p for p in targets if not _preserve_holds(p)]
+        llm_slot = 0
+        for bullet_para in targets:
+            blk = _date_first_cls_map.get(bullet_para.para_id)
+            if _preserve_holds(bullet_para):
+                _log.debug(
+                    "date-first: para %r preserved adjunct (%s) — kept verbatim",
+                    bullet_para.para_id, blk.semantic_type,
+                )
+                continue
+            if llm_slot < len(llm_bullets):
                 _log.debug(
                     "date-first: para %r updated  %r → %r",
                     bullet_para.para_id,
                     bullet_para.text[:40],
-                    llm_bullets[i][:40],
+                    llm_bullets[llm_slot][:40],
                 )
-                bullet_para.text = llm_bullets[i]
+                bullet_para.text = llm_bullets[llm_slot]
+                llm_slot += 1
+            elif (
+                llm_bullets
+                and bullet_para.para_id not in _protected_pids
+                and not (_extract_company_tokens(bullet_para.text) & _company_guard_tokens)
+                and not _contact_line_re.search(bullet_para.text)
+            ):
+                # Surplus template slot beyond the LLM bullet count: blank it
+                # so stale template content does not render alongside the
+                # injected bullets (sample 36: sub-project lines).
+                _log.debug(
+                    "date-first: surplus slot %r blanked  (%r)",
+                    bullet_para.para_id, bullet_para.text[:40],
+                )
+                bullet_para.text = ""
 
-        # Extra LLM bullets beyond the template's existing slots.
+        # Extra LLM bullets beyond the template's rewriteable slots.
         # Clone from the last target paragraph; leave para_id="" — the injection
         # code in apply_tailored assigns IDs and creates layout_blocks only when
         # the anchor block has an xml_proto_xml (real DOCX template).
-        if targets and len(llm_bullets) > len(targets):
-            arch = targets[-1]
+        if rewriteable_targets and len(llm_bullets) > len(rewriteable_targets):
+            arch = rewriteable_targets[-1]
             arch_pid = arch.para_id  # injection anchor: insert after this block
             if arch_pid:
-                for extra_text in llm_bullets[len(targets):]:
+                for extra_text in llm_bullets[len(rewriteable_targets):]:
                     extra_pm = arch.clone_as(extra_text)
                     # para_id intentionally left "" — injector assigns it later
                     _extra_injections.setdefault(arch_pid, []).append(extra_pm)
@@ -2413,6 +3818,38 @@ def _update_experience_date_first(
                         arch_pid,
                         extra_text[:40],
                     )
+
+    # Unclaimed body paras covered by the injected LLM content (placeholder
+    # text, near-duplicates, wrap-split fragments) render stale template
+    # content next to the rewrite — blank them.  Company/date/contact lines
+    # and paras claimed by any role are untouched (sample 22: the Wardiere
+    # block's template bullets survived unclaimed after its spurious role was
+    # discarded).
+    _claimed_all: set[int] = set()
+    for _rr2 in rebuilt_roles:
+        for _p2 in [_rr2.header, *_rr2.header_extra, *_rr2.meta_lines, *_rr2.bullets]:
+            if _p2 is not None:
+                _claimed_all.add(id(_p2))
+    for _up in orig.body_paras:
+        if id(_up) in _claimed_all or not _up.text.strip():
+            continue
+        if _up.semantic not in ("bullet", "paragraph"):
+            continue
+        if _up.para_id in _protected_pids:
+            continue
+        if _extract_company_tokens(_up.text) & _company_guard_tokens:
+            continue
+        if _contact_line_re.search(_up.text):
+            continue
+        if (
+            _is_placeholder_text(_up.text)
+            or _similar_to_any_line(_up.text, _all_llm_bullets)
+        ):
+            _log.debug(
+                "date-first: unclaimed covered para %r blanked (%r)",
+                _up.para_id, _up.text[:40],
+            )
+            _up.text = ""
 
     # Insert extra paragraphs into body_paras at the correct positions so they
     # appear in document order (critical for the two-column table renderer).
@@ -2436,6 +3873,7 @@ def _update_experience_date_first(
         body_paras=result_body,
         roles=[],
         section_id=orig.section_id,
+        container_type=orig.container_type,
     )
     if _extra_injections:
         result._extra_injections = _extra_injections  # type: ignore[attr-defined]
@@ -2446,7 +3884,21 @@ def _update_experience_date_first(
 # Classification-constrained update helpers
 # ---------------------------------------------------------------------------
 
-def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
+# Role body_block semantic types by rewrite policy (mirrors classification_validator.py).
+_REWRITEABLE_BODY_TYPES: frozenset[str] = frozenset({
+    "bullet", "role_achievement_bullet", "role_responsibility_bullet",
+})
+_PRESERVED_ADJUNCT_TYPES: frozenset[str] = frozenset({
+    "role_intro", "role_highlight", "role_project_label", "role_project_context",
+    "role_tech_stack", "role_key_technologies", "role_tools",
+    "role_nested_detail", "role_freeform_note",
+})
+
+
+def _split_cls_mega_role(
+    role: "RoleEntry",
+    llm_roles: "list[LlmRole] | None" = None,
+) -> "list[RoleEntry]":
     """Split a classification-rebuilt role into sub-roles when its bullet list
     contains company-separator paragraphs.
 
@@ -2456,6 +3908,12 @@ def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
       (handles the case where classification assigned a wrong para as the role
       header but the actual company name is in meta_lines[0]).
     - Subsequent sub-roles: company_para as header, leading role_meta as meta.
+
+    When *llm_roles* is given, a second boundary strategy applies: a bullet
+    whose text closely matches an LLM role header is a role boundary even
+    without a following role_meta para.  Handles templates whose dates live
+    in another column (sample 35: one mega-role covering 6 real roles, with
+    the 5 other role-header lines classified as bullets).
     """
     bullets = role.bullets
     if not bullets:
@@ -2470,6 +3928,44 @@ def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
             j += 1
         if j < len(bullets) and bullets[j].semantic == "role_meta":
             boundaries.append(i)
+
+    if llm_roles:
+        def _norm(s: str) -> str:
+            return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+
+        _date_seg = re.compile(r"\b(19|20)\d{2}\b|present|current", re.IGNORECASE)
+        headers: list[str] = []
+        for lr in llm_roles:
+            if not lr.header.strip():
+                continue
+            # Drop trailing pipe segments that are date ranges
+            # ("Title, Company | March 2025 – Present" → "Title, Company").
+            segs = [s for s in lr.header.split("|")]
+            while len(segs) > 1 and _date_seg.search(segs[-1]):
+                segs.pop()
+            h = _norm("|".join(segs))
+            if len(h) >= 15:
+                headers.append(h)
+        for i, p in enumerate(bullets):
+            if i in boundaries:
+                continue
+            t = _norm(p.text)
+            if not t:
+                continue
+            # Prefix match handles template paras where the role header is
+            # glued with following prose ("... Remote Highlights: Leading...");
+            # fuzzy ratio handles minor punctuation/wording drift.
+            if any(
+                t.startswith(h)
+                or (len(t) <= 90 and difflib.SequenceMatcher(None, t, h).ratio() >= 0.75)
+                for h in headers
+            ):
+                boundaries.append(i)
+                _log.debug(
+                    "mega-role split: bullet %r matches an LLM role header → boundary",
+                    p.text[:60],
+                )
+        boundaries.sort()
 
     if not boundaries:
         return [role]
@@ -2524,6 +4020,225 @@ def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
     return result
 
 
+def _split_role_by_meta_dates(role: "RoleEntry") -> "list[RoleEntry]":
+    """Split a cls-rebuilt role when meta_lines contains a second role's date header.
+
+    Handles the pattern where the classifier collapsed 2 adjacent roles into one:
+      - meta_blocks contains paragraph-type paras (first role's bullets) followed
+        by a role_meta para (second role's date/company line).
+      - body_blocks are the second role's bullets.
+
+    When detected, produces two RoleEntry objects:
+      role_0: header=original header, bullets=meta_lines[:split_idx] (para-type only)
+      role_1: header=meta_lines[split_idx] (the role_meta), bullets=original bullets
+    """
+    split_idx: int | None = None
+    seen_paragraph = False
+    for i, p in enumerate(role.meta_lines):
+        if p.semantic in ("paragraph", "bullet", "role_header"):
+            seen_paragraph = True
+        elif p.semantic == "role_meta" and seen_paragraph:
+            split_idx = i
+            break
+
+    if split_idx is None:
+        return [role]
+
+    role0_bullets = [p for p in role.meta_lines[:split_idx] if p.text.strip()]
+    role1_header = role.meta_lines[split_idx]
+
+    return [
+        RoleEntry(
+            header=role.header,
+            header_extra=role.header_extra,
+            meta_lines=[],
+            bullets=role0_bullets,
+            role_id=role.header.text.strip(),
+            role_id_stable=role.header.para_id or role.header.text.strip(),
+        ),
+        RoleEntry(
+            header=role1_header,
+            header_extra=[],
+            meta_lines=[],
+            bullets=role.bullets,
+            role_id=role1_header.text.strip(),
+            role_id_stable=role1_header.para_id or role1_header.text.strip(),
+        ),
+    ]
+
+
+def _update_role_with_adjuncts(
+    orig: "RoleEntry",
+    llm_bullets: "list[str]",
+    cls_body_block_map: "dict[str, Any]",
+    layout_bound: bool = False,
+    section_llm_bullets: "list[str] | None" = None,
+) -> "RoleEntry":
+    """Like _update_role_bullets_only but preserves role-local adjunct blocks.
+
+    Body blocks with rewrite_policy=preserve keep their original template text
+    verbatim.  Body blocks with rewrite_policy=rewrite_text receive LLM bullets.
+    The relative order of preserved and rewritten blocks within the role is
+    maintained by re-assembling against the original bullets list.
+
+    When no preserved adjuncts are found for this role, delegates to
+    _update_role_bullets_only (identical result, no overhead).
+    """
+    # Semantic types that represent source material for the LLM rewrite rather
+    # than structural elements that must survive verbatim.  Preserving them
+    # produces stale fragments alongside the newly-written bullets.
+    _REWRITE_SOURCE_SEMANTICS = frozenset({
+        "role_freeform_note",    # multi-line free-text blocks
+        "role_project_context",  # project description notes
+    })
+    preserved_ids: set[str] = set()
+    for p in orig.bullets:
+        blk = cls_body_block_map.get(p.para_id)
+        if blk is not None and blk.rewrite_policy == "preserve":
+            if blk.semantic_type in _REWRITE_SOURCE_SEMANTICS:
+                _log.debug(
+                    "PRESERVED_ADJUNCT_CLEANUP: role=%r para_id=%r semantic=%r "
+                    "action=excluded_from_preserved ownership=role_bullet",
+                    orig.role_id, p.para_id, blk.semantic_type,
+                )
+                continue
+            if _is_placeholder_text(p.text):
+                # Placeholder text must always be rewriteable, whatever the
+                # classification says (sample 6/14 kept "Summarize your key
+                # responsibilities…" verbatim while bullets became extras).
+                continue
+            if _similar_to_any_line(p.text, section_llm_bullets or llm_bullets):
+                # The LLM visibly rewrote this exact line — preserving it
+                # would render the template version next to its own rewrite
+                # (samples 22/24 duplication; templates repeat near-identical
+                # bullets across roles, so compare section-wide).
+                continue
+            preserved_ids.add(p.para_id)
+
+    if not preserved_ids:
+        return _update_role_bullets_only(orig, llm_bullets, layout_bound=layout_bound)
+
+    # Tech-stack de-duplication: when a preserved block has semantic_type in
+    # {role_key_technologies, role_tech_stack} AND the LLM also generates a
+    # "Key technologies:"-prefixed bullet, that LLM bullet has no rewriteable
+    # slot and would normally become an unbound extra → _ext_N clone → duplicate
+    # rendering.  Intercept it here: replace the preserved block's text with the
+    # LLM content and remove the LLM bullet from the working list so no clone
+    # is created.  Both preserved and LLM text describe the same tech-stack fact;
+    # the LLM version is more current and job-targeted.
+    _TECH_SEMANTICS = frozenset({"role_key_technologies", "role_tech_stack"})
+    _TECH_PREFIX_RE = re.compile(
+        r"(?i)^key\s+tech|^tech(?:nolog|stack)|^technologies\s*[:\-]"
+    )
+    preserved_text_overrides: dict[str, str] = {}
+    llm_bullets_working = list(llm_bullets)
+
+    for _p in orig.bullets:
+        if _p.para_id not in preserved_ids:
+            continue
+        _blk = cls_body_block_map.get(_p.para_id)
+        if _blk is None or _blk.semantic_type not in _TECH_SEMANTICS:
+            continue
+        for _li, _lb in enumerate(llm_bullets_working):
+            if _TECH_PREFIX_RE.match(_lb.strip()):
+                preserved_text_overrides[_p.para_id] = llm_bullets_working.pop(_li)
+                _log.debug(
+                    "DUP_TECH_STACK_CANDIDATE: role=%r para_id=%r semantic=%r "
+                    "action=replace_preserved_with_llm text=%r",
+                    orig.role_id, _p.para_id, _blk.semantic_type,
+                    preserved_text_overrides[_p.para_id][:80],
+                )
+                break
+        else:
+            _log.debug(
+                "DUP_TECH_STACK_CANDIDATE: role=%r para_id=%r semantic=%r "
+                "action=no_llm_match_keep_original text=%r",
+                orig.role_id, _p.para_id, _blk.semantic_type,
+                _p.text[:80],
+            )
+
+    # Diagnostics
+    _log.debug(
+        "ROLE_ADJUNCT_SPLIT: role=%r  rewriteable=[%s]  preserved=[%s]  llm_bullets=%d",
+        orig.role_id,
+        ", ".join(
+            f"{p.para_id}({cls_body_block_map[p.para_id].semantic_type})"
+            for p in orig.bullets
+            if p.para_id and p.para_id not in preserved_ids and p.para_id in cls_body_block_map
+        ),
+        ", ".join(
+            f"{p.para_id}({cls_body_block_map[p.para_id].semantic_type})"
+            for p in orig.bullets
+            if p.para_id in preserved_ids and p.para_id in cls_body_block_map
+        ),
+        len(llm_bullets_working),
+    )
+
+    rewriteable_paras = [p for p in orig.bullets if p.para_id not in preserved_ids]
+    temp_role = RoleEntry(
+        header=orig.header,
+        header_extra=orig.header_extra,
+        meta_lines=orig.meta_lines,
+        bullets=rewriteable_paras,
+        role_id=orig.role_id,
+        role_id_stable=orig.role_id_stable,
+        layout_binding=orig.layout_binding,
+    )
+    updated_temp = _update_role_bullets_only(temp_role, llm_bullets_working, layout_bound=layout_bound)
+
+    # Re-assemble in original bullets order: preserved paras stay, rewriteable
+    # slots are replaced with updated text from updated_temp.bullets.
+    updated_iter = iter(updated_temp.bullets)
+    final_bullets: list[ParaModel] = []
+    for p in orig.bullets:
+        if p.para_id in preserved_ids:
+            _override = preserved_text_overrides.get(p.para_id)
+            final_bullets.append(_dc_replace(p, text=_override) if _override is not None else p)
+        else:
+            nxt = next(updated_iter, None)
+            if nxt is not None:
+                final_bullets.append(nxt)
+    # Extra LLM bullets cloned beyond original rewriteable slots
+    final_bullets.extend(updated_iter)
+
+    # Deduplicate identical preserved tech-semantic blocks.  Template sub-projects
+    # may each carry the same tech annotation (e.g. "DevOps: GitLab, Jenkins").
+    # After the LLM rewrites the role without that exact annotation, all occurrences
+    # survive as preserved orphans.  Keep the first, clear subsequent duplicates.
+    _seen_tech_text: set[str] = set()
+    _deduped: list[ParaModel] = []
+    for _fb in final_bullets:
+        _blk = cls_body_block_map.get(_fb.para_id)
+        if (
+            _fb.para_id in preserved_ids
+            and _blk is not None
+            and _blk.semantic_type in _TECH_SEMANTICS
+        ):
+            _norm = _fb.text.strip().lower()
+            if _norm and _norm in _seen_tech_text:
+                _log.debug(
+                    "PRESERVED_ADJUNCT_CLEANUP: role=%r para_id=%r semantic=%r "
+                    "action=clear_duplicate_tech text=%r",
+                    orig.role_id, _fb.para_id, _blk.semantic_type, _fb.text[:60],
+                )
+                _deduped.append(_dc_replace(_fb, text=""))
+                continue
+            if _norm:
+                _seen_tech_text.add(_norm)
+        _deduped.append(_fb)
+    final_bullets = _deduped
+
+    return RoleEntry(
+        header=updated_temp.header,
+        header_extra=updated_temp.header_extra,
+        meta_lines=updated_temp.meta_lines,
+        bullets=final_bullets,
+        role_id=orig.role_id,
+        role_id_stable=orig.role_id_stable,
+        layout_binding=orig.layout_binding,
+    )
+
+
 def _update_experience_classified(
     orig: ResumeSection,
     llm: LlmSection,
@@ -2545,14 +4260,20 @@ def _update_experience_classified(
     Falls back to _update_body_classified when no role structure can be derived
     from either the parser or classification.
     """
+    # Resolve LLM roles early (pipe format, else dash/date reparse) so the
+    # mega-role split can use LLM role headers as boundary hints.
+    llm_roles = llm.roles
+    if not llm_roles and llm.body_lines:
+        llm_roles = _reparse_body_lines_as_roles(llm.body_lines) or []
+
     # Prefer classification-based role structure when it provides more
     # granularity than the parser (e.g. mega-role spanning multiple companies).
     if cls_sec.roles:
-        rebuilt = _rebuild_roles_from_classification(orig, cls_sec)
+        rebuilt = _rebuild_roles_from_classification(orig, cls_sec, llm_roles or None)
         if rebuilt:
             expanded: list[RoleEntry] = []
             for r in rebuilt:
-                expanded.extend(_split_cls_mega_role(r))
+                expanded.extend(_split_cls_mega_role(r, llm_roles))
             if len(expanded) > len(orig.roles):
                 _log.debug(
                     "classification: expanding %d parser roles → %d cls roles "
@@ -2566,6 +4287,7 @@ def _update_experience_classified(
                     body_paras=orig.body_paras,
                     roles=expanded,
                     section_id=orig.section_id,
+                    container_type=orig.container_type,
                 )
 
     if not orig.roles:
@@ -2575,51 +4297,196 @@ def _update_experience_classified(
         )
         return _update_body_classified(orig, llm, cls_sec, layout_bound=layout_bound)
 
-    # Resolve LLM roles: try pipe format first, then dash/date format.
-    llm_roles = llm.roles
-    if not llm_roles and llm.body_lines and orig.roles:
-        reparsed = _reparse_body_lines_as_roles(llm.body_lines)
-        if reparsed:
-            llm_roles = reparsed
-            if len(reparsed) != len(orig.roles):
-                _log.debug(
-                    "EXPERIENCE_ROLE_COUNT_MISMATCH: section=%r orig_roles=%d reparsed_roles=%d",
-                    orig.title, len(orig.roles), len(reparsed),
-                )
-        else:
-            _log.debug(
-                "EXPERIENCE_LLM_ROLE_PARSE_FAILED: section=%r body_lines=%d "
-                "reason=no_boundaries; keeping %d orig roles verbatim",
-                orig.title, len(llm.body_lines), len(orig.roles),
-            )
-
+    if not llm_roles and llm.body_lines:
+        _log.debug(
+            "EXPERIENCE_LLM_ROLE_PARSE_FAILED: section=%r body_lines=%d "
+            "reason=no_boundaries; keeping %d orig roles verbatim",
+            orig.title, len(llm.body_lines), len(orig.roles),
+        )
+    elif len(llm_roles) != len(orig.roles):
+        _log.debug(
+            "EXPERIENCE_ROLE_COUNT_MISMATCH: section=%r orig_roles=%d llm_roles=%d",
+            orig.title, len(orig.roles), len(llm_roles),
+        )
     if len(llm_roles) > len(orig.roles):
         _log.debug(
             "classification: ignoring %d extra LLM roles for section %r (IR has %d)",
             len(llm_roles) - len(orig.roles), orig.title, len(orig.roles),
         )
 
+    # Build para_id → ClassificationBlock map for the whole section so
+    # _update_role_with_adjuncts can distinguish rewriteable from preserved blocks.
+    cls_body_block_map: dict[str, Any] = {}
+    for _cr in cls_sec.roles:
+        for _blk in _cr.body_blocks:
+            if _blk.para_id:
+                cls_body_block_map[_blk.para_id] = _blk
+
+    # Section-wide "covered by LLM" test: placeholder text, or a near-dup /
+    # fragment of any injected bullet.  Company and date/contact lines are
+    # never considered covered.
+    _sec_llm_lines_all: list[str] = [b for _lr in llm_roles for b in _lr.bullets]
+    _sec_guard_tokens: set[str] = set()
+    for _lr in llm_roles:
+        _sec_guard_tokens |= _extract_company_tokens(_lr.header)
+    for _or in orig.roles:
+        if _or.header is not None:
+            _sec_guard_tokens |= _extract_company_tokens(_or.header.text)
+    _sec_contact_re = re.compile(r"@|\d{3,}|https?://|www\.", re.IGNORECASE)
+
+    def _covered_by_llm(p: "ParaModel") -> bool:
+        if not p.text.strip():
+            return False
+        if _extract_company_tokens(p.text) & _sec_guard_tokens:
+            return False
+        if _sec_contact_re.search(p.text):
+            return False
+        return (
+            _is_placeholder_text(p.text)
+            or _similar_to_any_line(p.text, _sec_llm_lines_all)
+        )
+
+    # Pair LLM roles to IR roles by company similarity (positional fallback),
+    # not by list position: classification/parser role under-detection made
+    # positional zip inject the wrong role's bullets (samples 29, 33).
+    match_map = (
+        _match_llm_to_ir_roles(llm_roles, orig.roles)
+        if llm_roles else [None] * len(orig.roles)
+    )
+
     updated_roles: list[RoleEntry] = []
     for i, o_role in enumerate(orig.roles):
-        if i < len(llm_roles):
-            updated = _update_role_bullets_only(o_role, llm_roles[i].bullets, layout_bound=layout_bound)
+        llm_idx = match_map[i]
+        if llm_idx is not None:
+            _release_identity_slots(o_role, llm_roles[llm_idx])
+            updated = _update_role_with_adjuncts(
+                o_role, llm_roles[llm_idx].bullets, cls_body_block_map,
+                layout_bound=layout_bound,
+                section_llm_bullets=[b for _lr in llm_roles for b in _lr.bullets],
+            )
             _log.debug(
-                "classification: role %r → updated %d bullets",
-                o_role.role_id, len(llm_roles[i].bullets),
+                "classification: role %r → updated %d bullets (LLM[%d] %r)",
+                o_role.role_id, len(llm_roles[llm_idx].bullets),
+                llm_idx, llm_roles[llm_idx].header[:50],
             )
         else:
-            # No LLM counterpart — keep IR role verbatim.
+            # No LLM counterpart.  A spurious classification role — one whose
+            # HEADER text is itself covered by the LLM content (a wrap-split
+            # fragment of an injected bullet, sample 21) — is dropped
+            # entirely; its paras become unclaimed and the body sanitizer
+            # below clears the stale copies.  Real unmatched roles are kept
+            # verbatim, with content lines the LLM already rewrote elsewhere
+            # (and placeholder text) blanked.
+            if o_role.header is not None and _covered_by_llm(o_role.header):
+                _log.debug(
+                    "classification: unmatched role %r dropped — header is a "
+                    "covered fragment (%r)",
+                    o_role.role_id, o_role.header.text[:40],
+                )
+                continue
+            for _vb in [*o_role.bullets, *o_role.header_extra, *o_role.meta_lines]:
+                if _covered_by_llm(_vb):
+                    _log.debug(
+                        "classification: unmatched role %r — blanked covered "
+                        "para %r (%r)",
+                        o_role.role_id, _vb.para_id, _vb.text[:40],
+                    )
+                    _vb.text = ""
             updated = o_role
             _log.debug("classification: role %r → verbatim (no LLM counterpart)", o_role.role_id)
         updated_roles.append(updated)
+
+    # Propagate classification semantic types to ParaModel.semantic for bullets.
+    # role_intro, role_key_technologies, and role_tech_stack enable semantic-aware
+    # rendering decisions (font-cap exemption, bold-strip guard) in the renderer.
+    _PROPAGATE_CLS_SEMANTICS = frozenset({
+        "role_intro", "role_key_technologies", "role_tech_stack",
+        "role_project_label",
+    })
+    for _role in updated_roles:
+        for _idx, _pm in enumerate(_role.bullets):
+            if _pm.para_id and _pm.para_id in cls_body_block_map:
+                _blk = cls_body_block_map[_pm.para_id]
+                if _blk.semantic_type in _PROPAGATE_CLS_SEMANTICS:
+                    _role.bullets[_idx] = _dc_replace(_pm, semantic=_blk.semantic_type)
+
+    # Date injection for date-column templates (e.g. sample 35): when the LLM
+    # role header contains a " | <date>" suffix and the template role header has
+    # no year/month, inject the date string into the template header text.  The
+    # orphaned date-column paras in header_paras are cleared by apply_tailored
+    # when _dates_injected is set on the returned section.
+    #
+    # Exception: timeline_left_role_right roles already have dates in the left
+    # table cell (v2 renderer).  Injecting the date into the right-cell header
+    # would duplicate it.  Skip injection for those roles; their left_para_ids
+    # carry the date display and need no right-cell supplement.
+    _dates_injected = False
+    if llm_roles:
+        for _di, _upd in enumerate(updated_roles):
+            if _di >= len(llm_roles):
+                break
+            # timeline_left_role_right: left cell already carries the date.
+            _di_orig_lb = orig.roles[_di].layout_binding if _di < len(orig.roles) else None
+            if (_di_orig_lb or {}).get("kind") == "timeline_left_role_right":
+                _log.debug(
+                    "DATE_INJECTION_SKIPPED: role=%r timeline_left_role_right "
+                    "(date already in left cell)",
+                    _upd.role_id,
+                )
+                continue
+            _llm_hdr = llm_roles[_di].header
+            _pipe_idx = _llm_hdr.rfind(" | ")
+            if _pipe_idx == -1:
+                continue
+            _date_str = _llm_hdr[_pipe_idx + 3:].strip()
+            if not _date_str:
+                continue
+            # Skip if template header or any meta line already has a date.
+            _hdr_has_date = bool(
+                _YEAR_RE.search(_upd.header.text) or _MONTH_NAME_RE.search(_upd.header.text)
+            )
+            _meta_has_date = any(
+                bool(_YEAR_RE.search(m.text) or _MONTH_NAME_RE.search(m.text))
+                for m in _upd.meta_lines
+            )
+            if _hdr_has_date or _meta_has_date:
+                continue
+            # The pipe suffix must look like a date (year, month, "current", or "present").
+            if not (
+                _YEAR_RE.search(_date_str)
+                or _MONTH_NAME_RE.search(_date_str)
+                or "current" in _date_str.lower()
+                or "present" in _date_str.lower()
+            ):
+                continue
+            updated_roles[_di] = _dc_replace(
+                _upd,
+                header=_dc_replace(_upd.header, text=f"{_upd.header.text} | {_date_str}"),
+            )
+            _dates_injected = True
+            _log.debug(
+                "DATE_INJECTED_FROM_LLM: role=%r date=%r",
+                _upd.role_id, _date_str,
+            )
 
     _log.debug(
         "classification: section %r preserve_heading=%s rewrite_policy=%s",
         orig.title, cls_sec.preserve_heading, cls_sec.rewrite_policy,
     )
-    # Filter body_paras to exclude para_ids already claimed by roles, preventing
-    # SPLIT_BRAIN_BODY_PARAS validator failures.  Spacer paragraphs (empty or no
-    # para_id) are kept so layout_blocks renderer can find them via body_paras.
+    # Sanitize body_paras: keep spacers intact (layout_blocks needs them), clear
+    # stale role content so the layout_blocks renderer writes empty paragraphs
+    # instead of falling back to the xml_proto original text.
+    #
+    # Two failure modes this addresses:
+    #   Case A — paragraph-semantic body_paras kept with original text: they are
+    #             in para_lookup via sec.body_paras and render stale template text.
+    #   Case B — bullet-semantic body_paras previously *removed* from body_paras:
+    #             absent from para_lookup, renderer falls back to xml_proto and
+    #             still shows the original text.  Clearing (not removing) them
+    #             puts them in para_lookup with text="" so they render invisible.
+    #
+    # Rule: a non-empty body_para not claimed by an updated role and not
+    # explicitly preserved in the classification is stale role content → clear it.
     _role_para_ids: set[str] = set()
     for r in updated_roles:
         if r.header.para_id:
@@ -2627,18 +4494,78 @@ def _update_experience_classified(
         for _p in r.header_extra + r.meta_lines + r.bullets:
             if _p.para_id:
                 _role_para_ids.add(_p.para_id)
-    filtered_body = [
-        p for p in orig.body_paras
-        if not p.para_id or p.para_id not in _role_para_ids
-    ]
-    return ResumeSection(
+    # Rewrite-source semantics are excluded: their body_paras must be cleared
+    # when the role is rewritten, just like non-preserved content.
+    _REWRITE_SOURCE_CLS = frozenset({"role_freeform_note", "role_project_context", "highlight_header"})
+    _preserved_in_cls: set[str] = {
+        _pid for _pid, _blk in cls_body_block_map.items()
+        if _blk.rewrite_policy == "preserve"
+        and _blk.semantic_type not in _REWRITE_SOURCE_CLS
+    }
+    _STALE_BODY_SEMANTICS = frozenset({"role_header", "role_meta", "bullet", "paragraph"})
+
+    def _sanitize_body(p: "ParaModel") -> "ParaModel":
+        if not p.para_id or not p.text.strip():
+            return p                        # spacer — keep as-is
+        if p.para_id in _role_para_ids:
+            return p                        # claimed by updated role — hands off
+        if p.para_id in _preserved_in_cls:
+            # role_intro blocks without \n are compound-split prose intros (source
+            # material extracted from "Title, Company Highlights: body..." orphans).
+            # Structured meta role_intro blocks always use \n as field separators.
+            _blk = cls_body_block_map.get(p.para_id)
+            if _blk and _blk.semantic_type == "role_intro" and "\n" not in p.text:
+                return _dc_replace(p, text="")
+            if _covered_by_llm(p):
+                # Preserve yields when the LLM already rewrote this content
+                # (placeholder or near-duplicate of an injected bullet).
+                return _dc_replace(p, text="")
+            return p                        # explicitly preserved by classification
+        if p.semantic in _STALE_BODY_SEMANTICS:
+            return _dc_replace(p, text="")  # stale template content — clear
+        return p
+
+    filtered_body = [_sanitize_body(p) for p in orig.body_paras]
+
+    # Register extra unbound bullets (para_id="") as injections so apply_tailored
+    # creates layout blocks for them and the renderer can write their text.
+    # Without this, extra LLM bullets beyond the template's slot count are silently
+    # dropped because they have no layout block to anchor to.
+    # Roles with NO bullet slots produce ALL-unbound bullets; use the same fallback
+    # anchor logic (last meta line → header) as the auto-registration loop so that
+    # setting _extra_injections for one role doesn't suppress the others.
+    _extra_injections: "dict[str, list[ParaModel]]" = {}
+    for _r in updated_roles:
+        _bound = [b for b in _r.bullets if b.para_id]
+        _unbound = [b for b in _r.bullets if not b.para_id and b.text.strip()]
+        if _unbound:
+            _anchor_pm = (
+                _bound[-1] if _bound
+                else _r.meta_lines[-1] if (_r.meta_lines and _r.meta_lines[-1].para_id)
+                else _r.header
+            )
+            _anchor = _anchor_pm.para_id
+            if _anchor:
+                _extra_injections.setdefault(_anchor, []).extend(_unbound)
+                _log.debug(
+                    "CLASSIFIED_EXTRA_BULLETS: role=%r anchor=%r extra=%d",
+                    _r.role_id, _anchor, len(_unbound),
+                )
+
+    result = ResumeSection(
         title=orig.title,
         heading=orig.heading,
         semantic_type=orig.semantic_type,
         body_paras=filtered_body,
         roles=updated_roles,
         section_id=orig.section_id,
+        container_type=orig.container_type,
     )
+    if _extra_injections:
+        result._extra_injections = _extra_injections  # type: ignore[attr-defined]
+    if _dates_injected:
+        result._dates_injected = True  # type: ignore[attr-defined]
+    return result
 
 
 def _update_body_classified(
@@ -2691,6 +4618,7 @@ def _update_body_classified(
             body_paras=new_body,
             roles=[],
             section_id=orig.section_id,
+            container_type=orig.container_type,
         )
 
     # No structure constraint — use existing body update.
@@ -2701,7 +4629,17 @@ def _update_body_classified(
             body_lines=_sanitize_skills_lines(llm.body_lines),
             roles=llm.roles,
         )
-    return _update_body_section(orig, llm, layout_bound=layout_bound)
+    result = _update_body_section(orig, llm, layout_bound=layout_bound)
+    # When the classifier identifies an 'other' template section as a summary
+    # (e.g. "Senior Software Engineer" intro-prose), promote the result's
+    # semantic_type so downstream logic treats it correctly:
+    # (a) _inject_fragmented_experience only targets 'other' sections — keeping
+    #     'other' would cause it to overwrite the injected summary with experience
+    #     bullets; (b) the grader's _ir_text_by_section_type identifies summary
+    #     sections by semantic_type in {'summary','profile'}.
+    if cls_sec.semantic_type == "summary" and orig.semantic_type != "summary":
+        result.semantic_type = "summary"
+    return result
 
 
 def _apply_section_classified(
@@ -2946,18 +4884,54 @@ def normalize_llm_sections(
 ) -> list["LlmSection"]:
     """Normalize LLM output sections to structural correctness before apply_tailored.
 
-    Runs two repair passes:
+    Runs three repair passes:
     1. Role-continuation repair: absorbs "Web Designer"-style top-level sections
        that immediately follow an Experience section as additional LlmRole entries.
     2. Role-in-bullets repair: extracts role headers accidentally embedded as
        bullet points back into proper LlmRole entries.
+    3. Duplicate-section deduplication: when the LLM echoes original template
+       sections verbatim at the end of its output, those duplicates shadow the
+       real LLM-generated sections during matching.  Keep the first occurrence of
+       each semantic type and drop later duplicates.
 
     These repairs are always applied when layout_blocks are present to prevent
     structural mismatch between the semantic model and the layout tree.
     """
     llm_sections = _repair_role_continuation_sections(llm_sections)
     llm_sections = _repair_roles_from_bullets(llm_sections)
+    llm_sections = _deduplicate_llm_sections(llm_sections)
     return llm_sections
+
+
+def _deduplicate_llm_sections(
+    llm_sections: list["LlmSection"],
+) -> list["LlmSection"]:
+    """Drop later duplicate semantic-type sections, keeping the first occurrence.
+
+    LLMs occasionally append original template content verbatim after their
+    generated output (e.g. template heading "SKILLS" after the real "Technical
+    Skills" section).  During section matching, the exact-heading pass picks
+    the verbatim echo over the real content, leaving the template section
+    unchanged.  Removing the duplicates lets the first (real) section win.
+
+    Only deduplicates for concrete semantic types (skills, experience, summary,
+    education).  "other"-type sections are never deduplicated.
+    """
+    _DEDUP_TYPES = frozenset({"skills", "experience", "summary", "education"})
+    seen_types: set[str] = set()
+    result: list["LlmSection"] = []
+    for sec in llm_sections:
+        st = sec.semantic_type
+        if st in _DEDUP_TYPES:
+            if st in seen_types:
+                _log.debug(
+                    "NORMALIZE_DEDUP: dropped duplicate %r section %r",
+                    st, sec.heading[:40],
+                )
+                continue
+            seen_types.add(st)
+        result.append(sec)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -3265,10 +5239,24 @@ def _find_summary_anchors(
         return None
 
     # Walk backwards to find the trailing cluster of empty paragraphs.
+    # Geometry guard: reject candidates in narrow newspaper columns (date/sidebar
+    # areas).  Injecting a multi-sentence summary into a ≤180pt column produces a
+    # broken narrow vertical layout.  When the trailing empty slots belong to a
+    # narrow column, stop scanning rather than reaching further back.
+    _col_widths: "dict[str, int] | None" = getattr(doc, "_newspaper_col_widths", None)
+    _MIN_ANCHOR_WIDTH_TWIPS = 3600  # 180 pt in twips
     cluster_start = len(header_paras)
     for i in range(len(header_paras) - 1, -1, -1):
         pm = header_paras[i]
         if pm.para_id and not pm.text.strip():
+            if _col_widths is not None:
+                _w = _col_widths.get(pm.para_id)
+                if _w is not None and _w < _MIN_ANCHOR_WIDTH_TWIPS:
+                    _log.debug(
+                        "SUMMARY_ANCHOR_REJECTED_NARROW: pid=%r width_twips=%d threshold=%d",
+                        pm.para_id, _w, _MIN_ANCHOR_WIDTH_TWIPS,
+                    )
+                    break  # narrow column — stop; do not use slots from this region
             cluster_start = i
         else:
             break
@@ -3712,6 +5700,7 @@ def apply_anchor_budgets(
                 bullets=[_t(b) for b in role.bullets],
                 role_id=role.role_id,
                 role_id_stable=role.role_id_stable,
+                layout_binding=role.layout_binding,
             ))
         new_sections.append(ResumeSection(
             title=sec.title,
@@ -3720,12 +5709,14 @@ def apply_anchor_budgets(
             body_paras=[_t(p) for p in sec.body_paras],
             roles=new_roles,
             section_id=sec.section_id,
+            container_type=sec.container_type,
         ))
 
     # Rebuild all_paras in canonical order
     all_paras: list[ParaModel] = list(new_header)
     for s in new_sections:
-        all_paras.append(s.heading)
+        if s.section_id:  # only emit heading for template-origin sections
+            all_paras.append(s.heading)
         if s.semantic_type == "experience" and s.roles:
             for r in s.roles:
                 all_paras.append(r.header)
@@ -3733,6 +5724,18 @@ def apply_anchor_budgets(
                 all_paras.extend(r.bullets)
         else:
             all_paras.extend(s.body_paras)
+
+    # Carry over injected extras that live only in updated.all_paras (e.g.
+    # the left-column skills extras registered at the end of apply_tailored):
+    # the renderer resolves their _ext_ layout blocks through this list, and
+    # dropping them here made those blocks render the ANCHOR's XML verbatim —
+    # sample 28 showed eight copies of "Excelled in Mechanics and Materials."
+    # instead of the injected skills lines.
+    _seen_pids = {p.para_id for p in all_paras if p.para_id}
+    for p in (updated.all_paras or []):
+        if p.para_id and p.para_id not in _seen_pids:
+            all_paras.append(_t(p))
+            _seen_pids.add(p.para_id)
 
     return ResumeDocument(
         header_paras=new_header,
@@ -3826,6 +5829,55 @@ def apply_tailored(
             return by_title
         return by_id
 
+    _TARGET_SEMANTIC_TYPES: frozenset[str] = frozenset({"summary", "skills", "experience"})
+
+    def _trusted_cls_sec(
+        orig_section: "ResumeSection", llm_section: "LlmSection | None"
+    ) -> "ClassificationSection | None":
+        """Resolve classification, bypassing untrustworthy 'preserve' policies.
+
+        Generalizes the Pattern-C summary guard: stored classifications
+        sometimes label real target sections other/preserve (samples 24 'SKILL',
+        26 'Work History', 33 'Proficiency', 35 skills).  Returns None (→
+        unclassified path rewrites the content) when:
+        - the IR says the section is a target type (summary/skills/experience)
+          but the classification's semantic_type disagrees, or
+        - the classification carries no blocks and no roles for the section
+          while a skills/summary LLM section was matched to it (the classifier
+          had nothing to say about content it now claims to preserve).
+        """
+        cls_sec = _resolve_cls_sec(orig_section)
+        if cls_sec is None or cls_sec.rewrite_policy != "preserve":
+            return cls_sec
+        if (
+            orig_section.semantic_type in _TARGET_SEMANTIC_TYPES
+            and cls_sec.semantic_type != orig_section.semantic_type
+        ):
+            _log.debug(
+                "CLS_PRESERVE_BYPASSED: section %r — cls says %s/preserve but "
+                "IR semantic_type=%s; ignoring classification",
+                orig_section.title, cls_sec.semantic_type, orig_section.semantic_type,
+            )
+            return None
+        if (
+            llm_section is not None
+            and llm_section.semantic_type in ("skills", "summary")
+            and cls_sec.semantic_type == "other"
+            and not cls_sec.blocks
+            and not cls_sec.roles
+        ):
+            # other/preserve with zero blocks is the classifier's "don't know"
+            # default, not a deliberate preserve of typed content (sample 35's
+            # 'Skills (used in professional projects)').  An explicitly typed
+            # preserve (e.g. skills/preserve) is honored.
+            _log.debug(
+                "CLS_PRESERVE_BYPASSED: section %r — other/preserve with empty "
+                "blocks/roles while matched to LLM %s section; ignoring classification",
+                orig_section.title, llm_section.semantic_type,
+            )
+            return None
+        return cls_sec
+
     # Layout-bound mode: active when layout_blocks are present and the flag is on.
     # normalize_llm_sections runs whenever layout_blocks exist (flag-independent):
     # it absorbs fake role-title sections and extracts role headers from bullets,
@@ -3838,9 +5890,48 @@ def apply_tailored(
     try:
         match = _match_sections(original.sections, llm_sections)
     except ValueError as exc:
-        # Spec §9: ambiguous section mapping → do NOT modify → return template verbatim.
-        _log.warning("Section mapping failed — returning template verbatim: %s", exc)
-        return original
+        # Degraded retry instead of the old return-template-verbatim: apply
+        # the pairs that DID match; unmatched originals stay verbatim.
+        _log.warning(
+            "Section mapping failed (%s) — retrying leniently: matched pairs "
+            "are applied, unmatched originals kept verbatim", exc,
+        )
+        match = _match_sections(original.sections, llm_sections, strict=False)
+        if not any(ls is not None for _, ls in match.pairs):
+            # Nothing matched at all — there is no content to salvage, and
+            # letting lone extras through would fabricate sections the
+            # template never had (spec §9). Keep the template verbatim.
+            _log.warning("Section mapping degraded with 0 pairs — returning template verbatim")
+            return original
+
+    # Pattern F: classification labels a template 'other' section as 'summary'
+    # but exact-heading matching gave it a non-summary LLM section (LLM repeated
+    # the template heading verbatim).  The actual summary content landed in an
+    # extra 'Professional Summary' section.  Substitute it into the pair and
+    # remove it from extras so it is not injected a second time.
+    _extra_sum_idx = next(
+        (i for i, s in enumerate(match.extras) if s.semantic_type == "summary"),
+        None,
+    )
+    if _extra_sum_idx is not None:
+        for _pi, (_orig_s, _llm_s) in enumerate(match.pairs):
+            _cls_f = _resolve_cls_sec(_orig_s)
+            if (
+                _cls_f is not None
+                and _cls_f.semantic_type == "summary"
+                and _cls_f.rewrite_policy != "preserve"
+                and _orig_s.semantic_type not in ("summary",)
+                and (_llm_s is None or _llm_s.semantic_type not in ("summary",))
+            ):
+                _extra_sum = match.extras.pop(_extra_sum_idx)
+                match.pairs[_pi] = (_orig_s, _extra_sum)
+                _log.debug(
+                    "PATTERN_F: substituted extra summary %r into slot %r "
+                    "(template type=%s, orig llm type=%s)",
+                    _extra_sum.heading, _orig_s.title,
+                    _orig_s.semantic_type, _llm_s.semantic_type if _llm_s else "none",
+                )
+                break
 
     def _apply_section(orig_section: ResumeSection, llm_section: LlmSection) -> ResumeSection:
         """Update orig_section with llm_section content, respecting lock rules."""
@@ -3860,7 +5951,7 @@ def apply_tailored(
                 sum(1 for p in orig_section.body_paras
                     if p.text.strip() and p.semantic == "role_meta"),
             )
-            cls_sec = _resolve_cls_sec(orig_section)
+            cls_sec = _trusted_cls_sec(orig_section, llm_section)
             if cls_sec is not None and cls_sec.rewrite_policy == "preserve":
                 return orig_section
             # When classification has roles, use them to reconstruct role
@@ -3868,27 +5959,101 @@ def apply_tailored(
             # Expand any mega-role (e.g. multiple companies under one cls role)
             # so each company gets its own role entry matched to an LLM role.
             if cls_sec is not None and cls_sec.roles:
-                rebuilt_raw = _rebuild_roles_from_classification(orig_section, cls_sec)
+                # Resolve LLM roles the same way _update_experience_date_first
+                # does (pipe format, else dash/date reparse) so the rebuild can
+                # use LLM headers to guard span claims and repair duplicate
+                # headers.  The mega-role split keeps using only parsed pipe
+                # roles: reparsed dash/date roles include company lines as
+                # separate roles and over-split (sample 36 duplication).
+                _df_llm_roles = llm_section.roles
+                if not _df_llm_roles and llm_section.body_lines:
+                    _df_llm_roles = _reparse_body_lines_as_roles(
+                        llm_section.body_lines
+                    ) or []
+                rebuilt_raw = _rebuild_roles_from_classification(
+                    orig_section, cls_sec, _df_llm_roles or None
+                )
+                def _bad_parser_hdr(r: "RoleEntry") -> bool:
+                    if r.header is None:
+                        return True
+                    t = r.header.text.strip()
+                    if _STANDALONE_DATE_LINE_RE.match(t):
+                        return True
+                    # Paren-wrapped bare dates: "(2010-2013)" (sample 22).
+                    if re.fullmatch(
+                        r"\(?\s*" + _DATE_RANGE_PAT + r"\s*\)?", t, re.IGNORECASE
+                    ):
+                        return True
+                    # Sentence-length content lines are bullets, not headers.
+                    if len(t) > 70 or t.endswith((".", "!", "?")):
+                        return True
+                    return False
+
                 rebuilt: list[RoleEntry] = []
                 for _r in rebuilt_raw:
-                    rebuilt.extend(_split_cls_mega_role(_r))
+                    rebuilt.extend(_split_cls_mega_role(_r, llm_section.roles or None))
+                # Second split pass: detect roles where meta_lines contains a
+                # paragraph-type para followed by a role_meta para (second role's
+                # date header collapsed into the first role's meta_blocks).
+                split2: list[RoleEntry] = []
+                for _r in rebuilt:
+                    split2.extend(_split_role_by_meta_dates(_r))
+                rebuilt = split2
+                # Split validation: splitting that manufactures date-headed or
+                # sentence-headed roles is malformed (sample 22: the mega
+                # split produced '(2010-2013)' and 'Develop features…' as
+                # role headers, and the wrong-role match then overwrote the
+                # Wardiere company/title lines with bullets).  Revert to the
+                # unsplit rebuild when it was sane.
+                if (
+                    len(rebuilt) > len(rebuilt_raw)
+                    and any(_bad_parser_hdr(r) for r in rebuilt)
+                    and not any(_bad_parser_hdr(r) for r in rebuilt_raw)
+                ):
+                    _log.debug(
+                        "date-first: role splitting produced malformed headers "
+                        "— reverted to %d unsplit role(s)", len(rebuilt_raw),
+                    )
+                    rebuilt = list(rebuilt_raw)
+                # Fallback: if classification produced roles with no bullet or
+                # header_extra slots (e.g. body_blocks=[] in all roles), the
+                # updater has nothing to write into.  Use the heuristic date-first
+                # rebuild which places placeholder body_paras into header_extra.
+                if not any(r.bullets or r.header_extra for r in rebuilt):
+                    rebuilt = _rebuild_date_first_roles(orig_section)
+                    _log.debug(
+                        "date-first cls-fallback: all cls roles have no bullet/header_extra "
+                        "slots — using heuristic rebuild for %r", orig_section.title,
+                    )
+                # Classification under-detection: when the parser found MORE
+                # roles than the classification rebuild (sample 16: one cls
+                # role whose body_blocks point into the second role's region
+                # vs two correctly grouped parser roles), the parser structure
+                # is the better boundary source.  Guard: never prefer parser
+                # roles when any of them is headed by a bare date line — that
+                # is the collapsed date-first malformation this whole path
+                # exists to work around (sample 6: 'Jan 20XX - Current' as a
+                # parser role header put bullets into the date column).
+                _parser_roles_sane = bool(orig_section.roles) and not any(
+                    _bad_parser_hdr(r) for r in orig_section.roles
+                )
+                if _parser_roles_sane and len(orig_section.roles) > len(rebuilt):
+                    _log.debug(
+                        "date-first: using %d parser roles over %d cls-rebuilt "
+                        "roles (classification under-detected)",
+                        len(orig_section.roles), len(rebuilt),
+                    )
+                    rebuilt = orig_section.roles
             else:
                 rebuilt = _rebuild_date_first_roles(orig_section)
-            return _update_experience_date_first(orig_section, llm_section, rebuilt)
+            return _update_experience_date_first(orig_section, llm_section, rebuilt, cls_sec=cls_sec)
 
-        # Classification-constrained path: look up by section_id with title fallback.
-        cls_sec = _resolve_cls_sec(orig_section)
-        # Pattern C guard: LLM classifier sometimes labels OBJECTIVE/PROFILE
-        # sections as other/preserve when it doesn't recognise the heading.
-        # The PDF parser already set semantic_type="summary", so trust the IR and
-        # bypass classification to let the unclassified path rewrite the content.
-        if (
-            cls_sec is not None
-            and cls_sec.rewrite_policy == "preserve"
-            and orig_section.semantic_type == "summary"
-            and cls_sec.semantic_type != "summary"
-        ):
-            cls_sec = None
+        # Classification-constrained path: look up by section_id with title
+        # fallback, bypassing untrustworthy preserve policies (subsumes the
+        # old summary-only Pattern C guard and develop's Pattern C/D/E
+        # variants — any target-type section whose classification disagrees
+        # on semantic_type gets its preserve policy ignored).
+        cls_sec = _trusted_cls_sec(orig_section, llm_section)
         if cls_sec is not None:
             return _apply_section_classified(
                 orig_section, llm_section, cls_sec, _role_cls, layout_bound=_layout_bound
@@ -4005,6 +6170,65 @@ def apply_tailored(
                 )
             else:
                 _log.debug("SUMMARY_ANCHORS_NOT_FOUND: no safe empty header slots")
+
+        def _try_inbody_skills_subblock(llm_s: "LlmSection") -> bool:
+            """Anchor a skills-y extra at an in-body sub-block label.
+
+            Sample 32: the template's Education section ends with an
+            unlabeled skills sub-block ('Skills and Abilities' label para +
+            item lines).  When an unmatched LLM section's heading equals such
+            an in-body label, write the LLM lines into the item paras instead
+            of dropping the section or appending it at the document end.
+            Only locked-type or unmatched host sections are eligible — their
+            ParaModel objects flow into new_sections unchanged, so in-place
+            text updates propagate to the renderer.
+            """
+            _norm = lambda s: re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+            target = _norm(llm_s.heading)
+            if not target or "skill" not in target:
+                return False
+            lines = [l.strip() for l in llm_s.body_lines if l.strip()]
+            if not lines:
+                return False
+            for orig_section, _ls in match.pairs:
+                if orig_section.semantic_type in ("experience", "summary", "skills"):
+                    continue
+                if (
+                    orig_section.semantic_type not in _LOCKED_SEMANTIC_TYPES
+                    and _ls is not None
+                ):
+                    # Matched non-locked sections are rewritten as copies —
+                    # in-place mutation here would be silently lost.
+                    continue
+                paras = orig_section.body_paras
+                for i, p in enumerate(paras):
+                    if not p.text.strip() or _norm(p.text) != target:
+                        continue
+                    slots: list[ParaModel] = []
+                    for q in paras[i + 1:]:
+                        if not q.text.strip():
+                            continue
+                        if q.semantic not in ("paragraph", "bullet") or not q.para_id:
+                            break
+                        slots.append(q)
+                    if not slots:
+                        continue
+                    for j, q in enumerate(slots):
+                        q.text = lines[j] if j < len(lines) else ""
+                    if len(lines) > len(slots):
+                        _log.debug(
+                            "SKILLS_SUBBLOCK_OVERFLOW_DROPPED: %d line(s) "
+                            "beyond %d slot(s)",
+                            len(lines) - len(slots), len(slots),
+                        )
+                    _log.debug(
+                        "SKILLS_SUBBLOCK_INJECTED: section=%r label=%r "
+                        "slots=%d lines=%d",
+                        orig_section.title, p.text.strip()[:40],
+                        len(slots), len(lines),
+                    )
+                    return True
+            return False
 
         # Iterate LLM output order; emit matched or extra sections.
         # Spec §5: extra experience sections are never created.
@@ -4211,8 +6435,10 @@ def apply_tailored(
                          if s.semantic_type in _CONTENT_BOUNDARY_TYPES),
                         None,
                     )
-                    _skills_injected = False
-                    if _left_col_end is not None and _left_col_end > 0:
+                    # Prefer an in-body sub-block whose label matches the LLM
+                    # heading — more native than left-column or doc-end.
+                    _skills_injected = _try_inbody_skills_subblock(llm_s)
+                    if not _skills_injected and _left_col_end is not None and _left_col_end > 0:
                         # Find the last 'other' section before the content boundary
                         # that has a valid anchor paragraph (non-contact, non-empty).
                         # Contact-info guard: reject paragraphs with URLs, email,
@@ -4317,6 +6543,10 @@ def apply_tailored(
                             "apply_tailored: skills extra %r → unbound (doc end fallback)",
                             llm_s.heading,
                         )
+                elif _try_inbody_skills_subblock(llm_s):
+                    # Skills-y "other" extra (e.g. 'Skills and Abilities')
+                    # anchored at a matching in-body sub-block label.
+                    pass
                 else:
                     _log.debug(
                         "UPDATER_SECTION_ANCHOR_NOT_FOUND: %r dropped in layout-bound mode",
@@ -4477,7 +6707,11 @@ def apply_tailored(
             s.semantic_type == "experience" for s in new_sections
         ):
             new_sections = _inject_fragmented_experience(
-                new_sections, original.sections, _unmatched_exp
+                new_sections, original.sections, _unmatched_exp,
+                matched_section_ids={
+                    _os.section_id for _os, _ls in match.pairs
+                    if _ls is not None and _os.section_id
+                },
             )
 
     # Lorem ipsum cleanup in layout-bound mode: blank out any remaining lorem ipsum
@@ -4517,6 +6751,64 @@ def apply_tailored(
             p for p in effective_header_paras
             if p.para_id not in _used_anchor_ids
         ]
+
+    # Date-column header cleanup: when experience roles had dates injected from
+    # LLM role headers, clear orphaned date-fragment paras from header_paras.
+    # Handles templates (e.g. sample 35) where the date column appears before
+    # the Experience heading in document order, causing date fragments to render
+    # as a noise block above the Experience section.
+    # Guard: paragraphs in a narrow newspaper column (< 3600 twips) ARE the
+    # visible date sidebar — they must not be cleared.
+    if any(getattr(s, "_dates_injected", False) for s in new_sections):
+        _date_col_widths: "dict[str, int] | None" = getattr(original, "_newspaper_col_widths", None)
+        _MIN_SIDEBAR_TWIPS = 3600  # 180 pt — same threshold as summary-anchor narrow guard
+        _cleaned_hp: list[ParaModel] = []
+        for _hp in effective_header_paras:
+            if _hp.para_id and _hp.text.strip() and _DATE_COL_PARA_RE.match(_hp.text.strip()):
+                if _date_col_widths is not None:
+                    _w = _date_col_widths.get(_hp.para_id)
+                    if _w is not None and _w < _MIN_SIDEBAR_TWIPS:
+                        _cleaned_hp.append(_hp)
+                        _log.debug(
+                            "DATE_COL_HEADER_PRESERVED: para_id=%r text=%r col_width_twips=%d",
+                            _hp.para_id, _hp.text.strip(), _w,
+                        )
+                        continue
+                _cleaned_hp.append(_dc_replace(_hp, text=""))
+                _log.debug(
+                    "DATE_COL_HEADER_CLEARED: para_id=%r text=%r",
+                    _hp.para_id, _hp.text.strip(),
+                )
+            else:
+                _cleaned_hp.append(_hp)
+        effective_header_paras = _cleaned_hp
+
+    # Icon-artifact header cleanup: detect "icon-char username" paras where an
+    # icon-font glyph (FontAwesome, etc.) degraded to a garbage ASCII character
+    # in a system font (Times New Roman) because the icon font was not embedded.
+    # Pattern: exactly 2 whitespace-separated tokens, first token ≤2 chars,
+    # second all-lowercase alphanumeric ≥4 chars, no '@' or '.' (not email/URL),
+    # total length <20.  Applied unconditionally — the heuristic is tight enough
+    # not to fire on legitimate contact lines (emails have '@', URLs have '.').
+    for _hi, _hp in enumerate(effective_header_paras):
+        if not _hp.para_id or not _hp.text.strip():
+            continue
+        _ia_words = _hp.text.strip().split()
+        if (
+            len(_ia_words) == 2
+            and len(_ia_words[0]) <= 2
+            and len(_hp.text.strip()) < 20
+            and _ia_words[1][0].islower()
+            and _ia_words[1].isalnum()
+            and len(_ia_words[1]) >= 4
+            and "@" not in _hp.text
+            and "." not in _hp.text
+        ):
+            effective_header_paras[_hi] = _dc_replace(_hp, text="")
+            _log.debug(
+                "ICON_ARTIFACT_CLEARED: para_id=%r text=%r",
+                _hp.para_id, _hp.text.strip(),
+            )
 
     # Blank out intro-prose header_paras that would duplicate an anchored summary.
     # When the template has a summary-like placeholder in header_paras (e.g. a
@@ -4595,7 +6887,8 @@ def apply_tailored(
     # Rebuild flat para list in document order
     all_paras: list[ParaModel] = list(effective_header_paras)
     for section in new_sections:
-        all_paras.append(section.heading)
+        if section.section_id:  # only emit heading for template-origin sections
+            all_paras.append(section.heading)
         if section.semantic_type == "experience" and section.roles:
             # Emit pre-role orphan body_paras only when body_paras contains
             # an actual role_header paragraph (pipe-format resumes).  For
@@ -4634,7 +6927,8 @@ def apply_tailored(
         if len(new_sections) < _orig_sec_count:
             all_paras = list(effective_header_paras)
             for section in new_sections:
-                all_paras.append(section.heading)
+                if section.section_id:  # only emit heading for template-origin sections
+                    all_paras.append(section.heading)
                 if section.semantic_type == "experience" and section.roles:
                     if any(bp.semantic == "role_header" for bp in section.body_paras):
                         _claimed2 = {id(pm) for role in section.roles for pm in role.meta_lines}
@@ -4692,11 +6986,11 @@ def apply_tailored(
             # Overflow to a second page is acceptable; truncated bullets lose meaning.
             # (Previous cap: max(orig_len, 60).  Removed per content-preservation policy.)
             #
-            # Skills sections in table cells: apply a moderate cap of max(orig_len*2, 60).
-            # This allows 2× the original content (meaningful improvement over the original
-            # severe cap at orig_len) while preventing the narrow left sidebar cell from
-            # growing so large that it causes column layout collapse or table ejection to
-            # page 2.  Full skills in unconstrained (non-table) templates are never capped.
+            # Skills sections in table cells: apply a moderate cap of max(orig_len*2, 200).
+            # The 200-char minimum prevents aggressive truncation when the template uses
+            # short placeholder text (e.g. "Data analysis" = 13 chars) but the LLM
+            # produces long categorised skill lines ("Category: item1, item2, …").
+            # Overflow to a second page is still preferable to silently clipping content.
             _is_skills_section = (
                 _ns.semantic_type == "skills"
                 or "skill" in _ns.title.lower()
@@ -4706,11 +7000,18 @@ def apply_tailored(
                 _bp_changed = False
                 for _nbp in _ns.body_paras:
                     _olen = _orig_bp_len.get(_nbp.para_id, 0)
-                    _skills_cap = max(_olen * 2, 60) if _olen > 0 else 0
+                    _skills_cap = max(_olen * 2, 200) if _olen > 0 else 0
                     if _skills_cap > 0 and len(_nbp.text.strip()) > _skills_cap:
-                        _bpcut = _nbp.text.rfind(" ", 0, _skills_cap)
+                        # Prefer cutting at the last complete comma-separated
+                        # item: "Label: A, B, C" capped mid-item leaves a
+                        # dangling fragment ("..., Goal") in the rendered cell
+                        # (sample 10 Key Skills).
+                        _bpcut = _nbp.text.rfind(", ", 0, _skills_cap)
+                        if _bpcut <= 0:
+                            _bpcut = _nbp.text.rfind(" ", 0, _skills_cap)
                         _capped_bps.append(_nbp.with_text(
-                            _nbp.text[:_bpcut] if _bpcut > 0 else _nbp.text[:_skills_cap]
+                            _nbp.text[:_bpcut].rstrip(",")
+                            if _bpcut > 0 else _nbp.text[:_skills_cap]
                         ))
                         _bp_changed = True
                     else:
@@ -4789,7 +7090,10 @@ def apply_tailored(
             if orig_section.semantic_type in _LOCKED_SEMANTIC_TYPES:
                 continue  # Spec §3: locked sections are never updated in-place either.
 
-            cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+            # Same trusted resolution as the section dispatch: title fallback
+            # plus bypass of untrustworthy preserve policies (samples 24/26
+            # died here — 'SKILL'/'Work History' labelled other/preserve).
+            cls_sec = _trusted_cls_sec(orig_section, llm_section)
 
             # Classification: preserve → skip entirely.
             if cls_sec is not None and cls_sec.rewrite_policy == "preserve":
@@ -5280,6 +7584,23 @@ def apply_tailored(
                                     _ski_el = _ski_rpr.find(f"{{{_W_SK}}}{_ski_tag}")
                                     if _ski_el is not None:
                                         _ski_rpr.remove(_ski_el)
+                            # Strip heading-like pStyle (Heading*/Title/Subtitle)
+                            # from the body proto: the CI cell para used as the
+                            # prototype may be a styled label, and its pStyle
+                            # makes every injected skill line re-parse as a
+                            # section heading (sample 12).
+                            _ski_pPr = _ski_b_proto.find(f"{{{_W_SK}}}pPr")
+                            if _ski_pPr is not None:
+                                _ski_ps = _ski_pPr.find(f"{{{_W_SK}}}pStyle")
+                                if _ski_ps is not None:
+                                    _ski_val = (
+                                        _ski_ps.get(f"{{{_W_SK}}}val") or ""
+                                    ).replace(" ", "").lower()
+                                    if (
+                                        _ski_val.startswith("heading")
+                                        or _ski_val in ("title", "subtitle")
+                                    ):
+                                        _ski_pPr.remove(_ski_ps)
                             for _ski_t in _ski_b_proto.findall(f".//{{{_W_SK}}}t"):
                                 _ski_t.text = ""
                             for _su in _ski_unbound:
@@ -5320,8 +7641,25 @@ def apply_tailored(
                 for _j, _pm in enumerate(_extras):
                     _pm.para_id = f"{_blk.para_id}_ext_{_j + 1}"
                 _insert_at = _i + 1 + _offset
+                # Strip column-break from the XML proto so _ext_ bullets do not
+                # inherit <w:br type="column"/> from an anchor paragraph that
+                # starts a newspaper right column.
+                _ext_proto = _blk.xml_proto_xml
+                if "type=\"column\"" in _ext_proto:
+                    try:
+                        _proto_elem = _etree.fromstring(_ext_proto.encode("utf-8"))
+                        for _cbr in _proto_elem.findall(f".//{{{_W_NS}}}br"):
+                            if _cbr.get(f"{{{_W_NS}}}type") == "column":
+                                _cbr.getparent().remove(_cbr)
+                        _ext_proto = _etree.tostring(_proto_elem, encoding="unicode")
+                        _log.debug(
+                            "EXT_PROTO_COL_BREAK_STRIPPED: anchor=%r",
+                            _blk.para_id,
+                        )
+                    except Exception:
+                        pass
                 _new_blocks = [
-                    _LPB(para_id=_pm.para_id, xml_proto_xml=_blk.xml_proto_xml)
+                    _LPB(para_id=_pm.para_id, xml_proto_xml=_ext_proto)
                     for _pm in _extras
                 ]
                 _new_lb[_insert_at:_insert_at] = _new_blocks
@@ -5382,6 +7720,12 @@ def apply_tailored(
                             _new_p = _deepcopy(_pm.style.xml_proto)
                         else:
                             _new_p = _deepcopy(_anchor_elem)
+                        # Strip bookmarks to prevent para_id collisions when re-parsing the DOCX
+                        for _bk_tag in ("bookmarkStart", "bookmarkEnd"):
+                            for _bk in list(_new_p.findall(f"{{{_W_NS}}}{_bk_tag}")):
+                                _new_p.remove(_bk)
+                            for _bk in list(_new_p.findall(f".//{{{_W_NS}}}{_bk_tag}")):
+                                _bk.getparent().remove(_bk)
                         # Clear all text runs and set new content
                         for _t in _new_p.findall(f".//{{{_W_NS}}}t"):
                             _t.text = ""
@@ -5438,6 +7782,300 @@ def apply_tailored(
                     "SKILLS_UNBOUND_LAYOUT_BLOCKS: appended %d blocks for %d section(s)",
                     len(_skills_lb), len(_skills_unbound_secs),
                 )
+
+    # Register injected extras in all_paras: their layout blocks clone the
+    # ANCHOR's XML prototype, and the renderer swaps in the extra's text only
+    # when it can resolve the block's para_id via the semantic model.  Extras
+    # living solely in _extra_injections (e.g. the left-column skills path)
+    # were invisible to that lookup, so their blocks rendered the anchor's
+    # text verbatim — sample 28 showed eight copies of "Excelled in Mechanics
+    # and Materials." instead of the injected skills lines.
+    _known_pids = {p.para_id for p in all_paras if p.para_id}
+    if _all_extra_injections:
+        for _epms in _all_extra_injections.values():
+            for _epm in _epms:
+                if _epm.para_id and _epm.para_id not in _known_pids:
+                    all_paras.append(_epm)
+                    _known_pids.add(_epm.para_id)
+
+    # Orphaned template paras: layout blocks whose para_id fell OUT of the
+    # semantic model during the update render their template XML verbatim —
+    # unreachable by any updater logic (sample 21: 17 orphan blocks rendered
+    # wrap-split duplicates of injected bullets; sample 33's "duplicate
+    # twins" were the same class).  Re-register the original paras: cleared
+    # when their text is covered by the LLM content (placeholder / near-dup
+    # of an injected line), verbatim otherwise (design elements untouched).
+    _all_llm_content: list[str] = []
+    for _ls in llm_sections:
+        _all_llm_content.extend(l for l in _ls.body_lines if l.strip())
+        for _lr in _ls.roles:
+            _all_llm_content.extend(b for b in _lr.bullets if b.strip())
+    _orphan_guard_tokens: set[str] = set()
+    for _ls in llm_sections:
+        for _lr in _ls.roles:
+            _orphan_guard_tokens |= _extract_company_tokens(_lr.header)
+    _orphan_contact_re = re.compile(r"@|\d{3,}|https?://|www\.", re.IGNORECASE)
+
+    # Final experience dedup: the update paths sometimes leave stale template
+    # copies behind under COPIED ParaModels that in-path blanking cannot
+    # reach (wrap-split fragments, spurious cls roles — sample 21).  Sweep
+    # the finished model: blank experience-section paras that are NEAR-dups
+    # or fragments of the LLM content but not exact injected lines.  Headers,
+    # companies, dates/contact lines are exempt.
+    _exact_llm_norm = {" ".join(l.split()).lower() for l in _all_llm_content}
+    _llm_token_union = {
+        w[:4].lower()
+        for l in _all_llm_content
+        for w in re.findall(r"[A-Za-z]{3,}", l)
+    }
+
+    def _final_dedup_target(pm: "ParaModel") -> bool:
+        if not pm.para_id or not pm.text.strip():
+            return False
+        if pm.semantic not in (
+            "bullet", "paragraph", "role_header", "role_meta", "role_intro",
+        ):
+            return False
+        if _STANDALONE_DATE_LINE_RE.match(pm.text.strip()):
+            return False
+        _tn = " ".join(pm.text.split()).lower()
+        if _tn in _exact_llm_norm:
+            return False  # injected (or exact-echo) content — keep
+        _words = re.findall(r"[A-Za-z]{3,}", pm.text)
+        # One incidental shared token ('solutions' in a 12-word sentence,
+        # sample 32) is not company identity; two or more is.
+        _ct_overlap = _extract_company_tokens(pm.text) & _orphan_guard_tokens
+        if len(_ct_overlap) >= 2 or (_ct_overlap and len(_words) < 8):
+            return False
+        if _orphan_contact_re.search(pm.text):
+            return False
+        if _is_placeholder_text(pm.text):
+            return True
+        if len(_words) < 6:
+            # Short lines are role/company identity material ('Marketing
+            # Science Company') — template-verbatim by policy, never stale.
+            return False
+        if _similar_to_any_line(pm.text, _all_llm_content):
+            return True
+        # Glued template remnant: two template sentences fused into one
+        # para (sample 32) — no single LLM line is similar, but the LLM
+        # token union covers virtually every word.
+        if len(_words) >= 8 and _llm_token_union:
+            _pref = {w[:4].lower() for w in _words}
+            if len(_pref & _llm_token_union) / len(_pref) >= 0.9:
+                return True
+        return False
+
+    # Summary relocation: in two-column/table templates (sample 28) the
+    # matched summary section has no wide body slot, so the LLM summary
+    # lands as an extra clone in the narrow LABEL column while the
+    # template's real summary para renders verbatim elsewhere — double
+    # summary text overflowing the fixed frame.  Swap them: write the LLM
+    # text into the template summary para (in-place, so table blobs pick it
+    # up) and blank the extra clone.
+    _llm_summary_lines = [
+        l.strip() for _ls in llm_sections
+        if _ls.semantic_type == "summary"
+        for l in (_ls.body_lines or []) if l.strip()
+    ]
+    if _llm_summary_lines:
+        def _iter_model_paras_sr():
+            for pm in effective_header_paras:
+                yield pm
+            for sec in new_sections:
+                if sec.heading is not None:
+                    yield sec.heading
+                for r in sec.roles:
+                    for x in [
+                        r.header, *r.header_extra, *r.meta_lines, *r.bullets,
+                    ]:
+                        if x is not None:
+                            yield x
+                for pm in sec.body_paras:
+                    yield pm
+            for pm in all_paras:
+                yield pm
+            for pm in (original.all_paras or []):
+                yield pm
+
+        def _shared_word_prefix(a: str, b: str) -> int:
+            _aw = re.findall(r"[a-z0-9+]+", a.lower())
+            _bw = re.findall(r"[a-z0-9+]+", b.lower())
+            n = 0
+            for x, y in zip(_aw, _bw):
+                if x != y:
+                    break
+                n += 1
+            return n
+
+        for _L in _llm_summary_lines:
+            _Ln = " ".join(_L.split()).lower()
+            _exact_objs: dict[int, "ParaModel"] = {}
+            _stale_objs: dict[int, "ParaModel"] = {}
+            for pm in _iter_model_paras_sr():
+                if id(pm) in _exact_objs or id(pm) in _stale_objs:
+                    continue
+                t = pm.text.strip()
+                if not t:
+                    continue
+                if " ".join(t.split()).lower() == _Ln:
+                    _exact_objs[id(pm)] = pm
+                elif len(re.findall(r"[A-Za-z]{3,}", t)) >= 15 and (
+                    _similar_to_any_line(t, [_L])
+                    # The template summary seeds the rewrite, so the two
+                    # share a long identical opening even when the tails
+                    # diverge past the similarity threshold (sample 28).
+                    or _shared_word_prefix(t, _L) >= 8
+                ):
+                    _stale_objs[id(pm)] = pm
+            # Only the pathological shape qualifies: the exact LLM text
+            # lives in an EXTRA CLONE (_ext_ para — the narrow-column
+            # insert) while the stale near-copy is a real TEMPLATE para.
+            # When the exact holder is a template para the normal injection
+            # already succeeded (sample 12) — touching anything would
+            # clobber legitimate content.
+            _exact_objs = {
+                k: p for k, p in _exact_objs.items()
+                if p.para_id and "_ext_" in p.para_id
+            }
+            _stale_objs = {
+                k: p for k, p in _stale_objs.items()
+                if p.para_id and "_ext_" not in p.para_id
+            }
+            if not _exact_objs or not _stale_objs:
+                continue
+            _stale_ids = {
+                p.para_id for p in _stale_objs.values() if p.para_id
+            }
+            _exact_ids = {
+                p.para_id for p in _exact_objs.values() if p.para_id
+            }
+            _exact_ids -= _stale_ids
+            for pm in _iter_model_paras_sr():
+                if id(pm) in _stale_objs or (
+                    pm.para_id and pm.para_id in _stale_ids
+                ):
+                    if pm.text != _L:
+                        pm.text = _L
+                elif id(pm) in _exact_objs or (
+                    pm.para_id and pm.para_id in _exact_ids
+                ):
+                    if pm.text.strip():
+                        pm.text = ""
+            _log.debug(
+                "SUMMARY_RELOCATED: LLM summary written into stale template "
+                "summary para(s) %s; extra clone(s) %s blanked",
+                sorted(_stale_ids) or "<no-id>",
+                sorted(_exact_ids) or "<no-id>",
+            )
+
+    # Group every model copy of each experience para id — the same id often
+    # exists as several ParaModel objects (section body, role slot, all_paras)
+    # holding DIFFERENT texts after the update paths ran.
+    _twin_map: dict[str, list] = {}
+
+    def _note_twin(pm) -> None:
+        if pm is not None and pm.para_id:
+            _twin_map.setdefault(pm.para_id, []).append(pm)
+
+    _exp_ids: set[str] = set()
+    for _sec_fd in new_sections:
+        if _sec_fd.semantic_type != "experience":
+            continue
+        _cand_pms: list = list(_sec_fd.body_paras)
+        for _r_fd in _sec_fd.roles:
+            _cand_pms.extend([
+                _r_fd.header, *_r_fd.header_extra,
+                *_r_fd.meta_lines, *_r_fd.bullets,
+            ])
+        for _pm_fd in _cand_pms:
+            if _pm_fd is not None and _pm_fd.para_id:
+                _exp_ids.add(_pm_fd.para_id)
+                _note_twin(_pm_fd)
+    for _pm_tw in all_paras:
+        if _pm_tw.para_id in _exp_ids:
+            _note_twin(_pm_tw)
+    for _sec_tw in new_sections:
+        for _pm_tw in _sec_tw.body_paras:
+            if _pm_tw.para_id in _exp_ids:
+                _note_twin(_pm_tw)
+
+    def _tnorm_fd(s: str) -> str:
+        return " ".join(s.split()).lower()
+
+    # An LLM line is "visibly placed" once a twin-group agrees on it
+    # unanimously (every model copy of that para id holds the line — ext
+    # paras and fully-updated slots).  A second group whose injected copy
+    # repeats such a line is a redundant stale slot: its render-winning
+    # twin shows template text next to the real injection (sample 9's
+    # template+LLM near-dup) — blank the whole group instead of unifying.
+    _visible_llm: set[str] = set()
+    for _twins in _twin_map.values():
+        _texts = {_tnorm_fd(t.text) for t in _twins}
+        if len(_texts) == 1 and next(iter(_texts)) in _exact_llm_norm:
+            _visible_llm.add(next(iter(_texts)))
+
+    for _pid_fd, _twins in _twin_map.items():
+        _llm_texts = {
+            _tnorm_fd(t.text) for t in _twins
+            if _tnorm_fd(t.text) in _exact_llm_norm
+        }
+        if len(_llm_texts) > 1:
+            # Two different LLM lines under one id (wrap-split slots that
+            # each got real content, sample 3) — touching either side loses
+            # content; leave the group as the update paths built it.
+            continue
+        if _llm_texts:
+            _canon_n = next(iter(_llm_texts))
+            _stale = [
+                t for t in _twins if _tnorm_fd(t.text) != _canon_n
+            ]
+            if not _stale:
+                continue
+            if _canon_n in _visible_llm:
+                for _pm_fd in _twins:
+                    if _pm_fd.text.strip():
+                        _log.debug(
+                            "FINAL_EXPERIENCE_DEDUP: blanked redundant "
+                            "group %r (%r)", _pid_fd, _pm_fd.text[:40],
+                        )
+                        _pm_fd.text = ""
+            else:
+                _canon = next(
+                    t.text for t in _twins
+                    if _tnorm_fd(t.text) == _canon_n
+                )
+                for _pm_fd in _stale:
+                    _log.debug(
+                        "FINAL_EXPERIENCE_DEDUP: unified %r to LLM text "
+                        "(was %r)", _pid_fd, _pm_fd.text[:40],
+                    )
+                    _pm_fd.text = _canon
+                _visible_llm.add(_canon_n)
+        elif any(_final_dedup_target(_pm_fd) for _pm_fd in _twins):
+            for _pm_fd in _twins:
+                if _pm_fd.text.strip():
+                    _log.debug(
+                        "FINAL_EXPERIENCE_DEDUP: blanked %r (%r)",
+                        _pid_fd, _pm_fd.text[:40],
+                    )
+                    _pm_fd.text = ""
+    for _opm in (original.all_paras or []):
+        if not _opm.para_id or _opm.para_id in _known_pids:
+            continue
+        _reg = _opm
+        if (
+            _opm.text.strip()
+            and _opm.semantic in ("bullet", "paragraph")
+            and _final_dedup_target(_opm)
+        ):
+            _reg = _opm.with_text("")
+            _log.debug(
+                "ORPHAN_BLOCK_COVERED_BLANKED: para_id=%r (%r)",
+                _opm.para_id, _opm.text[:40],
+            )
+        all_paras.append(_reg)
+        _known_pids.add(_opm.para_id)
 
     _result = ResumeDocument(
         header_paras=effective_header_paras,

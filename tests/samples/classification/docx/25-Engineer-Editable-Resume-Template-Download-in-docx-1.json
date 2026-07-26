@@ -1,0 +1,2825 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "GENERAL INFO",
+        "paragraphs": [
+          {
+            "para_id": "para_12",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_13",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_14",
+            "text": "Mechanical Engineer with 6+ years of experience in lightweight materials innovation, production, and maintenance. Possess a B.S. in Mechanical Engineering from Really Great University. Seeking to leverage my knowledge, leadership abilities, and materials development competency in the role of Senior Mechanical Engineer for Ingoude Company.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_16",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_17",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_18",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_19",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_20",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_22",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_23",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_24",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_25",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_26",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_27",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_28",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_29",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_30",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_31",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_32",
+            "text": "2008-2012",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_33",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_34",
+            "text": "2012-2014",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_35",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_36",
+            "text": "Master Degree of Project",
+            "parser_semantic": "project_header"
+          },
+          {
+            "para_id": "para_37",
+            "text": "Mechanical Engineer at",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_38",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_39",
+            "text": "Engineering",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_40",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_41",
+            "text": "Warner & Spencer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_42",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_43",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_44",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_45",
+            "text": "Followed my passion in Product",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_46",
+            "text": "Completed 2 years course in Really",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_47",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_48",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_49",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_50",
+            "text": "Design and Manufacturing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_51",
+            "text": "Great University. Graduated with",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_52",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_53",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_54",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_55",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_56",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_57",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_58",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_59",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_60",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_61",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_62",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_63",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_64",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_65",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_66",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_67",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_68",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_69",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_70",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_71",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_72",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_73",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_74",
+            "text": "coursework",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_75",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_76",
+            "text": "distinction (GWA 3,8).",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_77",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_78",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_79",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_80",
+            "text": "Pursued an independent study program",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_81",
+            "text": "Increased production efficiency",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_82",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_83",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_84",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_85",
+            "text": "in Machine Layout Design.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_86",
+            "text": "by 15% by strategically minimizing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_87",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_88",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_89",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_90",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_91",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_92",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_93",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_94",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_95",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_96",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_97",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_98",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_99",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_100",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_101",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_102",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_103",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_104",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_105",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_106",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_107",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_108",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_109",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_110",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_111",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_112",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_113",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_114",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_115",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_116",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_117",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_118",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_119",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_120",
+            "text": "bottlenecks",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_121",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_122",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_123",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_124",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "WORK HISTORY",
+        "paragraphs": [
+          {
+            "para_id": "para_144",
+            "text": "2014-2016",
+            "parser_semantic": "role_meta",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_146",
+            "text": "2016 - Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_153",
+            "text": "Mechanical Engineer at",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_154",
+            "text": "Mechanical Engineering",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_156",
+            "text": "Apprentice at Thynk Unlimited",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_158",
+            "text": "Warner & Spencer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_162",
+            "text": "Researched new materials-generation",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_163",
+            "text": "Worked with a team of 10+ to ideate,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_167",
+            "text": "techniques, compiling and distributing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_168",
+            "text": "create, maintain, and update lightweight",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_172",
+            "text": "an average of 3 reports/year to",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_173",
+            "text": "materials, working primarily with",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_188",
+            "text": "engineering team",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_190",
+            "text": "carbon fiber composite",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_197",
+            "text": "+123-456-7890       hello@techguruplus.com      123 Anywhere St., Any City",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_144"
+            ],
+            "meta_para_ids": [
+              "para_146"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_153"
+            ],
+            "meta_para_ids": [
+              "para_154"
+            ],
+            "bullet_para_ids": [
+              "para_156",
+              "para_158",
+              "para_162",
+              "para_163",
+              "para_167",
+              "para_168",
+              "para_172",
+              "para_173",
+              "para_188",
+              "para_190",
+              "para_197"
+            ]
+          }
+        ]
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "GENERAL INFO",
+        "paragraphs": [
+          {
+            "para_id": "para_11",
+            "text": "GENERAL INFO",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_12",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_13",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_14",
+            "text": "Mechanical Engineer with 6+ years of experience in lightweight materials innovation, production, and maintenance. Possess a B.S. in Mechanical Engineering from Really Great University. Seeking to leverage my knowledge, leadership abilities, and materials development competency in the role of Senior Mechanical Engineer for Ingoude Company.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_16",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_17",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_18",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_19",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_20",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_21",
+            "text": "EDUCATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_22",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_23",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_24",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_25",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_26",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_27",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_28",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_29",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_30",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_31",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_32",
+            "text": "2008-2012",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_33",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_34",
+            "text": "2012-2014",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_35",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_36",
+            "text": "Master Degree of Project",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_37",
+            "text": "Mechanical Engineer at",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_38",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_39",
+            "text": "Engineering",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_40",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_41",
+            "text": "Warner & Spencer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_42",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_43",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_44",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_45",
+            "text": "Followed my passion in Product",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_46",
+            "text": "Completed 2 years course in Really",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_47",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_48",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_49",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_50",
+            "text": "Design and Manufacturing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_51",
+            "text": "Great University. Graduated with",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_52",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_53",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_54",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_55",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_56",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_57",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_58",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_59",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_60",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_61",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_62",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_63",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_64",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_65",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_66",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_67",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_68",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_69",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_70",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_71",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_72",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_73",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_74",
+            "text": "coursework",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_75",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_76",
+            "text": "distinction (GWA 3,8).",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_77",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_78",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_79",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_80",
+            "text": "Pursued an independent study program",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_81",
+            "text": "Increased production efficiency",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_82",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_83",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_84",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_85",
+            "text": "in Machine Layout Design.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_86",
+            "text": "by 15% by strategically minimizing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_87",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_88",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_89",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_90",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_91",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_92",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_93",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_94",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_95",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_96",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_97",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_98",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_99",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_100",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_101",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_102",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_103",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_104",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_105",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_106",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_107",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_108",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_109",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_110",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_111",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_112",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_113",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_114",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_115",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_116",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_117",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_118",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_119",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_120",
+            "text": "bottlenecks",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_121",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_122",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_123",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_124",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "WORK HISTORY",
+        "paragraphs": [
+          {
+            "para_id": "para_125",
+            "text": "WORK HISTORY",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_144",
+            "text": "2014-2016",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_146",
+            "text": "2016 - Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_153",
+            "text": "Mechanical Engineer at",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_154",
+            "text": "Mechanical Engineering",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_156",
+            "text": "Apprentice at Thynk Unlimited",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_158",
+            "text": "Warner & Spencer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_162",
+            "text": "Researched new materials-generation",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_163",
+            "text": "Worked with a team of 10+ to ideate,",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_167",
+            "text": "techniques, compiling and distributing",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_168",
+            "text": "create, maintain, and update lightweight",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_172",
+            "text": "an average of 3 reports/year to",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_173",
+            "text": "materials, working primarily with",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_188",
+            "text": "engineering team",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_190",
+            "text": "carbon fiber composite",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_197",
+            "text": "+123-456-7890       hello@techguruplus.com      123 Anywhere St., Any City",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_144"
+            ],
+            "meta_para_ids": [
+              "para_146"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_153"
+            ],
+            "meta_para_ids": [
+              "para_154"
+            ],
+            "bullet_para_ids": [
+              "para_156",
+              "para_158",
+              "para_162",
+              "para_163",
+              "para_167",
+              "para_168",
+              "para_172",
+              "para_173",
+              "para_188",
+              "para_190",
+              "para_197"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_11",
+        "text_preview": "GENERAL INFO"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_21",
+        "text_preview": "EDUCATION"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_125",
+        "text_preview": "WORK HISTORY"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 1
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "GENERAL INFO",
+        "display_title": "General Info",
+        "semantic_type": "summary",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_14",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_2",
+            "para_id": "para_36",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_37",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_39",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_41",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_6",
+            "para_id": "para_45",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_7",
+            "para_id": "para_46",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_8",
+            "para_id": "para_50",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_9",
+            "para_id": "para_51",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_10",
+            "para_id": "para_74",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_11",
+            "para_id": "para_76",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_12",
+            "para_id": "para_80",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_13",
+            "para_id": "para_81",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_14",
+            "para_id": "para_85",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_15",
+            "para_id": "para_86",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_16",
+            "para_id": "para_120",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "WORK HISTORY",
+        "display_title": "Work History",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_17",
+                "para_id": "para_144",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_18",
+                "para_id": "para_146",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_19",
+                "para_id": "para_156",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_20",
+                "para_id": "para_158",
+                "semantic_type": "role_highlight",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_21",
+                "para_id": "para_162",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_22",
+                "para_id": "para_163",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_23",
+                "para_id": "para_167",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_24",
+                "para_id": "para_168",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_25",
+                "para_id": "para_172",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_26",
+                "para_id": "para_173",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_27",
+                "para_id": "para_188",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_28",
+                "para_id": "para_190",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_29",
+                "para_id": "para_197",
+                "semantic_type": "role_freeform_note",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_REWRITE_POLICY",
+        "section_id": "sec_1",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_HEADING",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_1 rewrite_policy='preserve'"
+      },
+      {
+        "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_2",
+        "detail": "must be true"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_REWRITE_POLICY",
+          "SUMMARY_PRESERVE_HEADING",
+          "SUMMARY_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": false,
+        "error_codes": [
+          "EDUCATION_PRESERVE_BODY_STRUCTURE"
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "repair_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "invalid_sections": [
+      {
+        "parser_section": {
+          "section_id": "sec_1",
+          "raw_title": "GENERAL INFO",
+          "paragraphs": [
+            {
+              "para_id": "para_12",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_13",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_14",
+              "text": "Mechanical Engineer with 6+ years of experience in lightweight materials innovation, production, and maintenance. Possess a B.S. in Mechanical Engineering from Really Great University. Seeking to leverage my knowledge, leadership abilities, and materials development competency in the role of Senior Mechanical Engineer for Ingoude Company.",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_15",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_16",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_17",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_18",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_19",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_20",
+              "text": "",
+              "parser_semantic": "empty"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_1",
+          "raw_title": "GENERAL INFO",
+          "display_title": "General Info",
+          "semantic_type": "summary",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "block_1",
+              "para_id": "para_14",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SUMMARY_REWRITE_POLICY",
+            "section_id": "sec_1",
+            "detail": "got 'preserve'"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_HEADING",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_1 rewrite_policy='preserve'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_2",
+          "raw_title": "EDUCATION",
+          "paragraphs": [
+            {
+              "para_id": "para_22",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_23",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_24",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_25",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_26",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_27",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_28",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_29",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_30",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_31",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_32",
+              "text": "2008-2012",
+              "parser_semantic": "role_meta"
+            },
+            {
+              "para_id": "para_33",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_34",
+              "text": "2012-2014",
+              "parser_semantic": "role_meta"
+            },
+            {
+              "para_id": "para_35",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_36",
+              "text": "Master Degree of Project",
+              "parser_semantic": "project_header"
+            },
+            {
+              "para_id": "para_37",
+              "text": "Mechanical Engineer at",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_38",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_39",
+              "text": "Engineering",
+              "parser_semantic": "specialization_header"
+            },
+            {
+              "para_id": "para_40",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_41",
+              "text": "Warner & Spencer",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_42",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_43",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_44",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_45",
+              "text": "Followed my passion in Product",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_46",
+              "text": "Completed 2 years course in Really",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_47",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_48",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_49",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_50",
+              "text": "Design and Manufacturing",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_51",
+              "text": "Great University. Graduated with",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_52",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_53",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_54",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_55",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_56",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_57",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_58",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_59",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_60",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_61",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_62",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_63",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_64",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_65",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_66",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_67",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_68",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_69",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_70",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_71",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_72",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_73",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_74",
+              "text": "coursework",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_75",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_76",
+              "text": "distinction (GWA 3,8).",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_77",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_78",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_79",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_80",
+              "text": "Pursued an independent study program",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_81",
+              "text": "Increased production efficiency",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_82",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_83",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_84",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_85",
+              "text": "in Machine Layout Design.",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_86",
+              "text": "by 15% by strategically minimizing",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_87",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_88",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_89",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_90",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_91",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_92",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_93",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_94",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_95",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_96",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_97",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_98",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_99",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_100",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_101",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_102",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_103",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_104",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_105",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_106",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_107",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_108",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_109",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_110",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_111",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_112",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_113",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_114",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_115",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_116",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_117",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_118",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_119",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_120",
+              "text": "bottlenecks",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_121",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_122",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_123",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_124",
+              "text": "",
+              "parser_semantic": "empty"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_2",
+          "raw_title": "EDUCATION",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "block_2",
+              "para_id": "para_36",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_3",
+              "para_id": "para_37",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_4",
+              "para_id": "para_39",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_5",
+              "para_id": "para_41",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_6",
+              "para_id": "para_45",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_7",
+              "para_id": "para_46",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_8",
+              "para_id": "para_50",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_9",
+              "para_id": "para_51",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_10",
+              "para_id": "para_74",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_11",
+              "para_id": "para_76",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_12",
+              "para_id": "para_80",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_13",
+              "para_id": "para_81",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_14",
+              "para_id": "para_85",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_15",
+              "para_id": "para_86",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_16",
+              "para_id": "para_120",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+            "section_id": "sec_2",
+            "detail": "must be true"
+          }
+        ]
+      }
+    ]
+  },
+  "repair_response": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "GENERAL INFO",
+        "display_title": "General Info",
+        "semantic_type": "summary",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_14",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_1",
+                "para_id": "para_14",
+                "semantic_type": "summary_paragraph",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": []
+          }
+        ]
+      }
+    ]
+  },
+  "validation_after_repair": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_ROLES_PRESENT",
+        "section_id": "sec_1",
+        "detail": "roles[] must be empty for this section type"
+      },
+      {
+        "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_2",
+        "detail": "must be true"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_ROLES_PRESENT"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": false,
+        "error_codes": [
+          "EDUCATION_PRESERVE_BODY_STRUCTURE"
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "GENERAL INFO",
+        "display_title": "General Info",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_14",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_2",
+            "para_id": "para_36",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_37",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_39",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_41",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_6",
+            "para_id": "para_45",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_7",
+            "para_id": "para_46",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_8",
+            "para_id": "para_50",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_9",
+            "para_id": "para_51",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_10",
+            "para_id": "para_74",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_11",
+            "para_id": "para_76",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_12",
+            "para_id": "para_80",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_13",
+            "para_id": "para_81",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_14",
+            "para_id": "para_85",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_15",
+            "para_id": "para_86",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_16",
+            "para_id": "para_120",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "WORK HISTORY",
+        "display_title": "Work History",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_17",
+                "para_id": "para_144",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_18",
+                "para_id": "para_146",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_19",
+                "para_id": "para_156",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_20",
+                "para_id": "para_158",
+                "semantic_type": "role_highlight",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_21",
+                "para_id": "para_162",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_22",
+                "para_id": "para_163",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_23",
+                "para_id": "para_167",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_24",
+                "para_id": "para_168",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_25",
+                "para_id": "para_172",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_26",
+                "para_id": "para_173",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_27",
+                "para_id": "para_188",
+                "semantic_type": "role_key_technologies",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_28",
+                "para_id": "para_190",
+                "semantic_type": "role_tech_stack",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_29",
+                "para_id": "para_197",
+                "semantic_type": "role_freeform_note",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "status": "repaired_and_downgraded",
+  "validation_error_count": 4,
+  "invalid_section_count_before_repair": 2,
+  "invalid_section_count_after_repair": 2,
+  "repaired_section_count": 0,
+  "downgraded_section_count": 2,
+  "invalid_section_ids": [
+    "sec_1",
+    "sec_2"
+  ],
+  "recovery_applied": true
+}

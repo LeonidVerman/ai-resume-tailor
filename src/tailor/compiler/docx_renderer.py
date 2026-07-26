@@ -62,6 +62,7 @@ def _make_floating_image_para(
     doc_part,
     img_id: int,
     behind_doc: bool = False,
+    relative_height: int = 2,
 ) -> "Any | None":
     """Return a ``w:p`` containing a floating (page-anchored) image, or None on error.
 
@@ -96,7 +97,7 @@ def _make_floating_image_para(
     anchor = etree.SubElement(
         drawing, f"{{{_WP}}}anchor",
         distT="0", distB="0", distL="0", distR="0",
-        simplePos="0", relativeHeight="2",
+        simplePos="0", relativeHeight=str(relative_height),
         behindDoc="1" if behind_doc else "0",
         locked="0", layoutInCell="1", allowOverlap="0",
     )
@@ -150,7 +151,40 @@ def _make_floating_image_para(
     return p
 
 
-def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
+def _apply_docx_page_background(d, hex_color: str) -> None:
+    """Set the DOCX page background color via <w:background>.
+
+    Adds <w:background w:color="RRGGBB"/> before <w:body> and enables
+    displayBackgroundShape in settings.xml.  LibreOffice renders this as a
+    solid page fill — more reliable than a behind-text floating image for
+    single-column templates whose entire page is a dark color.
+    """
+    from lxml import etree as _etree
+    hex_upper = hex_color.upper()
+    doc_elem = d.element
+    existing = doc_elem.find(f"{{{_W}}}background")
+    if existing is not None:
+        doc_elem.remove(existing)
+    bg = _etree.Element(f"{{{_W}}}background")
+    bg.set(f"{{{_W}}}color", hex_upper)
+    body_elem = doc_elem.find(f"{{{_W}}}body")
+    if body_elem is not None:
+        body_idx = list(doc_elem).index(body_elem)
+        doc_elem.insert(body_idx, bg)
+    else:
+        doc_elem.insert(0, bg)
+    try:
+        settings_elem = d.settings.element
+        disp_tag = f"{{{_W}}}displayBackgroundShape"
+        if settings_elem.find(disp_tag) is None:
+            _etree.SubElement(settings_elem, disp_tag)
+    except Exception:
+        pass
+
+
+def _insert_page_images(
+    doc: "ResumeDocument", body, sectPr, doc_part, *, skip_floating_hrules: bool = False
+) -> None:
     """Append floating image paragraphs for every extracted ``PageImageBlock``.
 
     Called once after each render path writes its content paragraphs.
@@ -159,6 +193,13 @@ def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
 
     Profile photos float above text (behindDoc=0); decorative elements sit
     behind text (behindDoc=1).
+
+    Parameters
+    ----------
+    skip_floating_hrules:
+        When True, also skip anchor=None h_rule images.  Set in the plain-path
+        render where floating h_rules are converted to inline separator paragraphs
+        in the header bucket loop instead.
     """
     if not getattr(doc, "page_images", None) or doc_part is None:
         return
@@ -170,8 +211,28 @@ def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
         # the document spans multiple pages.
         body.insert(0, elem)
 
+    # Fix C: Deterministic z-ordering by category so background layers remain stable
+    # regardless of document insertion order.  Lower relativeHeight = further back.
+    _CATEGORY_Z: dict[str, int] = {
+        "full_page_bg": 2,       # page-level decorative background — furthest back
+        "header_band": 3,        # header/footer color bands
+        "footer_band": 3,
+        "sidebar_bg": 4,         # column sidebar background
+        "body_decor": 5,         # mid-page decorative elements
+        "header_footer_decor": 5,
+        "profile_photo": 10,     # foreground — on top of everything
+    }
     for i, img in enumerate(doc.page_images):
+        # Anchored h_rules are rendered as w:pBdr/w:top on the section heading
+        # paragraph.  Skip them here so they don't also appear as floating images.
+        if img.category == "h_rule" and img.anchor_next_section_id is not None:
+            continue
+        # Floating h_rules (anchor=None) are converted to inline separator paragraphs
+        # in the plain-path header bucket loop when skip_floating_hrules is set.
+        if skip_floating_hrules and img.category == "h_rule":
+            continue
         behind = img.category != "profile_photo"
+        z = _CATEGORY_Z.get(img.category, 5 if behind else 10)
         para = _make_floating_image_para(
             img.image_bytes,
             img.x_pt, img.y_pt,
@@ -179,9 +240,112 @@ def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
             doc_part,
             img_id=1000 + i,
             behind_doc=behind,
+            relative_height=z,
         )
         if para is not None:
             _add(para)
+
+
+# ---------------------------------------------------------------------------
+# Section-anchored h_rule border helpers
+# ---------------------------------------------------------------------------
+
+def _sample_png_color_hex(image_bytes: bytes) -> "str | None":
+    """Return 'RRGGBB' hex for the center pixel of *image_bytes* (PNG), or None."""
+    try:
+        import fitz as _fitz
+        import io as _io
+        pix = _fitz.Pixmap(_io.BytesIO(image_bytes))
+        sample = pix.pixel(pix.width // 2, pix.height // 2)
+        return f"{sample[0]:02x}{sample[1]:02x}{sample[2]:02x}"
+    except Exception:
+        return None
+
+
+def _build_h_rule_border_map(doc: "ResumeDocument") -> "dict[str, Any]":
+    """Return {heading_para_id: PageImageBlock} for sections with anchored h_rules.
+
+    Used by render paths to apply w:pBdr/w:top borders to section headings that
+    have an associated h_rule extracted from the source PDF.
+    """
+    sec_id_to_para_id = {
+        sec.section_id: sec.heading.para_id
+        for sec in doc.sections
+        if sec.section_id and sec.heading.para_id
+    }
+    result: dict = {}
+    for img in getattr(doc, "page_images", None) or []:
+        if img.category != "h_rule":
+            continue
+        anc = img.anchor_next_section_id
+        if anc is None:
+            continue
+        para_id = sec_id_to_para_id.get(anc)
+        if para_id:
+            result[para_id] = img
+    return result
+
+
+def _apply_h_rule_top_border(p_elem, rule_img: "Any") -> None:
+    """Add w:pBdr/w:top to *p_elem* (a w:p lxml element) for *rule_img*.
+
+    Uses the rule's color (sampled from its PNG center pixel) and derives
+    border thickness from the rule height.  Updates w:spacing/w:before so
+    the visual gap above the heading matches the original PDF gap_to_anchor_pt.
+    """
+    from lxml import etree
+
+    hex_color = _sample_png_color_hex(rule_img.image_bytes)
+    if hex_color is None:
+        hex_color = "808080"
+
+    gap_pt = rule_img.gap_to_anchor_pt or 20.0
+    thickness_eighths = max(4, min(24, int(rule_img.height_pt * 8)))
+    space_pt = 4
+    before_twips = int(gap_pt * 20)
+
+    pPr = p_elem.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        return
+
+    pBdr = etree.Element(f"{{{_W}}}pBdr")
+    top = etree.SubElement(pBdr, f"{{{_W}}}top")
+    top.set(f"{{{_W}}}val", "single")
+    top.set(f"{{{_W}}}sz", str(thickness_eighths))
+    top.set(f"{{{_W}}}space", str(space_pt))
+    top.set(f"{{{_W}}}color", hex_color)
+
+    spc_elem = pPr.find(f"{{{_W}}}spacing")
+    if spc_elem is not None:
+        spc_elem.addprevious(pBdr)
+        spc_elem.set(f"{{{_W}}}before", str(before_twips))
+    else:
+        pPr.append(pBdr)
+        spc_new = etree.SubElement(pPr, f"{{{_W}}}spacing")
+        spc_new.set(f"{{{_W}}}before", str(before_twips))
+        spc_new.set(f"{{{_W}}}after", "0")
+
+    _log.debug(
+        "HRULE_BORDER_APPLIED: para=%s color=#%s thickness=%d before=%d",
+        p_elem.get(f"{{{_W}}}rsidR", "?"), hex_color, thickness_eighths, before_twips,
+    )
+
+
+def _make_h_rule_separator_para(rule_img: "Any") -> "Any":
+    """Return an empty w:p with an h_rule applied as a top border.
+
+    Used in the plain-path header bucket loop to insert an inline horizontal
+    divider between header content groups (e.g., before the 3-col contacts row
+    when a floating h_rule falls between the preceding bucket and the contacts).
+    """
+    from lxml import etree
+
+    p = etree.Element(f"{{{_W}}}p")
+    pPr = etree.SubElement(p, f"{{{_W}}}pPr")
+    pStyle = etree.SubElement(pPr, f"{{{_W}}}pStyle")
+    pStyle.set(f"{{{_W}}}val", "Normal")
+    _apply_h_rule_top_border(p, rule_img)
+    return p
 
 
 # ---------------------------------------------------------------------------
@@ -549,7 +713,7 @@ def _clear_sdt_placeholder(p_elem) -> None:
         p_elem.remove(sdt_elem)
 
 
-def _set_para_text(p_elem, text: str) -> None:
+def _set_para_text(p_elem, text: str, *, normalize_runs: bool = False) -> bool:
     """Set text on p_elem in-place, preserving all per-run formatting.
 
     Text is distributed across runs proportionally to their original character
@@ -559,24 +723,45 @@ def _set_para_text(p_elem, text: str) -> None:
 
     If no runs exist a minimal w:r/w:t structure is created.
 
+    Returns True when the paragraph text was written, False when the paragraph
+    was intentionally preserved unchanged (multi-column SDT row whose text did
+    not change).
+
     Note: w:br elements in the XML proto already provide in-paragraph line
     breaks.  Strip any '\\n' characters from *text* before distributing so
     that the line break is not written twice (once into w:t and once via w:br).
+
+    When *normalize_runs* is True the function collapses all content runs into
+    a single run (the first run that originally contained text) and writes the
+    full *text* there.  This eliminates run-fragmentation artifacts inherited
+    from PDF→DOCX conversion (partial bold, micro-font glyphs, mixed fonts)
+    for semantic paragraph types where uniform formatting is expected (e.g.
+    bullet points and body paragraphs).  Paragraph-level properties (indent,
+    spacing, numbering) are unaffected.  Whitespace-only structural spacer runs
+    and VML-embedded runs are preserved as-is.
     """
     # Preserve original text for multi-line distribution check (before stripping \n).
     _text_has_newlines = "\n" in text
     # w:br elements provide the line break; avoid doubling by stripping \n from text.
     text = text.replace("\n", "")
-    # Early-exit for multi-SDT paragraphs: when a paragraph has two or more
-    # direct w:sdt children, those SDTs form a structured multi-column layout
-    # (e.g. sample 7 "email TAB phone TAB LinkedIn" contact row).  Distributing
-    # new text across the SDT runs collapses all columns into a single run and
-    # destroys the tab-stop-based horizontal spread.  Skip text update entirely;
-    # _clear_sdt_placeholder will flatten each SDT to its original runs,
-    # preserving the original text and tab structure.
+    # Multi-SDT paragraphs: two or more direct w:sdt children form a structured
+    # multi-column layout (e.g. sample 7 "email TAB phone TAB LinkedIn" contact
+    # row).  Distributing new text across the SDT runs collapses all columns
+    # into a single run and destroys the tab-stop-based horizontal spread, so
+    # when the text is unchanged the paragraph is preserved as-is and
+    # _clear_sdt_placeholder flattens each SDT to its original runs.  When the
+    # text genuinely differs the updater injected new content into this slot;
+    # the column layout is stale for that text, so strip the content children
+    # (same as the _ext_-slot handling in the layout-block renderers) and write
+    # the new text into a fresh simple run instead of silently dropping it.
     _sdt_count = sum(1 for child in p_elem if child.tag == f"{{{_W}}}sdt")
     if _sdt_count >= 2:
-        return  # multi-column SDT row — preserve structure unchanged
+        _current = "".join(t.text or "" for t in p_elem.iter(f"{{{_W}}}t"))
+        if "".join(text.split()) == "".join(_current.split()):
+            return False  # multi-column SDT row unchanged — preserve structure
+        for _child in list(p_elem):
+            if _child.tag != f"{{{_W}}}pPr":
+                p_elem.remove(_child)
     all_runs: list = []
     for child in p_elem:
         tag = child.tag
@@ -603,7 +788,7 @@ def _set_para_text(p_elem, text: str) -> None:
         t.text = text
         if text and (text[0] == " " or text[-1] == " "):
             t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
-        return
+        return True
 
     # Collect original text length of each run (used for proportional split).
     # Two kinds of runs are excluded from content distribution:
@@ -632,9 +817,33 @@ def _set_para_text(p_elem, text: str) -> None:
             ws_text[i] = run_text
             chars = 0   # exclude from proportional distribution
         elif r.find(f"{{{_W}}}pict") is not None:
-            nested_t = r.findall(f".//{{{_W}}}t")
-            if nested_t:
-                vml_text_str += "".join(t.text or "" for t in nested_t)
+            # Only capture text that lives inside a w:txbxContent (the actual
+            # VML text-box container).  Using .//{w}t recursively would also
+            # grab direct w:t siblings of w:pict in the same run and mistakenly
+            # treat them as "already handled" VML text.
+            _txb_t = [
+                t
+                for txb in r.findall(f".//{{{_W}}}txbxContent")
+                for t in txb.findall(f".//{{{_W}}}t")
+            ]
+            if _txb_t:
+                vml_text_str += "".join(t.text or "" for t in _txb_t)
+                vml_indices.add(i)
+                chars = 0   # exclude from proportional distribution
+        elif r.find(f".//{{{_WP}}}anchor") is not None:
+            # Modern WPS text box in mc:AlternateContent/mc:Choice/w:drawing/wp:anchor.
+            # Only capture text inside w:txbxContent — the actual embedded text box.
+            # A run that contains BOTH a background drawing (wp:anchor with no text box)
+            # AND a direct w:t child (e.g. "AMELIA ADAMS") must not have its paragraph
+            # text mistaken for VML box content; .//{w}t recursive search would capture
+            # that direct sibling, causing the name to be stripped from the output.
+            _txb_t = [
+                t
+                for txb in r.findall(f".//{{{_W}}}txbxContent")
+                for t in txb.findall(f".//{{{_W}}}t")
+            ]
+            if _txb_t:
+                vml_text_str += "".join(t.text or "" for t in _txb_t)
                 vml_indices.add(i)
                 chars = 0   # exclude from proportional distribution
         orig_lens.append(chars)
@@ -682,6 +891,136 @@ def _set_para_text(p_elem, text: str) -> None:
                     if _t_elems:
                         _post_tab_preserve[i] = "".join(t.text or "" for t in _t_elems)
 
+    # PDF-export micro-kerning strip and w:w propagation.
+    #
+    # PDF-to-DOCX converters produce two artefacts that break proportional text
+    # redistribution:
+    #
+    # 1. Inter-word spacer runs: 1–3 char whitespace-only runs with w:spacing
+    #    tuned for a space glyph.  After redistribution word characters land
+    #    there and the space-optimised spacing mis-aligns them ("Bakend").
+    #    Fix: strip w:spacing from these runs.
+    #
+    # 2. Character width scaling mismatch: spacer runs lack w:w (character width
+    #    scaling, e.g. w:val="90" = condensed 90%) that content runs carry.
+    #    After redistribution the word char in the spacer slot renders at 100%
+    #    width while surrounding chars are condensed → visible width mismatch.
+    #    Fix: copy w:w from the immediately preceding content run.
+    #
+    # Values > 80 twips are intentional letter-spacing (decorative headings)
+    # and must be preserved.  80 itself is a PDF-export artifact boundary value
+    # (seen on spacer runs in S35 "Other skills" heading) and must be stripped.
+    _MICRO_KERN_LIMIT = 81  # twips; strip abs(spacing) < 81 (i.e. ≤ 80)
+    # w:w (character width scaling) cleanup thresholds.
+    # PDF-to-DOCX converters produce two classes of artifact w:w values:
+    #   ≥ 150%: FontAwesome icon/bullet placeholder runs (e.g. w=270) that end
+    #           up carrying the first 1-2 chars of redistributed content, making
+    #           those chars render 2.7x wide ("De signed", "Mento red").
+    #           150 itself is a PDF-export artifact boundary value (S35 spacer runs)
+    #           that causes single chars to render 150% wide ("O ther skills").
+    #   < 95%:  Single mega-runs covering the whole original line (e.g. w=90)
+    #           where only the first proportional slice inherits the value; the
+    #           remaining slices get w=None (100%), creating a mismatch at the
+    #           first run boundary ("Prot ocols").
+    # Values in [95, 149] are treated as intentional typography and preserved.
+    _W_SCALE_MIN = 95
+    _W_SCALE_MAX = 149
+    _prev_content_rpr = None  # rPr of last non-spacer run, for w:w propagation
+    for _ki, _kr in enumerate(all_runs):
+        if _ki in ws_text or _ki in vml_indices:
+            continue
+        _kt_elems = _kr.findall(f"{{{_W}}}t")
+        _kr_text = "".join(e.text or "" for e in _kt_elems)
+        if not _kr_text:
+            continue
+        _krpr = _kr.find(f"{{{_W}}}rPr")
+        _is_spacer = _kr_text.isspace() and 1 <= len(_kr_text) <= 3
+
+        if not _is_spacer:
+            # Content run: record its rPr for neighbouring spacer propagation.
+            _prev_content_rpr = _krpr
+            # Strip micro-tracking from all content runs.  The _MICRO_KERN_LIMIT
+            # guard already protects intentional letter-spacing (≥80 twips).
+            if _krpr is not None:
+                _ksp = _krpr.find(f"{{{_W}}}spacing")
+                if _ksp is not None:
+                    try:
+                        if abs(int(_ksp.get(f"{{{_W}}}val") or 0)) < _MICRO_KERN_LIMIT:
+                            _krpr.remove(_ksp)
+                    except (ValueError, TypeError):
+                        pass
+                # Strip out-of-range character width scaling from content runs.
+                _kww = _krpr.find(f"{{{_W}}}w")
+                if _kww is not None:
+                    try:
+                        _wval = int(_kww.get(f"{{{_W}}}val") or 100)
+                        if _wval < _W_SCALE_MIN or _wval > _W_SCALE_MAX:
+                            _krpr.remove(_kww)
+                    except (ValueError, TypeError):
+                        pass
+            continue
+
+        # Spacer run: strip w:spacing.
+        if _krpr is not None:
+            _ksp = _krpr.find(f"{{{_W}}}spacing")
+            if _ksp is not None:
+                try:
+                    if abs(int(_ksp.get(f"{{{_W}}}val") or 0)) < _MICRO_KERN_LIMIT:
+                        _krpr.remove(_ksp)
+                except (ValueError, TypeError):
+                    pass
+            # Strip out-of-range w:w from spacer runs too.  Template spacer runs
+            # that immediately follow icon/placeholder runs may carry the same
+            # artifact w=270; stripping prevents it from surviving into output.
+            _kww_s = _krpr.find(f"{{{_W}}}w")
+            if _kww_s is not None:
+                try:
+                    _wval_s = int(_kww_s.get(f"{{{_W}}}val") or 100)
+                    if _wval_s < _W_SCALE_MIN or _wval_s > _W_SCALE_MAX:
+                        _krpr.remove(_kww_s)
+                except (ValueError, TypeError):
+                    pass
+
+        # Propagate w:w (character width scaling) from the preceding content run
+        # so the redistributed word character renders at the same condensed width.
+        # Only in-range values are propagated; artifact values were stripped above.
+        if _prev_content_rpr is not None and _krpr is not None:
+            _src_ww = _prev_content_rpr.find(f"{{{_W}}}w")
+            if _src_ww is not None and _krpr.find(f"{{{_W}}}w") is None:
+                _krpr.append(deepcopy(_src_ww))
+
+    # Outlier-sz normalization: strip w:sz/w:szCs/w:rFonts from content runs
+    # carrying an artifact font size inherited from PDF→DOCX icon/bullet glyphs.
+    # PDF converters assign w:sz=12 (6pt) to FontAwesome bullet character runs.
+    # After proportional redistribution the first chars of rewritten body text
+    # land in these runs and render at 6pt — visually broken ("Led a" tiny).
+    # Strip threshold ≤ 15 (7.5pt): no legitimate resume body text is that small.
+    # rFonts is also stripped from the same runs; the artifact font (e.g. Times
+    # New Roman at 6pt) is never intentional and causes an additional mismatch.
+    _SZ_ARTIFACT_CEIL = 15
+    for _si, _sr in enumerate(all_runs):
+        if _si in ws_text or _si in vml_indices:
+            continue
+        _srpr = _sr.find(f"{{{_W}}}rPr")
+        if _srpr is None:
+            continue
+        _ssz = _srpr.find(f"{{{_W}}}sz")
+        if _ssz is None:
+            continue
+        try:
+            _sz_val = int(_ssz.get(f"{{{_W}}}val") or 0)
+        except (ValueError, TypeError):
+            continue
+        if _sz_val > _SZ_ARTIFACT_CEIL:
+            continue
+        _srpr.remove(_ssz)
+        _sszcs = _srpr.find(f"{{{_W}}}szCs")
+        if _sszcs is not None:
+            _srpr.remove(_sszcs)
+        _srfonts = _srpr.find(f"{{{_W}}}rFonts")
+        if _srfonts is not None:
+            _srpr.remove(_srfonts)
+
     # Clear text from all runs (direct w:t children only; VML content is untouched).
     for r in all_runs:
         for t in r.findall(f"{{{_W}}}t"):
@@ -698,11 +1037,71 @@ def _set_para_text(p_elem, text: str) -> None:
     content_indices = [i for i in range(len(all_runs)) if i not in ws_text and i not in vml_indices]
 
     if not content_indices:
-        return  # all text is in VML boxes or structural spacers — nothing to write
+        return True  # all text is in VML boxes or structural spacers — nothing to write
 
     if total_orig == 0 or len(content_indices) == 1:
-        _set_run_text(all_runs[content_indices[0]], text)
-        return
+        _early_r = all_runs[content_indices[0]]
+        _set_run_text(_early_r, text)
+        if normalize_runs:
+            _early_rpr = _early_r.find(f"{{{_W}}}rPr")
+            if _early_rpr is not None:
+                _early_rf = _early_rpr.find(f"{{{_W}}}rFonts")
+                if _early_rf is not None and _early_rf.get(f"{{{_W}}}ascii", "") == "Arial Black":
+                    _early_rf.attrib.pop(f"{{{_W}}}ascii", None)
+                    _early_rf.attrib.pop(f"{{{_W}}}hAnsi", None)
+                    if not _early_rf.attrib:
+                        _early_rpr.remove(_early_rf)
+        return True
+
+    if normalize_runs:
+        # Conditional run collapse: only activate when Arial Black display-font
+        # contamination is detected in the paragraph's content runs.
+        # Paragraphs without display-font mixing fall through to proportional
+        # distribution, preserving intentional emphasis (bold keywords, italic
+        # terms, deliberate font variation).
+        #
+        # When Arial Black IS detected, collapse all content runs to a single
+        # dominant run chosen by majority-vote on rFonts by character count,
+        # then strip Arial Black from that run so the text renders in the body
+        # font.  This eliminates the PDF→DOCX proto artifact where a combined
+        # role-header paragraph (Arial Black "Senior Engineer" + body text) gets
+        # assigned to a bullet, making the entire bullet render in Arial Black.
+
+        def _run_font_ascii(r):
+            _rpr = r.find(f"{{{_W}}}rPr")
+            if _rpr is None:
+                return ""
+            _rf = _rpr.find(f"{{{_W}}}rFonts")
+            return _rf.get(f"{{{_W}}}ascii", "") if _rf is not None else ""
+
+        _cands = [(ci, orig_lens[ci]) for ci in content_indices if orig_lens[ci] > 0]
+        _has_display_font = any(_run_font_ascii(all_runs[ci]) == "Arial Black" for ci, _ in _cands)
+
+        if _has_display_font:
+            if _cands:
+                _font_votes: dict = {}
+                for _fci, _fchars in _cands:
+                    _fkey = _run_font_ascii(all_runs[_fci])
+                    _font_votes[_fkey] = _font_votes.get(_fkey, 0) + _fchars
+                _maj_font = max(_font_votes, key=_font_votes.__getitem__)
+                _dom_ci = next(
+                    (ci for ci, _ in _cands if _run_font_ascii(all_runs[ci]) == _maj_font),
+                    _cands[0][0],
+                )
+            else:
+                _dom_ci = content_indices[0]
+            _dom_r = all_runs[_dom_ci]
+            _set_run_text(_dom_r, text)
+            _dom_rpr = _dom_r.find(f"{{{_W}}}rPr")
+            if _dom_rpr is not None:
+                _dom_rf = _dom_rpr.find(f"{{{_W}}}rFonts")
+                if _dom_rf is not None and _dom_rf.get(f"{{{_W}}}ascii", "") == "Arial Black":
+                    _dom_rf.attrib.pop(f"{{{_W}}}ascii", None)
+                    _dom_rf.attrib.pop(f"{{{_W}}}hAnsi", None)
+                    if not _dom_rf.attrib:
+                        _dom_rpr.remove(_dom_rf)
+            return True
+        # No Arial Black contamination — fall through to proportional distribution
 
     # Tab-column overflow guard: when a paragraph uses pure-tab separator runs
     # (no <w:t>, only <w:tab/>) as column dividers and the new text is significantly
@@ -722,7 +1121,7 @@ def _set_para_text(p_elem, text: str) -> None:
         _set_run_text(all_runs[_first_ci], text)
         for ci in content_indices[1:]:
             _set_run_text(all_runs[ci], "")
-        return
+        return True
 
     # Tab-split label fix: when the paragraph has pure-tab separator runs (column
     # dividers) and the new text contains no tab characters, place ALL text in the
@@ -744,7 +1143,7 @@ def _set_para_text(p_elem, text: str) -> None:
                     _set_run_text(all_runs[ci], _post_tab_preserve[ci])
                 else:
                     _set_run_text(all_runs[ci], "")
-            return
+            return True
 
     # Multi-line paragraph distribution: when the original text had \n (line breaks
     # correspond to <w:br type="textWrapping"/> elements) and the paragraph still
@@ -805,7 +1204,7 @@ def _set_para_text(p_elem, text: str) -> None:
                     _set_run_text(all_runs[_grp[0]], _seg)
                     for _ci in _grp[1:]:
                         _set_run_text(all_runs[_ci], "")
-                return
+                return True
 
     # Distribute new text proportionally across content runs only.
     last_ci = content_indices[-1]
@@ -837,6 +1236,7 @@ def _set_para_text(p_elem, text: str) -> None:
         if has_text_content:
             for tab in list(r.findall(f"{{{_W}}}tab")):
                 r.remove(tab)
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -857,7 +1257,7 @@ def _render_para(pm: ParaModel, body, sectPr, preserve_section_break: bool = Fal
         _strip_last_rendered_page_breaks(clone)
         if not preserve_section_break:
             _strip_section_break(clone)
-        _set_para_text(clone, pm.text)
+        _set_para_text(clone, pm.text, normalize_runs=pm.semantic in ("bullet", "paragraph", "role_meta", "role_intro"))
         _clear_sdt_placeholder(clone)
     elif pm.paragraph_profile is not None:
         from tailor.compiler.para_builder import build_para_element
@@ -1079,6 +1479,8 @@ def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=
         return min(vals) if vals else 0
 
     for section in doc.sections:
+        if not section.section_id:  # skip LLM-extra sections (no template heading)
+            continue
         tr = etree.SubElement(tbl, f"{{{_W}}}tr")
 
         # Compute per-section indent baseline to normalise all body content
@@ -1153,13 +1555,23 @@ def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=
                     if bp.text.strip():
                         _append(bp)
             for role in section.roles:
-                if role.header_extra and "|" not in role.header.text:
+                _non_italic_he = [
+                    he for he in role.header_extra
+                    if he.text.strip() and not (he.paragraph_profile and he.paragraph_profile.italic)
+                ]
+                _italic_he = [
+                    he for he in role.header_extra
+                    if he.text.strip() and (he.paragraph_profile and he.paragraph_profile.italic)
+                ]
+                if _non_italic_he and "|" not in role.header.text:
                     _combined = role.header.text.strip() + " | " + " | ".join(
-                        he.text.strip() for he in role.header_extra if he.text.strip()
+                        he.text.strip() for he in _non_italic_he
                     )
                     _append(role.header, _combined)
                 else:
                     _append(role.header)
+                for ie in _italic_he:
+                    _append(ie)
                 for pm in role.meta_lines:
                     _append(pm)
                 for pm in role.bullets:
@@ -1285,6 +1697,120 @@ def _detect_body_two_col(body_paras) -> "list[tuple] | None":
     return rows if rows else None
 
 
+def _detect_body_n_col(body_paras, n: int) -> "list[tuple] | None":
+    """Generalisation of _detect_body_two_col for exactly N distinct x-positions.
+
+    Returns a list of N-tuples (one per y-bucket) or None if the layout
+    does not form a clean N-column grid.
+    """
+    if len(body_paras) < 2:
+        return None
+    indents = []
+    for pm in body_paras:
+        pp = pm.paragraph_profile
+        if pp is None or pp.indent_left_pt is None:
+            return None
+        indents.append(pp.indent_left_pt)
+    unique_indents = sorted({round(x) for x in indents})
+    if len(unique_indents) != n:
+        return None
+    by_y: "dict" = {}
+    for pm in body_paras:
+        pp = pm.paragraph_profile
+        if pp.y_top_pt is None:
+            return None
+        y = round(pp.y_top_pt, 1)
+        ind = round(pp.indent_left_pt)
+        slot = by_y.setdefault(y, {})
+        if ind in slot:
+            return None  # duplicate: not a clean grid
+        slot[ind] = pm
+    rows = []
+    for y in sorted(by_y):
+        row = by_y[y]
+        rows.append(tuple(row.get(ind) for ind in unique_indents))
+    return rows if rows else None
+
+
+def _build_contact_row_table(group_paras, text_w_twips: int, doc_part=None):
+    """Render same-y paragraphs as a borderless N-col table row.
+
+    Used to restore horizontal contact bars (email | phone | LinkedIn) and
+    N-column grids that the PDF parser represented as N separate ParaModel
+    objects with distinct indent_left_pt values but the same y_top_pt.
+
+    Returns an lxml element or None when the group does not form a clean
+    N-col grid (fewer than 2 distinct x-positions or multiple paras at the
+    same x-position).
+    """
+    from lxml import etree
+    from tailor.compiler.para_builder import build_para_element
+
+    if len(group_paras) < 2:
+        return None
+    xs = []
+    for pm in group_paras:
+        pp = pm.paragraph_profile
+        if pp is None or pp.indent_left_pt is None:
+            return None
+        xs.append(round(pp.indent_left_pt, 1))
+    unique_xs = sorted(set(xs))
+    if len(unique_xs) < 2:
+        return None
+    by_x: "dict" = {}
+    for pm, x in zip(group_paras, xs):
+        if x in by_x:
+            return None  # two paras at the same x — not a single-row grid
+        by_x[x] = pm
+
+    # Column widths derived from x-position gaps; last column fills remaining width.
+    col_ws = []
+    for i, bx in enumerate(unique_xs[:-1]):
+        col_ws.append(max(200, int((unique_xs[i + 1] - bx) * 20)))
+    col_ws.append(max(200, text_w_twips - int(unique_xs[0] * 20) - sum(col_ws)))
+
+    tbl = etree.Element(f"{{{_W}}}tbl")
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    tblW_el.set(f"{{{_W}}}w", str(int(unique_xs[0] * 20) + sum(col_ws)))
+    tblW_el.set(f"{{{_W}}}type", "dxa")
+    if unique_xs[0] > 0:
+        tblInd = etree.SubElement(tblPr, f"{{{_W}}}tblInd")
+        tblInd.set(f"{{{_W}}}w", str(int(unique_xs[0] * 20)))
+        tblInd.set(f"{{{_W}}}type", "dxa")
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
+    tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+        brd.set(f"{{{_W}}}val", "none")
+    tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for side in ("top", "left", "bottom", "right"):
+        m_el = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+        m_el.set(f"{{{_W}}}w", "0")
+        m_el.set(f"{{{_W}}}type", "dxa")
+
+    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+    for i, bx in enumerate(unique_xs):
+        pm = by_x[bx]
+        tc = etree.SubElement(tr, f"{{{_W}}}tc")
+        tcPr = etree.SubElement(tc, f"{{{_W}}}tcPr")
+        tcW = etree.SubElement(tcPr, f"{{{_W}}}tcW")
+        tcW.set(f"{{{_W}}}w", str(col_ws[i]))
+        tcW.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+        p_e = build_para_element(pm, doc_part)
+        # Shift para indent to cell origin (subtract column x-offset)
+        _pPr = p_e.find(f"{{{_W}}}pPr")
+        if _pPr is not None:
+            _ind = _pPr.find(f"{{{_W}}}ind")
+            if _ind is not None:
+                _cur = int(_ind.get(f"{{{_W}}}left", "0"))
+                _ind.set(f"{{{_W}}}left", str(max(0, _cur - int(bx * 20))))
+        tc.append(p_e)
+    return tbl
+
+
 def _detect_same_level_section_groups(sections) -> "list[list[int]]":
     """Return groups (lists of section indices) where headings share the same y_top (±5 pt).
 
@@ -1327,6 +1853,7 @@ def _render_pdf_single_col_with_groups(
 
     grouped_idxs: "set[int]" = {idx for grp in groups for idx in grp}
     rendered_group_keys: "set[tuple[int, ...]]" = set()
+    _h_rule_borders = _build_h_rule_border_map(doc)
 
     def _add(elem) -> None:
         if sectPr is not None:
@@ -1375,13 +1902,24 @@ def _render_pdf_single_col_with_groups(
         return m0_y < h_y
 
     def _role_header_pm(role):
-        """Return a ParaModel for the role header, combining header_extra when present."""
-        if role.header_extra and "|" not in role.header.text:
+        """Return a ParaModel for the role header, combining non-italic header_extra."""
+        non_italic = [
+            he for he in role.header_extra
+            if he.text.strip() and not (he.paragraph_profile and he.paragraph_profile.italic)
+        ]
+        if non_italic and "|" not in role.header.text:
             combined = role.header.text.strip() + " | " + " | ".join(
-                he.text.strip() for he in role.header_extra if he.text.strip()
+                he.text.strip() for he in non_italic
             )
             return role.header.with_text(combined)
         return role.header
+
+    def _role_italic_extra(role) -> "list":
+        """Return header_extra items that are italic (subtitles, rendered as own lines)."""
+        return [
+            he for he in role.header_extra
+            if he.text.strip() and (he.paragraph_profile and he.paragraph_profile.italic)
+        ]
 
     def _role_two_col_date(role) -> bool:
         """True when date meta is in the left column and role title is in the right column.
@@ -1475,25 +2013,41 @@ def _render_pdf_single_col_with_groups(
         """Build shifted paragraph elements for a role (used inside table cells)."""
         result = []
         hdr_pm = _role_header_pm(role)
+        italic_extra = _role_italic_extra(role)
         date_first = _role_date_first(role)
         two_col = _role_two_col_date(role)
         if two_col:
             result.append(_build_role_two_col_table(role, hdr_pm, min_indent))
         elif date_first:
-            elem = build_para_element(role.meta_lines[0], doc_part)
-            _shift_indent(elem, min_indent)
-            result.append(elem)
+            h_y_top = (role.header.paragraph_profile.y_top_pt
+                       if role.header.paragraph_profile else None)
+            for m in role.meta_lines:
+                m_y = m.paragraph_profile.y_top_pt if m.paragraph_profile else None
+                if h_y_top is None or m_y is None or m_y < h_y_top:
+                    elem = build_para_element(m, doc_part)
+                    _shift_indent(elem, min_indent)
+                    result.append(elem)
             elem = build_para_element(hdr_pm, doc_part)
             _shift_indent(elem, min_indent)
             result.append(elem)
-            for m in role.meta_lines[1:]:
-                elem = build_para_element(m, doc_part)
+            for ie in italic_extra:
+                elem = build_para_element(ie, doc_part)
                 _shift_indent(elem, min_indent)
                 result.append(elem)
+            for m in role.meta_lines:
+                m_y = m.paragraph_profile.y_top_pt if m.paragraph_profile else None
+                if h_y_top is not None and m_y is not None and m_y >= h_y_top:
+                    elem = build_para_element(m, doc_part)
+                    _shift_indent(elem, min_indent)
+                    result.append(elem)
         else:
             elem = build_para_element(hdr_pm, doc_part)
             _shift_indent(elem, min_indent)
             result.append(elem)
+            for ie in italic_extra:
+                elem = build_para_element(ie, doc_part)
+                _shift_indent(elem, min_indent)
+                result.append(elem)
             for m in role.meta_lines:
                 elem = build_para_element(m, doc_part)
                 _shift_indent(elem, min_indent)
@@ -1509,31 +2063,60 @@ def _render_pdf_single_col_with_groups(
         """Build paragraph elements for a role (used outside table cells)."""
         result = []
         hdr_pm = _role_header_pm(role)
+        italic_extra = _role_italic_extra(role)
         date_first = _role_date_first(role)
         two_col = _role_two_col_date(role)
         if two_col:
             result.append(_build_role_two_col_table(role, hdr_pm))
         elif date_first:
-            result.append(build_para_element(role.meta_lines[0], doc_part))
+            # Render meta lines that are physically above the role header before
+            # it; meta at or below the header renders after (e.g. right-aligned
+            # date on the same y as the role title stays after the title).
+            h_y_top = (role.header.paragraph_profile.y_top_pt
+                       if role.header.paragraph_profile else None)
+            for m in role.meta_lines:
+                m_y = m.paragraph_profile.y_top_pt if m.paragraph_profile else None
+                if h_y_top is None or m_y is None or m_y < h_y_top:
+                    result.append(build_para_element(m, doc_part))
             result.append(build_para_element(hdr_pm, doc_part))
-            for m in role.meta_lines[1:]:
-                result.append(build_para_element(m, doc_part))
+            for ie in italic_extra:
+                result.append(build_para_element(ie, doc_part))
+            for m in role.meta_lines:
+                m_y = m.paragraph_profile.y_top_pt if m.paragraph_profile else None
+                if h_y_top is not None and m_y is not None and m_y >= h_y_top:
+                    result.append(build_para_element(m, doc_part))
             for b in role.bullets:
                 result.append(build_para_element(b, doc_part))
         else:
             result.append(build_para_element(hdr_pm, doc_part))
+            for ie in italic_extra:
+                result.append(build_para_element(ie, doc_part))
             for m in role.meta_lines:
                 result.append(build_para_element(m, doc_part))
             for b in role.bullets:
                 result.append(build_para_element(b, doc_part))
         return result
 
-    def _build_section_paras_for_cell(sec, min_indent: int) -> "list":
+    def _build_section_paras_for_cell(sec, min_indent: int, skip_h_rule_ids=None) -> "list":
         """Build paragraph elements for a table cell, normalizing indent to cell origin."""
         elems = []
-        heading_elem = build_para_element(sec.heading, doc_part)
-        _shift_indent(heading_elem, min_indent)
-        elems.append(heading_elem)
+        if sec.section_id:  # only emit heading for template-origin sections
+            heading_elem = build_para_element(sec.heading, doc_part)
+            _shift_indent(heading_elem, min_indent)
+            # Zero out w:spacing/w:before so all cell headings in the same row align at
+            # the top; PDF space_before_pt values (e.g. 10pt for EDUCATION) would
+            # otherwise push one cell's heading down relative to its neighbours.
+            _hpPr = heading_elem.find(f"{{{_W}}}pPr")
+            if _hpPr is not None:
+                _hsp = _hpPr.find(f"{{{_W}}}spacing")
+                if _hsp is not None:
+                    _hsp.attrib.pop(f"{{{_W}}}before", None)
+                    _hsp.attrib.pop(f"{{{_W}}}beforeLines", None)
+            if sec.heading.para_id in _h_rule_borders and not (
+                skip_h_rule_ids and sec.heading.para_id in skip_h_rule_ids
+            ):
+                _apply_h_rule_top_border(heading_elem, _h_rule_borders[sec.heading.para_id])
+            elems.append(heading_elem)
         if sec.semantic_type == "experience" and sec.roles:
             _has_orphan = any(bp.semantic == "role_header" for bp in sec.body_paras)
             if _has_orphan:
@@ -1555,8 +2138,14 @@ def _render_pdf_single_col_with_groups(
         return elems
 
     def _build_section_paras(sec) -> "list":
-        elems: list = [build_para_element(sec.heading, doc_part)]
+        heading_elem = build_para_element(sec.heading, doc_part)
+        _rule_img = _h_rule_borders.get(sec.heading.para_id)
+        elems: list = []
+        if sec.section_id:  # only emit heading for template-origin sections
+            elems.append(heading_elem)
         if sec.semantic_type == "experience" and sec.roles:
+            if _rule_img:
+                _apply_h_rule_top_border(heading_elem, _rule_img)
             _has_orphan = any(bp.semantic == "role_header" for bp in sec.body_paras)
             if _has_orphan:
                 # Skip body_paras that are already claimed by role meta_lines
@@ -1572,6 +2161,97 @@ def _render_pdf_single_col_with_groups(
         else:
             two_col_rows = _detect_body_two_col(sec.body_paras)
             if two_col_rows:
+                # Label-column detection: when the heading's x-position is ≥50pt left
+                # of the leftmost body column, the heading is a side label for the 2-col
+                # body grid.  Build an N×3 vMerge table [label | col1 | col2], shifting
+                # body-para indents to cell origin and applying any h_rule as a full-width
+                # w:tblBorders/top rather than a partial w:pBdr/top on the label cell alone.
+                _h_pp = sec.heading.paragraph_profile
+                _h_x = _h_pp.indent_left_pt if _h_pp else None
+                _body_xs = sorted({
+                    pm.paragraph_profile.indent_left_pt
+                    for l_pm, r_pm in two_col_rows
+                    for pm in (l_pm, r_pm)
+                    if pm and pm.paragraph_profile
+                })
+                if (
+                    _h_x is not None
+                    and len(_body_xs) == 2
+                    and _h_x < _body_xs[0] - 5.0
+                    and _body_xs[0] - _h_x >= 50.0
+                ):
+                    _bx1, _bx2 = _body_xs
+                    _c1 = max(100, int((_bx1 - _h_x) * 20))
+                    _c2 = max(100, int((_bx2 - _bx1) * 20))
+                    _c3 = max(100, text_area_w_twips - _c1 - _c2)
+                    _lbl_tbl = etree.Element(f"{{{_W}}}tbl")
+                    _lbl_tblPr = etree.SubElement(_lbl_tbl, f"{{{_W}}}tblPr")
+                    _lbl_tblW = etree.SubElement(_lbl_tblPr, f"{{{_W}}}tblW")
+                    _lbl_tblW.set(f"{{{_W}}}w", str(_c1 + _c2 + _c3))
+                    _lbl_tblW.set(f"{{{_W}}}type", "dxa")
+                    _lbl_tblLayout = etree.SubElement(_lbl_tblPr, f"{{{_W}}}tblLayout")
+                    _lbl_tblLayout.set(f"{{{_W}}}type", "fixed")
+                    _lbl_tblBorders = etree.SubElement(_lbl_tblPr, f"{{{_W}}}tblBorders")
+                    for _s in ("top", "left", "bottom", "right", "insideH", "insideV"):
+                        _b = etree.SubElement(_lbl_tblBorders, f"{{{_W}}}{_s}")
+                        _b.set(f"{{{_W}}}val", "none")
+                    _lbl_tblCellMar = etree.SubElement(_lbl_tblPr, f"{{{_W}}}tblCellMar")
+                    for _s in ("top", "left", "bottom", "right"):
+                        _m = etree.SubElement(_lbl_tblCellMar, f"{{{_W}}}{_s}")
+                        _m.set(f"{{{_W}}}w", "0")
+                        _m.set(f"{{{_W}}}type", "dxa")
+                    for _ri, (_l_pm, _r_pm) in enumerate(two_col_rows):
+                        _tr = etree.SubElement(_lbl_tbl, f"{{{_W}}}tr")
+                        # Col 0: label (heading, vMerge across all rows)
+                        _tc0 = etree.SubElement(_tr, f"{{{_W}}}tc")
+                        _tc0Pr = etree.SubElement(_tc0, f"{{{_W}}}tcPr")
+                        _tc0W = etree.SubElement(_tc0Pr, f"{{{_W}}}tcW")
+                        _tc0W.set(f"{{{_W}}}w", str(_c1))
+                        _tc0W.set(f"{{{_W}}}type", "dxa")
+                        etree.SubElement(_tc0Pr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "center")
+                        _vm = etree.SubElement(_tc0Pr, f"{{{_W}}}vMerge")
+                        if _ri == 0:
+                            _vm.set(f"{{{_W}}}val", "restart")
+                            _tc0.append(heading_elem)
+                        else:
+                            etree.SubElement(_tc0, f"{{{_W}}}p")
+                        # Col 1: left body data (shift out PDF x-offset so text starts at cell left)
+                        _tc1 = etree.SubElement(_tr, f"{{{_W}}}tc")
+                        _tc1Pr = etree.SubElement(_tc1, f"{{{_W}}}tcPr")
+                        _tc1W = etree.SubElement(_tc1Pr, f"{{{_W}}}tcW")
+                        _tc1W.set(f"{{{_W}}}w", str(_c2))
+                        _tc1W.set(f"{{{_W}}}type", "dxa")
+                        etree.SubElement(_tc1Pr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+                        if _l_pm is not None:
+                            _p1 = build_para_element(_l_pm, doc_part)
+                            _shift_indent(_p1, int(_bx1 * 20))
+                            _tc1.append(_p1)
+                        else:
+                            etree.SubElement(_tc1, f"{{{_W}}}p")
+                        # Col 2: right body data (shift out PDF x-offset so text starts at cell left)
+                        _tc2 = etree.SubElement(_tr, f"{{{_W}}}tc")
+                        _tc2Pr = etree.SubElement(_tc2, f"{{{_W}}}tcPr")
+                        _tc2W = etree.SubElement(_tc2Pr, f"{{{_W}}}tcW")
+                        _tc2W.set(f"{{{_W}}}w", str(_c3))
+                        _tc2W.set(f"{{{_W}}}type", "dxa")
+                        etree.SubElement(_tc2Pr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+                        if _r_pm is not None:
+                            _p2 = build_para_element(_r_pm, doc_part)
+                            _shift_indent(_p2, int(_bx2 * 20))
+                            _tc2.append(_p2)
+                        else:
+                            etree.SubElement(_tc2, f"{{{_W}}}p")
+                    # Emit h_rule as a standalone paragraph before the table so the
+                # divider line spans the full text width and has the correct gap.
+                if _rule_img:
+                    _hr_para = etree.Element(f"{{{_W}}}p")
+                    etree.SubElement(_hr_para, f"{{{_W}}}pPr")
+                    _apply_h_rule_top_border(_hr_para, _rule_img)
+                    return [_hr_para, _lbl_tbl]  # heading_elem is inside the table
+                return [_lbl_tbl]  # heading_elem is inside the table; discard elems
+                # Standard 2-col body table: heading is standalone above the table
+                if _rule_img:
+                    _apply_h_rule_top_border(heading_elem, _rule_img)
                 col_w = text_area_w_twips // 2
                 tbl = etree.Element(f"{{{_W}}}tbl")
                 tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
@@ -1604,13 +2284,79 @@ def _render_pdf_single_col_with_groups(
                             etree.SubElement(tc, f"{{{_W}}}p")
                 elems.append(tbl)
             else:
-                for pm in sec.body_paras:
-                    elems.append(build_para_element(pm, doc_part))
+                # Check for 3-column grid (e.g. 3-col skills/contact sub-section)
+                three_col_rows = _detect_body_n_col(sec.body_paras, 3)
+                if three_col_rows:
+                    if _rule_img:
+                        _apply_h_rule_top_border(heading_elem, _rule_img)
+                    _3bxs = sorted({round(pm.paragraph_profile.indent_left_pt)
+                                    for row in three_col_rows
+                                    for pm in row if pm is not None})
+                    _3cw0 = max(100, int((_3bxs[1] - _3bxs[0]) * 20))
+                    _3cw1 = max(100, int((_3bxs[2] - _3bxs[1]) * 20))
+                    _3cw2 = max(100, text_area_w_twips - _3cw0 - _3cw1)
+                    _3tbl = etree.Element(f"{{{_W}}}tbl")
+                    _3tblPr = etree.SubElement(_3tbl, f"{{{_W}}}tblPr")
+                    _3tblW = etree.SubElement(_3tblPr, f"{{{_W}}}tblW")
+                    _3tblW.set(f"{{{_W}}}w", str(_3cw0 + _3cw1 + _3cw2))
+                    _3tblW.set(f"{{{_W}}}type", "dxa")
+                    _3tblLayout = etree.SubElement(_3tblPr, f"{{{_W}}}tblLayout")
+                    _3tblLayout.set(f"{{{_W}}}type", "fixed")
+                    _3tblBorders = etree.SubElement(_3tblPr, f"{{{_W}}}tblBorders")
+                    for _s3 in ("top", "left", "bottom", "right", "insideH", "insideV"):
+                        _b3 = etree.SubElement(_3tblBorders, f"{{{_W}}}{_s3}")
+                        _b3.set(f"{{{_W}}}val", "none")
+                    _3tblCellMar = etree.SubElement(_3tblPr, f"{{{_W}}}tblCellMar")
+                    for _s3 in ("top", "left", "bottom", "right"):
+                        _m3 = etree.SubElement(_3tblCellMar, f"{{{_W}}}{_s3}")
+                        _m3.set(f"{{{_W}}}w", "0")
+                        _m3.set(f"{{{_W}}}type", "dxa")
+                    _3col_ws = [_3cw0, _3cw1, _3cw2]
+                    for _3row in three_col_rows:
+                        _3tr = etree.SubElement(_3tbl, f"{{{_W}}}tr")
+                        for _3ci, _3pm in enumerate(_3row):
+                            _3tc = etree.SubElement(_3tr, f"{{{_W}}}tc")
+                            _3tcPr = etree.SubElement(_3tc, f"{{{_W}}}tcPr")
+                            _3tcW = etree.SubElement(_3tcPr, f"{{{_W}}}tcW")
+                            _3tcW.set(f"{{{_W}}}w", str(_3col_ws[_3ci]))
+                            _3tcW.set(f"{{{_W}}}type", "dxa")
+                            etree.SubElement(_3tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+                            if _3pm is not None:
+                                _3pe = build_para_element(_3pm, doc_part)
+                                _shift_indent(_3pe, int(_3bxs[_3ci] * 20))
+                                _3tc.append(_3pe)
+                            else:
+                                etree.SubElement(_3tc, f"{{{_W}}}p")
+                    elems.append(_3tbl)
+                else:
+                    if _rule_img:
+                        _apply_h_rule_top_border(heading_elem, _rule_img)
+                    for pm in sec.body_paras:
+                        elems.append(build_para_element(pm, doc_part))
         return elems
 
-    # Header paragraphs first
-    for pm in doc.header_paras:
-        _add(build_para_element(pm, doc_part))
+    # Header paragraphs: group same-y items into multi-col table rows to restore
+    # horizontal contact bars (email | phone | LinkedIn) from the source PDF.
+    _hdr_y_buckets: "list" = []  # each entry: [y_val_or_None, [para_list]]
+    for _pm in doc.header_paras:
+        _pm_y = _pm.paragraph_profile.y_top_pt if _pm.paragraph_profile else None
+        if (
+            _pm_y is not None
+            and _hdr_y_buckets
+            and _hdr_y_buckets[-1][0] is not None
+            and abs(_pm_y - _hdr_y_buckets[-1][0]) <= 3.0
+        ):
+            _hdr_y_buckets[-1][1].append(_pm)
+        else:
+            _hdr_y_buckets.append([_pm_y, [_pm]])
+    for _hdr_y_val, _hdr_group in _hdr_y_buckets:
+        if len(_hdr_group) >= 2:
+            _hdr_tbl = _build_contact_row_table(_hdr_group, text_area_w_twips, doc_part)
+            if _hdr_tbl is not None:
+                _add(_hdr_tbl)
+                continue
+        for _pm in _hdr_group:
+            _add(build_para_element(_pm, doc_part))
 
     for i, sec in enumerate(doc.sections):
         if i not in grouped_idxs:
@@ -1631,6 +2377,27 @@ def _render_pdf_single_col_with_groups(
 
             n = len(grp)
             col_w = text_area_w_twips // n
+
+            # If any section heading in this group has an anchored h_rule, apply it
+            # as a full-width w:tblBorders/top on the group table so the divider spans
+            # all columns.  Suppress the per-cell w:pBdr/top that would otherwise only
+            # cover the leftmost cell.
+            _grp_rule_img = None
+            _grp_skip_h_rule_ids: "set[str]" = set()
+            for _sidx in grp:
+                _spid = doc.sections[_sidx].heading.para_id
+                if _spid in _h_rule_borders:
+                    if _grp_rule_img is None:
+                        _grp_rule_img = _h_rule_borders[_spid]
+                    _grp_skip_h_rule_ids.add(_spid)
+
+            # Emit h_rule as a standalone paragraph before the table so the divider
+            # spans the full text width with the correct gap_to_anchor_pt above it.
+            if _grp_rule_img is not None:
+                _grp_hr_para = etree.Element(f"{{{_W}}}p")
+                etree.SubElement(_grp_hr_para, f"{{{_W}}}pPr")
+                _apply_h_rule_top_border(_grp_hr_para, _grp_rule_img)
+                _add(_grp_hr_para)
 
             # Build N-column borderless table
             tbl = etree.Element(f"{{{_W}}}tbl")
@@ -1660,7 +2427,9 @@ def _render_pdf_single_col_with_groups(
                 tcW.set(f"{{{_W}}}w", str(col_w))
                 tcW.set(f"{{{_W}}}type", "dxa")
                 etree.SubElement(tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
-                for elem in _build_section_paras_for_cell(grp_sec, min_ind):
+                for elem in _build_section_paras_for_cell(
+                    grp_sec, min_ind, skip_h_rule_ids=_grp_skip_h_rule_ids
+                ):
                     tc.append(elem)
                 if not tc.findall(f"{{{_W}}}p"):
                     etree.SubElement(tc, f"{{{_W}}}p")
@@ -1742,6 +2511,23 @@ def _render_pdf_single_col_dark_header(doc: "ResumeDocument", body, sectPr, doc_
         _add(ftr_tbl)
 
 
+def _sec_has_parallel_body(sec) -> bool:
+    """True if a section has both left-column and right-column body paragraphs.
+
+    Used to detect the parallel-body layout (e.g. Sample 25) where section
+    headings are shared and the body content runs in two independent columns.
+    """
+    has_left = any(
+        pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
+        for pm in sec.body_paras
+    )
+    has_right = any(
+        pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
+        for pm in sec.body_paras
+    )
+    return has_left and has_right
+
+
 def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> None:
     """Render a two-column PDF-sourced document as a borderless DOCX table.
 
@@ -1775,10 +2561,11 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
 
     # Column widths.  The table is pushed to the physical page left edge via
     # tblInd=-left_margin, so the table spans from x=0 to x=left_w+right_w.
-    # right_w must not exceed page_w - right_margin - left_w; otherwise the
-    # table overflows the right margin and LibreOffice clips the right cell.
+    # right_w_max uses full page width (no right-margin deduction): the table
+    # already occupies to the physical page right edge via tblInd offset, so
+    # subtracting the right margin would incorrectly shrink the right column.
     left_w = layout.left_col_width_twips or (page_w_twips // 3)
-    right_w_max = page_w_twips - right_margin_twips - left_w
+    right_w_max = page_w_twips - left_w
     right_w = min(
         layout.right_col_width_twips or right_w_max,
         right_w_max,
@@ -1805,44 +2592,173 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         except (ValueError, IndexError):
             return False
 
+    # Y-positions of col=right header paras, used to detect side-by-side layouts.
+    _right_hdr_ys = [
+        pm.paragraph_profile.y_top_pt
+        for pm in doc.header_paras
+        if pm.paragraph_profile
+        and pm.paragraph_profile.column_id == "right"
+        and pm.paragraph_profile.y_top_pt is not None
+    ]
+
+    def _is_pseudo_left(pm) -> bool:
+        """True when a col=None header para should be placed in the left column cell.
+
+        The PDF parser assigns col=None to name/title paras whose rendered text
+        width extends past the column split boundary.  They belong in the left cell
+        when their x-origin is in the left zone AND a col=right para exists at a
+        nearby y-position (confirming a two-column header where name and title sit
+        side-by-side).
+        """
+        pp = pm.paragraph_profile
+        if not pp or pp.column_id is not None or _is_dark_bg(pm):
+            return False
+        if (pp.indent_left_pt or 0.0) >= layout.column_split_x * 0.5:
+            return False  # x-origin is in the right zone
+        if (pp.font_size_pt or 0.0) < 18.0:
+            return False  # small text — not a name/title spanning the boundary
+        pm_y = pp.y_top_pt or 0.0
+        return any(abs(ry - pm_y) <= 80.0 for ry in _right_hdr_ys)
+
+    _pseudo_left_ids = frozenset(id(pm) for pm in doc.header_paras if _is_pseudo_left(pm))
+
     above_paras = [
         pm for pm in doc.header_paras
-        if _is_dark_bg(pm)
-        or not (pm.paragraph_profile and pm.paragraph_profile.column_id in ("left", "right"))
+        if id(pm) not in _pseudo_left_ids
+        and (
+            _is_dark_bg(pm)
+            or not (pm.paragraph_profile and pm.paragraph_profile.column_id in ("left", "right"))
+        )
     ]
     _above_ids = frozenset(id(pm) for pm in above_paras)
     _hdr_left = [
         pm for pm in doc.header_paras
         if id(pm) not in _above_ids
-        and pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
+        and (
+            id(pm) in _pseudo_left_ids
+            or (pm.paragraph_profile and pm.paragraph_profile.column_id == "left")
+        )
     ]
     _hdr_right = [
         pm for pm in doc.header_paras
         if id(pm) not in _above_ids
+        and id(pm) not in _pseudo_left_ids
         and pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
     ]
     body_paras = [pm for pm in doc.all_paras if id(pm) not in _header_ids]
-    left_paras = _hdr_left + [
+    _body_left = [
         pm for pm in body_paras
         if pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
     ]
     # column_id=None body paras (cross-column or unassigned) fall back to the
     # right column so LLM-injected sections whose archetype was a full-width
     # header para are not silently dropped from the rendered output.
-    right_paras = _hdr_right + [
+    _body_right = [
         pm for pm in body_paras
         if not pm.paragraph_profile
         or pm.paragraph_profile.column_id in ("right", None)
     ]
 
-    # Detect dark header band color (first above_para with a background color).
+    def _y_of(pm):
+        pp = pm.paragraph_profile
+        if pp is None:
+            return float("inf")
+        # Use absolute Y so multi-page PDFs order correctly.  y_top_pt is
+        # page-relative (resets to 0 at each page top), so we add page_num *
+        # page_height to get a monotonically increasing coordinate.
+        # LLM-injected body paragraphs (para_id=None, y=0) sort last.
+        page_h = (layout.page_height_pt or 792.0)
+        abs_y = pp.page_num * page_h + (pp.y_top_pt or 0.0)
+        if abs_y == 0.0 and not pm.para_id:
+            return float("inf")
+        return abs_y
+
+    # Sort each column's *body* portion by absolute Y so paragraphs render in
+    # visual top-to-bottom order.  The IR can store paras out of y-order when a
+    # section boundary is detected (e.g. "Education" at y=263) before earlier
+    # content (e.g. contact icons at y=86) classified in the same column later.
+    # _hdr_* lists are NOT sorted: the pipeline (e.g. _inject_llm_summary_into_header)
+    # already places header items in the correct visual sequence; re-sorting them
+    # would displace LLM-injected summary paragraphs (y=0, no para_id) that were
+    # appended after the name header.
+    above_paras.sort(key=_y_of)
+    _body_left.sort(key=_y_of)
+    _body_right.sort(key=_y_of)
+    left_paras  = _hdr_left  + _body_left
+    right_paras = _hdr_right + _body_right
+
+    # Geometry diagnostics: log column assignments and y-positions for
+    # layout drift analysis.
+    import logging as _rlog
+    _glog = _rlog.getLogger("tailor.layout_geometry")
+    _glog.debug(
+        "GEOMETRY_REPORT sample=%s page=%.0fx%.0fpt "
+        "split_x=%.1fpt left_w=%.1fpt right_w=%.1fpt above=%d left=%d right=%d",
+        getattr(doc, "source_filename", "?"),
+        layout.page_width_pt or 0,
+        layout.page_height_pt or 0,
+        layout.column_split_x or 0,
+        left_w / 20.0,
+        right_w / 20.0,
+        len(above_paras),
+        len(left_paras),
+        len(right_paras),
+    )
+    for _pm in left_paras[:3]:
+        _glog.debug("  LEFT  y=%.1f %r", _y_of(_pm), (_pm.text or "")[:30])
+    for _pm in right_paras[:3]:
+        _glog.debug("  RIGHT y=%.1f %r", _y_of(_pm), (_pm.text or "")[:30])
+
+    # Background promotion: if all paragraphs in the left column share the same
+    # background_color and the layout has no explicit left_col_bg_color, use
+    # that color as cell shading so the background is continuous across
+    # space_before/space_after gaps rather than showing white between sections.
+    _eff_left_bg = layout.left_col_bg_color
+    if not _eff_left_bg and left_paras:
+        _left_bgs = {
+            pm.paragraph_profile.background_color
+            for pm in left_paras
+            if pm.paragraph_profile and pm.paragraph_profile.background_color
+        }
+        if len(_left_bgs) == 1:
+            _candidate = _left_bgs.pop()
+            _h = _candidate.lstrip("#").lower()
+            if len(_h) == 6:
+                _r, _g, _b = int(_h[0:2], 16), int(_h[2:4], 16), int(_h[4:6], 16)
+                if (_r + _g + _b) / 3 >= 128:  # light backgrounds only
+                    _eff_left_bg = _candidate
+                    _glog.debug("LAYOUT_BG_PROMOTED left_cell_bg=#%s (from uniform para bg)", _eff_left_bg)
+
+    _eff_right_bg = layout.right_col_bg_color
+    if not _eff_right_bg and right_paras:
+        _right_bgs = {
+            pm.paragraph_profile.background_color
+            for pm in right_paras
+            if pm.paragraph_profile and pm.paragraph_profile.background_color
+        }
+        if len(_right_bgs) == 1:
+            _candidate = _right_bgs.pop()
+            _h = _candidate.lstrip("#").lower()
+            if len(_h) == 6:
+                _r, _g, _b = int(_h[0:2], 16), int(_h[2:4], 16), int(_h[4:6], 16)
+                if (_r + _g + _b) / 3 >= 128:  # light backgrounds only
+                    _eff_right_bg = _candidate
+                    _glog.debug("LAYOUT_BG_PROMOTED right_cell_bg=#%s (from uniform para bg)", _eff_right_bg)
+
+    # Detect header band color (first above_para with a background color).
     header_bg = next(
         (pm.paragraph_profile.background_color
          for pm in above_paras
          if pm.paragraph_profile and pm.paragraph_profile.background_color),
         None,
     )
-    has_dark_hdr = bool(header_bg and above_paras)
+    # has_dark_hdr: True only when the header band is visually dark (lum < 128).
+    # Controls full-page-width extension, top-margin zeroing, and whether
+    # above_paras go inside the table header row (dark) or before the table as
+    # regular paragraphs (light/unassigned).  Light-background templates with
+    # col=None paragraphs at the top (e.g. the candidate name) should NOT
+    # trigger dark-header behavior — they render before the table via above_elems.
+    has_dark_hdr = any(_is_dark_bg(pm) for pm in above_paras)
 
     # When a dark header band is present the table is extended to the full
     # physical page width (page_w_twips) so the merged header row covers both
@@ -1850,7 +2766,54 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     # slot in the body row without widening the content cells.
     pad_w = max(0, page_w_twips - total_w) if has_dark_hdr else 0
     _use_pad = has_dark_hdr and pad_w > 0
-    n_grid_cols = 3 if _use_pad else 2
+
+    # Pre-scan: detect sibling section groups that need a wider outer tblGrid.
+    # A sibling group has ≥2 right-col sections at the same heading y (±3pt).
+    # Compute right-col cell widths early so tblGrid and gridSpan are consistent.
+    _sg_rcell_ws_global: "list" = []
+    _pre_sorted = sorted(
+        doc.sections,
+        key=lambda _s: (_s.heading.paragraph_profile.y_top_pt or 0.0)
+        if _s.heading.paragraph_profile else 0.0,
+    )
+    _pre_groups: "list" = []
+    for _ps in _pre_sorted:
+        _phy = (_ps.heading.paragraph_profile.y_top_pt or 0.0) if _ps.heading.paragraph_profile else 0.0
+        if _pre_groups and abs(_pre_groups[-1][0] - _phy) <= 3.0:
+            _pre_groups[-1][1].append(_ps)
+        else:
+            _pre_groups.append((_phy, [_ps]))
+    for _phy, _pg in _pre_groups:
+        if len(_pg) < 2:
+            continue
+        _prg = [
+            _s for _s in _pg
+            if _s.heading.paragraph_profile
+            and _s.heading.paragraph_profile.column_id in ("right", None)
+        ]
+        _prg.sort(
+            key=lambda _s: (_s.heading.paragraph_profile.indent_left_pt or 0.0)
+            if _s.heading.paragraph_profile else 0.0
+        )
+        if len(_prg) < 2:
+            continue
+        _prxs = [
+            (_s.heading.paragraph_profile.indent_left_pt or 0.0)
+            if _s.heading.paragraph_profile else 0.0
+            for _s in _prg
+        ]
+        _prws: "list" = []
+        for _pri in range(len(_prxs)):
+            _prcs = int(_prxs[_pri] * 20) if _pri > 0 else 0
+            if _pri < len(_prxs) - 1:
+                _prws.append(max(200, int(_prxs[_pri + 1] * 20) - _prcs))
+            else:
+                _prws.append(max(200, right_w - sum(_prws)))
+        if len(_prws) > len(_sg_rcell_ws_global):
+            _sg_rcell_ws_global = _prws
+    _n_right_grid_cols = len(_sg_rcell_ws_global) if _sg_rcell_ws_global else 1
+    _grid_right_ws = _sg_rcell_ws_global if _sg_rcell_ws_global else [right_w]
+    n_grid_cols = 1 + _n_right_grid_cols + (1 if _use_pad else 0)
     actual_tbl_w = page_w_twips if has_dark_hdr else total_w
 
     # Table element
@@ -1882,8 +2845,9 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         m.set(f"{{{_W}}}type", "dxa")
 
     # Grid column definitions — required for gridSpan in the merged header row.
+    # When sibling groups exist the right column is split into N sub-columns.
     tblGrid = etree.SubElement(tbl, f"{{{_W}}}tblGrid")
-    for cw in ([left_w, right_w, pad_w] if _use_pad else [left_w, right_w]):
+    for cw in ([left_w] + _grid_right_ws + ([pad_w] if _use_pad else [])):
         gc = etree.SubElement(tblGrid, f"{{{_W}}}gridCol")
         gc.set(f"{{{_W}}}w", str(cw))
 
@@ -1893,9 +2857,10 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     if has_dark_hdr:
         if sectPr is not None:
             _pgMar = sectPr.find(f"{{{_W}}}pgMar")
-            if _pgMar is not None:
-                _pgMar.set(f"{{{_W}}}top", "0")
-                _pgMar.set(f"{{{_W}}}header", "0")
+            if _pgMar is None:
+                _pgMar = etree.SubElement(sectPr, f"{{{_W}}}pgMar")
+            _pgMar.set(f"{{{_W}}}top", "0")
+            _pgMar.set(f"{{{_W}}}header", "0")
 
         hdr_tr = etree.SubElement(tbl, f"{{{_W}}}tr")
         hdr_tc = etree.SubElement(hdr_tr, f"{{{_W}}}tc")
@@ -1914,100 +2879,810 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         if not above_paras:
             etree.SubElement(hdr_tc, f"{{{_W}}}p")
 
-    # Body row
-    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+    # Detect parallel-body layout: any section has PARALLEL_BODY render_mode (from
+    # template_ir geometry classification) or has both left and right body_paras detected
+    # at runtime.  FULL_WIDTH alone does NOT trigger parallel mode — that would incorrectly
+    # force per-section-row rendering on sidebar templates where only some sections happen
+    # to have body text crossing the column split.
+    # When active, each section renders as a merged full-width heading row followed by
+    # a body row whose format depends on the section's render_mode:
+    #   PARALLEL_BODY → left|right two-column body row
+    #   FULL_WIDTH    → single merged full-width body row (only when parallel mode active)
+    #   SINGLE_COLUMN (or None) → left|right row with right cell empty
+    def _has_date_margin_roles(sec) -> bool:
+        """True when any role has a right-col header AND a left-col meta_line.
 
-    # Left cell
-    left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
-    left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
-    left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
-    left_tcW.set(f"{{{_W}}}w", str(left_w))
-    left_tcW.set(f"{{{_W}}}type", "dxa")
-    if layout.left_col_bg_color:
-        shd = etree.SubElement(left_tcPr, f"{{{_W}}}shd")
-        shd.set(f"{{{_W}}}val", "clear")
-        shd.set(f"{{{_W}}}color", "auto")
-        shd.set(f"{{{_W}}}fill", layout.left_col_bg_color)
+        This identifies the 'date-margin' layout (dates left, role content right)
+        so the parallel renderer is used even after body_paras are cleared.
+        """
+        for _r in sec.roles:
+            if _r.header.paragraph_profile and _r.header.paragraph_profile.column_id == "right":
+                if any(
+                    _m.paragraph_profile and _m.paragraph_profile.column_id == "left"
+                    for _m in _r.meta_lines
+                ):
+                    return True
+        return False
 
-    # Right cell
-    right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
-    right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
-    right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
-    right_tcW.set(f"{{{_W}}}w", str(right_w))
-    right_tcW.set(f"{{{_W}}}type", "dxa")
-    if layout.right_col_bg_color:
-        shd = etree.SubElement(right_tcPr, f"{{{_W}}}shd")
-        shd.set(f"{{{_W}}}val", "clear")
-        shd.set(f"{{{_W}}}color", "auto")
-        shd.set(f"{{{_W}}}fill", layout.right_col_bg_color)
+    _parallel_mode = (
+        any(sec.render_mode == "PARALLEL_BODY" for sec in doc.sections)
+        or any(_sec_has_parallel_body(sec) for sec in doc.sections)
+        or any(_has_date_margin_roles(sec) for sec in doc.sections)
+    )
 
-    # Right-margin padding cell — empty spacer filling the third grid column so
-    # the body row accounts for all grid columns defined in tblGrid.
-    if _use_pad:
-        pad_tc = etree.SubElement(tr, f"{{{_W}}}tc")
-        pad_tcPr = etree.SubElement(pad_tc, f"{{{_W}}}tcPr")
-        pad_tcW = etree.SubElement(pad_tcPr, f"{{{_W}}}tcW")
-        pad_tcW.set(f"{{{_W}}}w", str(pad_w))
-        pad_tcW.set(f"{{{_W}}}type", "dxa")
-        etree.SubElement(pad_tc, f"{{{_W}}}p")
-
-    # Pre-compute each left para's "section heading indent" so body paras that
-    # are more indented than their section heading can be capped to the heading
-    # level.  This normalises over-indented body items (e.g. skills bullet text
-    # at x=51 in a section whose heading is at x=31) without affecting headings
-    # or items that are already flush with their section heading.
-    _sec_heading_ind_twips: list[int] = []
-    _cur_heading_ind = 0
-    for pm in left_paras:
-        pp = pm.paragraph_profile
-        if pm.semantic == "section_heading" and pp is not None:
-            _cur_heading_ind = int(pp.indent_left_pt * 20)
-        _sec_heading_ind_twips.append(_cur_heading_ind)
-
-    for i, pm in enumerate(left_paras):
-        p_elem = build_para_element(pm, doc_part=doc_part)
-        # Shift all left-cell content right by left_margin_twips so it sits at
-        # the same x position as in the source PDF.  paragraph indent_left_pt is
-        # measured from the column origin (= page_margin_left), but the left
-        # cell starts at the physical page left edge (x=0), so we add the margin.
-        # Body paras more indented than their section heading are capped to the
-        # heading indent to keep visual alignment consistent within each section.
+    def _append_left_indent(p_elem, pm) -> None:
+        """Add left_margin_twips to a paragraph element's left indent."""
         pPr = p_elem.find(f"{{{_W}}}pPr")
         if pPr is not None:
             ind = pPr.find(f"{{{_W}}}ind")
-            heading_ind = _sec_heading_ind_twips[i]
             if ind is not None:
                 cur = int(ind.get(f"{{{_W}}}left", "0"))
-                if pm.semantic != "section_heading":
-                    cur = min(cur, heading_ind)
                 ind.set(f"{{{_W}}}left", str(cur + left_margin_twips))
             else:
                 new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
                 new_ind.set(f"{{{_W}}}left", str(left_margin_twips))
-        left_tc.append(p_elem)
-    if not left_paras:
-        etree.SubElement(left_tc, f"{{{_W}}}p")
 
-    for pm in right_paras:
-        right_tc.append(build_para_element(pm, doc_part=doc_part))
-    if not right_paras:
-        etree.SubElement(right_tc, f"{{{_W}}}p")
+    # LibreOffice ignores the outer table's negative tblInd for non-full-page
+    # tables and applies w:ind w:left relative to the document text margin
+    # (not the cell left edge).  Left-col paragraph indents are already measured
+    # from the column start which equals the text margin, so they need no
+    # correction.  Right-col indents are measured from the right-column start
+    # (column_split_x), which is left_w twips into the table.  To compensate,
+    # add (left_w - left_margin_twips) so the absolute position lands correctly.
+    _lo_rco = max(0, left_w - left_margin_twips) if not has_dark_hdr else 0
+
+    def _apply_lo_ind(p_elem, pm) -> None:
+        """Cell-aware left-indent for parallel-mode table cells.
+
+        Dark-header: delegates to _append_left_indent (LibreOffice honors tblInd
+        for full-page-spanning tables, so the existing offset is correct).
+        Light-header: left-col paragraphs need no change; right-col paragraphs
+        need _lo_rco added so content lands at its original absolute x position.
+        """
+        if has_dark_hdr:
+            _append_left_indent(p_elem, pm)
+            return
+        if _lo_rco <= 0:
+            return
+        pp = pm.paragraph_profile
+        if pp is None or pp.column_id != "right":
+            return
+        pPr = p_elem.find(f"{{{_W}}}pPr")
+        if pPr is None:
+            return
+        ind = pPr.find(f"{{{_W}}}ind")
+        if ind is not None:
+            cur = int(ind.get(f"{{{_W}}}left", "0"))
+            ind.set(f"{{{_W}}}left", str(cur + _lo_rco))
+        else:
+            new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
+            new_ind.set(f"{{{_W}}}left", str(_lo_rco))
+
+    if _parallel_mode:
+        # ------------------------------------------------------------------ #
+        # Parallel-body multi-row rendering                                   #
+        # Each section: merged heading row + left|right body row.            #
+        # Section headings span full width; body columns are independent.    #
+        # ------------------------------------------------------------------ #
+        _par_count = sum(1 for _s in doc.sections if _sec_has_parallel_body(_s))
+        _glog.debug(
+            "PARALLEL_SECTION_DETECTED doc=%s parallel_sections=%d total_sections=%d",
+            getattr(doc, "source_filename", "?"), _par_count, len(doc.sections),
+        )
+
+        def _zero_cell_top_spacing(p_elem) -> None:
+            """Zero space_before on the first paragraph of a table cell.
+
+            Both cells in a parallel body row start at the same vertical position.
+            Space_before on the first para of each cell pushes that cell's content
+            down, breaking visual alignment between left and right columns.
+            Standard DOCX practice: cells own their top padding; paragraphs inside
+            cells should have space_before=0 for the first item.
+            """
+            pPr = p_elem.find(f"{{{_W}}}pPr")
+            if pPr is not None:
+                spB = pPr.find(f"{{{_W}}}spacing")
+                if spB is not None:
+                    spB.set(f"{{{_W}}}before", "0")
+                else:
+                    new_sp = etree.SubElement(pPr, f"{{{_W}}}spacing")
+                    new_sp.set(f"{{{_W}}}before", "0")
+
+        def _make_two_col_row(l_paras, r_paras) -> None:
+            """Append a left|right body row to the table."""
+            _tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+            # Left cell
+            _ltc = etree.SubElement(_tr, f"{{{_W}}}tc")
+            _ltcPr = etree.SubElement(_ltc, f"{{{_W}}}tcPr")
+            _ltcW = etree.SubElement(_ltcPr, f"{{{_W}}}tcW")
+            _ltcW.set(f"{{{_W}}}w", str(left_w))
+            _ltcW.set(f"{{{_W}}}type", "dxa")
+            if _eff_left_bg:
+                _shd = etree.SubElement(_ltcPr, f"{{{_W}}}shd")
+                _shd.set(f"{{{_W}}}val", "clear")
+                _shd.set(f"{{{_W}}}color", "auto")
+                _shd.set(f"{{{_W}}}fill", _eff_left_bg)
+            for _i, _pm in enumerate(l_paras):
+                _pe = build_para_element(_pm, doc_part=doc_part)
+                _apply_lo_ind(_pe, _pm)
+                if _i == 0:
+                    _zero_cell_top_spacing(_pe)
+                _ltc.append(_pe)
+            if not l_paras:
+                etree.SubElement(_ltc, f"{{{_W}}}p")
+            # Right cell (spans all right grid columns in sibling-group layouts)
+            _rtc = etree.SubElement(_tr, f"{{{_W}}}tc")
+            _rtcPr = etree.SubElement(_rtc, f"{{{_W}}}tcPr")
+            _rtcW = etree.SubElement(_rtcPr, f"{{{_W}}}tcW")
+            _rtcW.set(f"{{{_W}}}w", str(right_w))
+            _rtcW.set(f"{{{_W}}}type", "dxa")
+            if _n_right_grid_cols > 1:
+                _rtcGS = etree.SubElement(_rtcPr, f"{{{_W}}}gridSpan")
+                _rtcGS.set(f"{{{_W}}}val", str(_n_right_grid_cols))
+            if _eff_right_bg:
+                _shd = etree.SubElement(_rtcPr, f"{{{_W}}}shd")
+                _shd.set(f"{{{_W}}}val", "clear")
+                _shd.set(f"{{{_W}}}color", "auto")
+                _shd.set(f"{{{_W}}}fill", _eff_right_bg)
+            # Group same-y right paras into multi-col sub-tables (e.g. phone | LinkedIn).
+            _rc_buckets: "list" = []
+            for _ii, _pm in enumerate(r_paras):
+                _pm_y = _pm.paragraph_profile.y_top_pt if _pm.paragraph_profile else None
+                if (
+                    _pm_y is not None
+                    and _rc_buckets
+                    and _rc_buckets[-1][0] is not None
+                    and abs(_pm_y - _rc_buckets[-1][0]) <= 3.0
+                ):
+                    _rc_buckets[-1][1].append(_pm)
+                else:
+                    _rc_buckets.append([_pm_y, [_pm]])
+            _rc_first_emitted = False
+            for _bk_y, _bk_group in _rc_buckets:
+                if len(_bk_group) >= 2:
+                    _bk_tbl = _build_contact_row_table(_bk_group, right_w, doc_part)
+                    if _bk_tbl is not None:
+                        _rtc.append(_bk_tbl)
+                        _rc_first_emitted = True
+                        continue
+                for _ii, _pm in enumerate(_bk_group):
+                    _pe = build_para_element(_pm, doc_part=doc_part)
+                    if not _rc_first_emitted:
+                        _zero_cell_top_spacing(_pe)
+                        _rc_first_emitted = True
+                    _apply_lo_ind(_pe, _pm)
+                    _rtc.append(_pe)
+            if not r_paras:
+                etree.SubElement(_rtc, f"{{{_W}}}p")
+            if _use_pad:
+                _ptc = etree.SubElement(_tr, f"{{{_W}}}tc")
+                _ptcPr = etree.SubElement(_ptc, f"{{{_W}}}tcPr")
+                _ptcW = etree.SubElement(_ptcPr, f"{{{_W}}}tcW")
+                _ptcW.set(f"{{{_W}}}w", str(pad_w))
+                _ptcW.set(f"{{{_W}}}type", "dxa")
+                etree.SubElement(_ptc, f"{{{_W}}}p")
+
+        _h_rule_borders_par = _build_h_rule_border_map(doc)
+
+        def _make_merged_hdr_row(pm) -> None:
+            """Append a full-width merged row for a section heading."""
+            _tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+            _htc = etree.SubElement(_tr, f"{{{_W}}}tc")
+            _htcPr = etree.SubElement(_htc, f"{{{_W}}}tcPr")
+            _htcW = etree.SubElement(_htcPr, f"{{{_W}}}tcW")
+            _htcW.set(f"{{{_W}}}w", str(actual_tbl_w))
+            _htcW.set(f"{{{_W}}}type", "dxa")
+            _gs = etree.SubElement(_htcPr, f"{{{_W}}}gridSpan")
+            _gs.set(f"{{{_W}}}val", str(n_grid_cols))
+            _pe = build_para_element(pm, doc_part=doc_part)
+            # Apply the same indent correction as left-cell paras so the heading
+            # sits at its original PDF x position inside the merged cell.
+            _apply_lo_ind(_pe, pm)
+            # Apply h_rule as a paragraph top border on the heading element so
+            # it renders as a visible horizontal divider above the section.
+            _hr = _h_rule_borders_par.get(pm.para_id)
+            if _hr:
+                _apply_h_rule_top_border(_pe, _hr)
+            _htc.append(_pe)
+
+        def _make_full_width_body_row(paras) -> None:
+            """Append a full-width merged body row (for FULL_WIDTH sections)."""
+            _tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+            _tc = etree.SubElement(_tr, f"{{{_W}}}tc")
+            _tcPr = etree.SubElement(_tc, f"{{{_W}}}tcPr")
+            _tcW = etree.SubElement(_tcPr, f"{{{_W}}}tcW")
+            _tcW.set(f"{{{_W}}}w", str(actual_tbl_w))
+            _tcW.set(f"{{{_W}}}type", "dxa")
+            _fgs = etree.SubElement(_tcPr, f"{{{_W}}}gridSpan")
+            _fgs.set(f"{{{_W}}}val", str(n_grid_cols))
+            for _pm in paras:
+                _pe = build_para_element(_pm, doc_part=doc_part)
+                _apply_lo_ind(_pe, _pm)
+                _tc.append(_pe)
+            if not paras:
+                etree.SubElement(_tc, f"{{{_W}}}p")
+
+        # Render non-above header paras (contact area, title) as the first body row.
+        # In parallel mode, _hdr_left/_hdr_right are not included in any section and
+        # would otherwise be silently dropped.
+        #
+        # Cross-column contact bar detection: when paras from both the left and
+        # right header lists share the same y-position (±3 pt), they form a
+        # horizontal contact bar (e.g. email | phone | LinkedIn) that spans both
+        # columns.  Rendering them in separate table cells produces y-misalignment
+        # because the cells have different heights.  Instead, separate them into:
+        #   Row A — name + title content (non-contact paras)
+        #   Row B — merged full-width contact bar
+        if _hdr_left or _hdr_right:
+            _hl_ys = {id(_pm): (_pm.paragraph_profile.y_top_pt or 0.0)
+                      for _pm in _hdr_left if _pm.paragraph_profile}
+            _hr_ys = {id(_pm): (_pm.paragraph_profile.y_top_pt or 0.0)
+                      for _pm in _hdr_right if _pm.paragraph_profile}
+            _cross_ids: "set" = set()
+            for _lid, _ly in _hl_ys.items():
+                for _rid, _ry in _hr_ys.items():
+                    if abs(_ly - _ry) <= 3.0:
+                        _cross_ids.add(_lid)
+                        _cross_ids.add(_rid)
+
+            if _cross_ids:
+                # Split header into content paras and contact-bar paras
+                _hl_c = [_pm for _pm in _hdr_left  if id(_pm) not in _cross_ids]
+                _hr_c = [_pm for _pm in _hdr_right if id(_pm) not in _cross_ids]
+                _contact = [_pm for _pm in _hdr_left + _hdr_right if id(_pm) in _cross_ids]
+
+                if _hl_c or _hr_c:
+                    _make_two_col_row(_hl_c, _hr_c)
+
+                # Build merged full-width contact bar row
+                # Compute absolute x from text margin for each contact para
+                _rco_pt = (layout.column_split_x or 0.0) - (layout.margin_left_pt or 0.0)
+                _c_abs: "list" = []
+                for _pm in _contact:
+                    _pp = _pm.paragraph_profile
+                    _ind_pt = (_pp.indent_left_pt or 0.0) if _pp else 0.0
+                    _col = _pp.column_id if _pp else None
+                    _c_abs.append(round(_rco_pt + _ind_pt if _col == "right" else _ind_pt, 1))
+                _c_pairs = sorted(zip(_c_abs, _contact), key=lambda _t: _t[0])
+                _c_uxs = [_t[0] for _t in _c_pairs]  # abs x from text margin (pt)
+                _c_sorted = [_t[1] for _t in _c_pairs]
+
+                # Column widths (pt gaps → twips)
+                _c_cwx: "list" = []
+                for _ci in range(len(_c_uxs) - 1):
+                    _c_cwx.append(max(200, int((_c_uxs[_ci + 1] - _c_uxs[_ci]) * 20)))
+                # Last col fills to right edge of outer table from text margin
+                _c_last = max(200, actual_tbl_w - left_margin_twips - int(_c_uxs[0] * 20) - sum(_c_cwx))
+                _c_cwx.append(_c_last)
+
+                # Sub-table indent: leftmost contact para's absolute x from page left
+                _c_tblInd = left_margin_twips + int(_c_uxs[0] * 20)
+                _c_tblW   = _c_tblInd + sum(_c_cwx)
+
+                _c_tbl = etree.Element(f"{{{_W}}}tbl")
+                _c_tblPr = etree.SubElement(_c_tbl, f"{{{_W}}}tblPr")
+                _c_tblW_el = etree.SubElement(_c_tblPr, f"{{{_W}}}tblW")
+                _c_tblW_el.set(f"{{{_W}}}w", str(_c_tblW))
+                _c_tblW_el.set(f"{{{_W}}}type", "dxa")
+                _c_tblInd_el = etree.SubElement(_c_tblPr, f"{{{_W}}}tblInd")
+                _c_tblInd_el.set(f"{{{_W}}}w", str(_c_tblInd))
+                _c_tblInd_el.set(f"{{{_W}}}type", "dxa")
+                _c_tblLay = etree.SubElement(_c_tblPr, f"{{{_W}}}tblLayout")
+                _c_tblLay.set(f"{{{_W}}}type", "fixed")
+                _c_tblBrd = etree.SubElement(_c_tblPr, f"{{{_W}}}tblBorders")
+                for _s in ("top", "left", "bottom", "right", "insideH", "insideV"):
+                    _b = etree.SubElement(_c_tblBrd, f"{{{_W}}}{_s}")
+                    _b.set(f"{{{_W}}}val", "none")
+                _c_tblMar = etree.SubElement(_c_tblPr, f"{{{_W}}}tblCellMar")
+                for _s in ("top", "left", "bottom", "right"):
+                    _m = etree.SubElement(_c_tblMar, f"{{{_W}}}{_s}")
+                    _m.set(f"{{{_W}}}w", "0")
+                    _m.set(f"{{{_W}}}type", "dxa")
+                _c_tr = etree.SubElement(_c_tbl, f"{{{_W}}}tr")
+                for _ci, (_ax, _pm) in enumerate(_c_pairs):
+                    _c_tc = etree.SubElement(_c_tr, f"{{{_W}}}tc")
+                    _c_tcPr = etree.SubElement(_c_tc, f"{{{_W}}}tcPr")
+                    _c_tcW = etree.SubElement(_c_tcPr, f"{{{_W}}}tcW")
+                    _c_tcW.set(f"{{{_W}}}w", str(_c_cwx[_ci]))
+                    _c_tcW.set(f"{{{_W}}}type", "dxa")
+                    _c_pe = build_para_element(_pm, doc_part=doc_part)
+                    # Zero out para indent — position comes from tblInd + column layout
+                    _c_pPr = _c_pe.find(f"{{{_W}}}pPr")
+                    if _c_pPr is not None:
+                        _c_ind = _c_pPr.find(f"{{{_W}}}ind")
+                        if _c_ind is not None:
+                            _c_ind.set(f"{{{_W}}}left", "0")
+                    _c_tc.append(_c_pe)
+
+                # Merged row wrapping the contact sub-table
+                _m_tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+                _m_tc = etree.SubElement(_m_tr, f"{{{_W}}}tc")
+                _m_tcPr = etree.SubElement(_m_tc, f"{{{_W}}}tcPr")
+                _m_tcW = etree.SubElement(_m_tcPr, f"{{{_W}}}tcW")
+                _m_tcW.set(f"{{{_W}}}w", str(actual_tbl_w))
+                _m_tcW.set(f"{{{_W}}}type", "dxa")
+                if n_grid_cols > 1:
+                    _m_gs = etree.SubElement(_m_tcPr, f"{{{_W}}}gridSpan")
+                    _m_gs.set(f"{{{_W}}}val", str(n_grid_cols))
+                _m_tc.append(_c_tbl)
+            else:
+                _make_two_col_row(_hdr_left, _hdr_right)
+
+        # Sort sections by heading y, then render each as: heading row + body row.
+        _sorted_secs = sorted(
+            doc.sections,
+            key=lambda _s: (
+                (_s.heading.paragraph_profile.y_top_pt or 0.0)
+                if _s.heading.paragraph_profile else 0.0
+            ),
+        )
+
+        # Group consecutive sections by same heading y (±3 pt) into sibling groups.
+        # A sibling group with N≥2 sections at the same y (e.g. Education | Skills |
+        # Interests in a 3-column bottom row) requires combined rendering: one outer
+        # row with a left cell (left-col sections) and a right cell containing a
+        # sub-table of right-col sections arranged side-by-side.
+        _sec_groups: "list" = []
+        for _sec in _sorted_secs:
+            _hy = (_sec.heading.paragraph_profile.y_top_pt or 0.0) if _sec.heading.paragraph_profile else 0.0
+            if _sec_groups and abs(_sec_groups[-1][0] - _hy) <= 3.0:
+                _sec_groups[-1][1].append(_sec)
+            else:
+                _sec_groups.append((_hy, [_sec]))
+
+        def _sg_all_content(_sec) -> "list":
+            """All body paras + role content for a section, sorted by y."""
+            _c: "list" = list(_sec.body_paras)
+            for _r in _sec.roles:
+                _c.extend([_r.header, *_r.meta_lines, *_r.bullets])
+            _c.sort(key=_y_of)
+            return _c
+
+        def _sg_adj_ind(p_elem, col_x_pt: float) -> None:
+            """Adjust paragraph w:ind left to be relative to sub-column start.
+
+            In a nested sub-table cell, LibreOffice uses cell-relative indents
+            (unlike outer table cells where it uses doc-margin-relative). So the
+            para's indent_left_pt (measured from the right-column origin) must be
+            reduced by col_x_pt (the sub-column's x from right-column origin) so
+            the content aligns at its original PDF x position.
+            """
+            _sg_pPr = p_elem.find(f"{{{_W}}}pPr")
+            if _sg_pPr is None:
+                return
+            _sg_ind = _sg_pPr.find(f"{{{_W}}}ind")
+            if _sg_ind is not None:
+                _sg_cur = int(_sg_ind.get(f"{{{_W}}}left", "0"))
+                _sg_new = max(0, _sg_cur - int(col_x_pt * 20))
+                _sg_ind.set(f"{{{_W}}}left", str(_sg_new))
+
+        for _gy, _group in _sec_groups:
+            if len(_group) == 1:
+                # ---------------------------------------------------------- #
+                # Normal single-section rendering (existing logic).            #
+                # ---------------------------------------------------------- #
+                _sec = _group[0]
+                _sec_mode = _sec.render_mode  # 'FULL_WIDTH' | 'PARALLEL_BODY' | None
+                _lbody: list = sorted(
+                    [_pm for _pm in _sec.body_paras
+                     if _pm.paragraph_profile
+                     and _pm.paragraph_profile.column_id == "left"],
+                    key=_y_of,
+                )
+                _rbody: list = sorted(
+                    [_pm for _pm in _sec.body_paras
+                     if _pm.paragraph_profile
+                     and _pm.paragraph_profile.column_id == "right"],
+                    key=_y_of,
+                )
+                # Experience sections store body content in roles, not body_paras.
+                # For date-margin layouts (right-col role headers) distribute by column:
+                # left-col meta_lines (dates) → _lbody; header + bullets → _rbody.
+                # Right-col meta_lines in this layout are template filler — drop them.
+                # For standard left-sidebar layouts everything goes to _lbody.
+                for _role in _sec.roles:
+                    _rh_col = (
+                        _role.header.paragraph_profile.column_id
+                        if _role.header.paragraph_profile else None
+                    )
+                    if _rh_col == "right":
+                        for _pm in _role.meta_lines:
+                            _mc = _pm.paragraph_profile.column_id if _pm.paragraph_profile else None
+                            if _mc == "left":
+                                _lbody.append(_pm)
+                            # drop right-col meta_lines (template filler like "Summarize...")
+                        _rbody.extend([_role.header, *_role.bullets])
+                    else:
+                        _lbody.extend([_role.header, *_role.meta_lines, *_role.bullets])
+                _lbody.sort(key=_y_of)
+                _rbody.sort(key=_y_of)
+                _is_par = bool(_lbody and _rbody)
+                _glog.debug(
+                    "SECTION_RENDER_MODE sec=%r mode=%s left=%d right=%d parallel=%s",
+                    _sec.title, _sec_mode, len(_lbody), len(_rbody), _is_par,
+                )
+                if _is_par:
+                    _left_y0 = _y_of(_lbody[0]) if _lbody else 0.0
+                    _right_y0 = _y_of(_rbody[0]) if _rbody else 0.0
+                    _glog.debug(
+                        "PARALLEL_ALIGNMENT section=%r left_y=%.1f right_y=%.1f delta=%.1f",
+                        _sec.title, _left_y0, _right_y0, abs(_left_y0 - _right_y0),
+                    )
+                    _glog.debug(
+                        "PARALLEL_SECTION_RENDERED sec=%r left_items=%d right_items=%d",
+                        _sec.title, len(_lbody), len(_rbody),
+                    )
+                _make_merged_hdr_row(_sec.heading)
+                if _sec_mode == "FULL_WIDTH":
+                    # Body spans full width — collect all body_paras regardless of column_id.
+                    _fw_body: list = list(_sec.body_paras)
+                    for _role in _sec.roles:
+                        _fw_body.extend([_role.header, *_role.meta_lines, *_role.bullets])
+                    _fw_body.sort(key=_y_of)
+                    _make_full_width_body_row(_fw_body)
+                else:
+                    _make_two_col_row(_lbody, _rbody)
+            else:
+                # ---------------------------------------------------------- #
+                # Sibling group: N sections at the same heading y.            #
+                # Each section gets its own OUTER cell in one row — no nested  #
+                # sub-table.  All cells share the same row top (correct        #
+                # vertical alignment).  _apply_lo_ind handles doc-margin-      #
+                # relative para indents for LibreOffice outer table cells.     #
+                # ---------------------------------------------------------- #
+                _sg_left = [
+                    _s for _s in _group
+                    if _s.heading.paragraph_profile
+                    and _s.heading.paragraph_profile.column_id == "left"
+                ]
+                _sg_right = [
+                    _s for _s in _group
+                    if _s.heading.paragraph_profile
+                    and _s.heading.paragraph_profile.column_id in ("right", None)
+                ]
+                _sg_right.sort(
+                    key=lambda _s: (_s.heading.paragraph_profile.indent_left_pt or 0.0)
+                    if _s.heading.paragraph_profile else 0.0
+                )
+                _glog.debug(
+                    "SIBLING_GROUP_RENDER y=%.1f left_secs=%d right_secs=%d",
+                    _gy, len(_sg_left), len(_sg_right),
+                )
+
+                _sg_tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+                # Right-col heading x positions (from right-col start = 0).
+                _sg_rxs = [
+                    (_s.heading.paragraph_profile.indent_left_pt or 0.0)
+                    if _s.heading.paragraph_profile else 0.0
+                    for _s in _sg_right
+                ]
+                # Cell widths: cell[i] spans from xs[i] (or 0 for i=0) to xs[i+1].
+                # The first right-col cell always starts at the right-col left edge (0).
+                _sg_rcell_ws: "list" = []
+                for _ri in range(len(_sg_rxs)):
+                    _sg_cs = int(_sg_rxs[_ri] * 20) if _ri > 0 else 0
+                    if _ri < len(_sg_rxs) - 1:
+                        _sg_rcell_ws.append(max(200, int(_sg_rxs[_ri + 1] * 20) - _sg_cs))
+                    else:
+                        _sg_rcell_ws.append(max(200, right_w - sum(_sg_rcell_ws)))
+
+                # Left-col sections (e.g. EDUCATION): one outer cell each
+                for _sg_sec in _sg_left:
+                    _sg_tc = etree.SubElement(_sg_tr, f"{{{_W}}}tc")
+                    _sg_tcPr = etree.SubElement(_sg_tc, f"{{{_W}}}tcPr")
+                    _sg_tcW = etree.SubElement(_sg_tcPr, f"{{{_W}}}tcW")
+                    _sg_tcW.set(f"{{{_W}}}w", str(left_w))
+                    _sg_tcW.set(f"{{{_W}}}type", "dxa")
+                    if _eff_left_bg:
+                        _sg_shd = etree.SubElement(_sg_tcPr, f"{{{_W}}}shd")
+                        _sg_shd.set(f"{{{_W}}}val", "clear")
+                        _sg_shd.set(f"{{{_W}}}color", "auto")
+                        _sg_shd.set(f"{{{_W}}}fill", _eff_left_bg)
+                    _sg_first = True
+                    _sg_hpe = build_para_element(_sg_sec.heading, doc_part=doc_part)
+                    _apply_lo_ind(_sg_hpe, _sg_sec.heading)
+                    _hr = _h_rule_borders_par.get(_sg_sec.heading.para_id)
+                    if _hr:
+                        _apply_h_rule_top_border(_sg_hpe, _hr)
+                    if _sg_first:
+                        _zero_cell_top_spacing(_sg_hpe)
+                        _sg_first = False
+                    _sg_tc.append(_sg_hpe)
+                    for _sg_pm in _sg_all_content(_sg_sec):
+                        _sg_pe = build_para_element(_sg_pm, doc_part=doc_part)
+                        _apply_lo_ind(_sg_pe, _sg_pm)
+                        _sg_tc.append(_sg_pe)
+                if not _sg_left:
+                    _sg_tc = etree.SubElement(_sg_tr, f"{{{_W}}}tc")
+                    _sg_tcPr = etree.SubElement(_sg_tc, f"{{{_W}}}tcPr")
+                    _sg_tcW = etree.SubElement(_sg_tcPr, f"{{{_W}}}tcW")
+                    _sg_tcW.set(f"{{{_W}}}w", str(left_w))
+                    _sg_tcW.set(f"{{{_W}}}type", "dxa")
+                    etree.SubElement(_sg_tc, f"{{{_W}}}p")
+
+                # Right-col sections: each in its own outer cell
+                for _ri, _sg_sec in enumerate(_sg_right):
+                    _sg_tc = etree.SubElement(_sg_tr, f"{{{_W}}}tc")
+                    _sg_tcPr = etree.SubElement(_sg_tc, f"{{{_W}}}tcPr")
+                    _sg_tcW = etree.SubElement(_sg_tcPr, f"{{{_W}}}tcW")
+                    _sg_tcW.set(f"{{{_W}}}w", str(_sg_rcell_ws[_ri]))
+                    _sg_tcW.set(f"{{{_W}}}type", "dxa")
+                    if _eff_right_bg:
+                        _sg_shd = etree.SubElement(_sg_tcPr, f"{{{_W}}}shd")
+                        _sg_shd.set(f"{{{_W}}}val", "clear")
+                        _sg_shd.set(f"{{{_W}}}color", "auto")
+                        _sg_shd.set(f"{{{_W}}}fill", _eff_right_bg)
+                    _sg_first = True
+                    _sg_hpe = build_para_element(_sg_sec.heading, doc_part=doc_part)
+                    _apply_lo_ind(_sg_hpe, _sg_sec.heading)
+                    _hr = _h_rule_borders_par.get(_sg_sec.heading.para_id)
+                    if _hr:
+                        _apply_h_rule_top_border(_sg_hpe, _hr)
+                    if _sg_first:
+                        _zero_cell_top_spacing(_sg_hpe)
+                        _sg_first = False
+                    _sg_tc.append(_sg_hpe)
+                    for _sg_pm in _sg_all_content(_sg_sec):
+                        _sg_pe = build_para_element(_sg_pm, doc_part=doc_part)
+                        _apply_lo_ind(_sg_pe, _sg_pm)
+                        _sg_tc.append(_sg_pe)
+                    if not _sg_tc.findall(f"{{{_W}}}p"):
+                        etree.SubElement(_sg_tc, f"{{{_W}}}p")
+
+                if _use_pad:
+                    _sg_ptc = etree.SubElement(_sg_tr, f"{{{_W}}}tc")
+                    _sg_ptcPr = etree.SubElement(_sg_ptc, f"{{{_W}}}tcPr")
+                    _sg_ptcW = etree.SubElement(_sg_ptcPr, f"{{{_W}}}tcW")
+                    _sg_ptcW.set(f"{{{_W}}}w", str(pad_w))
+                    _sg_ptcW.set(f"{{{_W}}}type", "dxa")
+                    etree.SubElement(_sg_ptc, f"{{{_W}}}p")
+
+    else:
+        # ------------------------------------------------------------------ #
+        # Standard single-body-row rendering.                                 #
+        # ------------------------------------------------------------------ #
+        # Body row
+        tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+        # Left cell
+        left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+        left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
+        left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
+        left_tcW.set(f"{{{_W}}}w", str(left_w))
+        left_tcW.set(f"{{{_W}}}type", "dxa")
+        if _eff_left_bg:
+            shd = etree.SubElement(left_tcPr, f"{{{_W}}}shd")
+            shd.set(f"{{{_W}}}val", "clear")
+            shd.set(f"{{{_W}}}color", "auto")
+            shd.set(f"{{{_W}}}fill", _eff_left_bg)
+
+        # Right cell
+        right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+        right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
+        right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
+        right_tcW.set(f"{{{_W}}}w", str(right_w))
+        right_tcW.set(f"{{{_W}}}type", "dxa")
+        if _eff_right_bg:
+            shd = etree.SubElement(right_tcPr, f"{{{_W}}}shd")
+            shd.set(f"{{{_W}}}val", "clear")
+            shd.set(f"{{{_W}}}color", "auto")
+            shd.set(f"{{{_W}}}fill", _eff_right_bg)
+
+        # Right-margin padding cell — empty spacer filling the third grid column.
+        if _use_pad:
+            pad_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+            pad_tcPr = etree.SubElement(pad_tc, f"{{{_W}}}tcPr")
+            pad_tcW = etree.SubElement(pad_tcPr, f"{{{_W}}}tcW")
+            pad_tcW.set(f"{{{_W}}}w", str(pad_w))
+            pad_tcW.set(f"{{{_W}}}type", "dxa")
+            etree.SubElement(pad_tc, f"{{{_W}}}p")
+
+        # Pre-compute each left para's "section heading indent" so body paras that
+        # are more indented than their section heading can be capped to the heading
+        # level.  This normalises over-indented body items without affecting headings
+        # or items flush with their section heading.
+        _sec_heading_ind_twips: list[int] = []
+        _cur_heading_ind = 0
+        for pm in left_paras:
+            pp = pm.paragraph_profile
+            if pm.semantic == "section_heading" and pp is not None:
+                _cur_heading_ind = int(pp.indent_left_pt * 20)
+            _sec_heading_ind_twips.append(_cur_heading_ind)
+
+        for i, pm in enumerate(left_paras):
+            p_elem = build_para_element(pm, doc_part=doc_part)
+            # Shift all left-cell content right by left_margin_twips so it sits at
+            # the same x position as in the source PDF.
+            pPr = p_elem.find(f"{{{_W}}}pPr")
+            if pPr is not None:
+                ind = pPr.find(f"{{{_W}}}ind")
+                heading_ind = _sec_heading_ind_twips[i]
+                if ind is not None:
+                    cur = int(ind.get(f"{{{_W}}}left", "0"))
+                    if pm.semantic != "section_heading":
+                        cur = min(cur, heading_ind)
+                    ind.set(f"{{{_W}}}left", str(cur + left_margin_twips))
+                else:
+                    new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
+                    new_ind.set(f"{{{_W}}}left", str(left_margin_twips))
+            left_tc.append(p_elem)
+        if not left_paras:
+            etree.SubElement(left_tc, f"{{{_W}}}p")
+
+        # Group same-y right_paras into multi-col sub-tables (e.g. phone | LinkedIn
+        # both at the same y within the right cell) so they render side-by-side.
+        _rp_buckets: "list" = []  # each entry: [y_val_or_None, [para_list]]
+        for _rp in right_paras:
+            _rp_y = _rp.paragraph_profile.y_top_pt if _rp.paragraph_profile else None
+            if (
+                _rp_y is not None
+                and _rp_buckets
+                and _rp_buckets[-1][0] is not None
+                and abs(_rp_y - _rp_buckets[-1][0]) <= 3.0
+            ):
+                _rp_buckets[-1][1].append(_rp)
+            else:
+                _rp_buckets.append([_rp_y, [_rp]])
+        for _rp_y_val, _rp_group in _rp_buckets:
+            if len(_rp_group) >= 2:
+                _rp_tbl = _build_contact_row_table(_rp_group, right_w, doc_part)
+                if _rp_tbl is not None:
+                    right_tc.append(_rp_tbl)
+                    continue
+            for _rp in _rp_group:
+                right_tc.append(build_para_element(_rp, doc_part=doc_part))
+        if not right_paras:
+            etree.SubElement(right_tc, f"{{{_W}}}p")
 
     # When there is no dark header band, above_paras are plain full-width
     # paragraphs (e.g. contact info with no background) inserted before the table.
-    above_elems = (
-        [] if has_dark_hdr
-        else [build_para_element(pm, doc_part=doc_part) for pm in above_paras]
-    )
+    # Group same-y items into multi-col table rows to restore horizontal contact
+    # bars (email | phone | LinkedIn) that share the same y_top_pt.
+    if has_dark_hdr:
+        above_elems: "list" = []
+    else:
+        above_elems = []
+        _above_text_w = _get_text_area_width_twips(sectPr)
+        _abv_buckets: "list" = []  # each entry: [y_val_or_None, [para_list]]
+        for _apm in above_paras:
+            _apm_y = _apm.paragraph_profile.y_top_pt if _apm.paragraph_profile else None
+            if (
+                _apm_y is not None
+                and _abv_buckets
+                and _abv_buckets[-1][0] is not None
+                and abs(_apm_y - _abv_buckets[-1][0]) <= 3.0
+            ):
+                _abv_buckets[-1][1].append(_apm)
+            else:
+                _abv_buckets.append([_apm_y, [_apm]])
+        for _abv_y, _abv_group in _abv_buckets:
+            if len(_abv_group) >= 2:
+                _abv_tbl = _build_contact_row_table(_abv_group, _above_text_w, doc_part)
+                if _abv_tbl is not None:
+                    above_elems.append(_abv_tbl)
+                    continue
+            for _apm in _abv_group:
+                above_elems.append(build_para_element(_apm, doc_part=doc_part))
+
+    # Footer band: render doc.footer_paras in a full-width dark band after the main
+    # table.  footer_bg_color may be inferred from the header color when pixel-sampling
+    # missed the footer (e.g. sample 25 where footer items were redistributed into
+    # section body_paras rather than captured as footer_paras directly).
+    _ftr_tbl = None
+    _raw_footer = list(doc.footer_paras) if doc.footer_paras else []
+
+    # Capture the original footer raster y-position before we filter page_images,
+    # so we can bottom-anchor our generated footer band at the same location.
+    _footer_raster_y: "float | None" = None
+    _ph = layout.page_height_pt or 841.9
+    _pw = layout.page_width_pt or 595.3
+    if _raw_footer and layout.footer_bg_color and getattr(doc, "page_images", None):
+        for _img in doc.page_images:
+            if (
+                _img.category in ("header_footer_decor", "footer_band")
+                and _img.width_pt >= _pw * 0.70
+                and (_img.y_pt + _img.height_pt) > _ph * 0.75
+            ):
+                _footer_raster_y = _img.y_pt
+                break
+
+    if _raw_footer and layout.footer_bg_color:
+        if len(_raw_footer) > 1:
+            _merged_text = "     ".join(pm.text.strip() for pm in _raw_footer if pm.text.strip())
+            _arch = _raw_footer[0]
+            _merged_pm = _arch.with_text(_merged_text)
+            _mpp = _merged_pm.paragraph_profile
+            if _mpp:
+                _mpp.alignment = "center"
+                _mpp.text_color = "ffffff"
+                _mpp.space_before_pt = 6.0
+                _mpp.space_after_pt = 6.0
+                _mpp.numbering = None
+            else:
+                from tailor.compiler.models import ParagraphProfile as _PP
+                _merged_pm.paragraph_profile = _PP(
+                    alignment="center", text_color="ffffff",
+                    space_before_pt=6.0, space_after_pt=6.0,
+                )
+            _merged_pm.semantic = "paragraph"  # strip bullet prefix (Target 5)
+            _footer_render = [_merged_pm]
+        else:
+            # Single item: clone to avoid mutating the original para.
+            _single = _raw_footer[0].with_text(_raw_footer[0].text)
+            _single.semantic = "paragraph"
+            if _single.paragraph_profile:
+                _single.paragraph_profile.numbering = None
+            _footer_render = [_single]
+        _ftr_tbl = _make_full_width_dark_band(
+            layout.footer_bg_color, page_w_twips, left_margin_twips,
+            _footer_render, doc_part=doc_part, center_text=True,
+        )
+
+        # Target 4: bottom-anchor footer band at its original page position.
+        # tblpPr makes the table a floating element positioned absolutely from the
+        # page top, so it lands at the original PDF footer location regardless of
+        # how much body content the LLM produced.
+        if _footer_raster_y is None and _raw_footer:
+            _fpm = _raw_footer[0].paragraph_profile
+            if _fpm and _fpm.y_pt:
+                # Para y minus one row height (approximately space_before + line) gives band top.
+                _footer_raster_y = max(0.0, _fpm.y_pt - 10.0)
+        if _footer_raster_y is not None:
+            _ftr_tblPr = _ftr_tbl.find(f"{{{_W}}}tblPr")
+            if _ftr_tblPr is not None:
+                _tblpPr = etree.SubElement(_ftr_tblPr, f"{{{_W}}}tblpPr")
+                _tblpPr.set(f"{{{_W}}}leftFromText", "0")
+                _tblpPr.set(f"{{{_W}}}rightFromText", "0")
+                _tblpPr.set(f"{{{_W}}}vertAnchor", "page")
+                _tblpPr.set(f"{{{_W}}}horzAnchor", "page")
+                _tblpPr.set(f"{{{_W}}}tblpX", "0")
+                _tblpPr.set(f"{{{_W}}}tblpY", str(int(_footer_raster_y * 20)))
+            _glog.debug(
+                "FOOTER_RENDERED items=%d bg=%s anchor_y=%.1f",
+                len(_raw_footer), layout.footer_bg_color, _footer_raster_y,
+            )
+        else:
+            _glog.debug("FOOTER_RENDERED items=%d bg=%s", len(_raw_footer), layout.footer_bg_color)
 
     if sectPr is not None:
         for elem in above_elems:
             sectPr.addprevious(elem)
         sectPr.addprevious(tbl)
+        if _ftr_tbl is not None:
+            sectPr.addprevious(_ftr_tbl)
     else:
         for elem in above_elems:
             body.append(elem)
         body.append(tbl)
+        if _ftr_tbl is not None:
+            body.append(_ftr_tbl)
+
+    # Targets 1 & 3: Suppress raster header/footer band images that are replaced by
+    # DOCX-generated equivalents (merged header row + footer band table).
+    # These wide raster images were captured from the original PDF as page_images with
+    # category="header_footer_decor". Leaving them in creates duplicate dark areas:
+    # the floating raster at the original position AND our DOCX table cell elsewhere.
+    if getattr(doc, "page_images", None):
+        _suppress_hdr = has_dark_hdr
+        _suppress_ftr = _ftr_tbl is not None
+
+        def _is_wide_band_raster(img, zone: str) -> bool:
+            if img.category not in ("header_footer_decor", "header_band", "footer_band"):
+                return False
+            if img.width_pt < _pw * 0.70:
+                return False
+            if zone == "header":
+                return img.y_pt < _ph * 0.30
+            return (img.y_pt + img.height_pt) > _ph * 0.75  # footer zone
+
+        doc.page_images = [
+            img for img in doc.page_images
+            if not (
+                (_suppress_hdr and _is_wide_band_raster(img, "header"))
+                or (_suppress_ftr and _is_wide_band_raster(img, "footer"))
+            )
+        ]
 
 
 def _render_table_block(tb: TableBlock, doc: "ResumeDocument", body, sectPr) -> None:
@@ -2635,6 +4310,41 @@ def _strip_column_bullet_drawings(tc_elem) -> None:
                 p_elem.insert(0, new_r)
 
 
+def _strip_decorative_inline_images(p_elem) -> None:
+    """Remove small wp:inline images from section-heading paragraphs.
+
+    PDF→DOCX conversion embeds decorative separator bars (thin horizontal rules,
+    ~22 mm wide × ~5 mm tall) as wp:inline drawings inside heading paragraphs.
+    In the original 2-column layout the narrow left column forced the image onto
+    its own line above the heading text.  In the single-column rendered layout
+    the image is inline on the same line as the text, producing "────Other skills"
+    with the bar visually merged into the heading.  Removing the drawing run
+    eliminates the corrupted separator; the heading renders cleanly without it.
+
+    Threshold: cy < 200 000 EMU (< ~16 mm tall) — decorative bars only; does not
+    affect full-page background images (cy in the millions of EMU).
+    """
+    _WP_INL = f"{{{_WP}}}inline"
+    _WP_EXT = f"{{{_WP}}}extent"
+    _DECOR_CY_MAX = 200_000
+    for r in list(p_elem.findall(f"{{{_W}}}r")):
+        drawing = r.find(f"{{{_W}}}drawing")
+        if drawing is None:
+            continue
+        inline = drawing.find(_WP_INL)
+        if inline is None:
+            continue
+        extent = inline.find(_WP_EXT)
+        if extent is None:
+            continue
+        try:
+            cy = int(extent.get("cy", "0"))
+        except (ValueError, TypeError):
+            continue
+        if cy < _DECOR_CY_MAX:
+            p_elem.remove(r)
+
+
 def _is_docx_section_header_left_layout(doc, left_blocks) -> bool:
     """Return True when the left column contains ONLY section-heading + spacer blocks.
 
@@ -3033,25 +4743,50 @@ def _render_block_into_elem(
     _strip_column_break(elem)
     pm = para_lookup.get(block.para_id) if block.para_id else None
     if pm is not None:
-        # For ext slots (overflow paragraphs cloned from a multi-SDT template slot),
-        # the cloned proto carries ≥2 SDT children that represent a structured
-        # multi-column layout (e.g. 3-column tab-based skills).  _set_para_text
-        # has a guard that preserves such paragraphs unchanged.  For ext slots that
-        # carry newly-assigned text this would silently render the original template
-        # content.  Strip all SDT children and let _set_para_text place the new
-        # text in a simple run instead.
-        if block.para_id and "_ext_" in block.para_id:
-            _sdt_cnt = sum(1 for _c in elem if _c.tag == f"{{{_W}}}sdt")
-            if _sdt_cnt >= 2:
-                _pPr_sdt = elem.find(f"{{{_W}}}pPr")
+        # _set_para_text has a guard that early-exits for paragraphs with ≥2 direct
+        # w:sdt children (multi-column contact rows like "email TAB phone TAB LinkedIn").
+        # The guard is correct for preserved template rows but incorrectly also fires
+        # for skills/summary rows that share the same SDT structure when the LLM
+        # has replaced their content.  Strip all non-pPr children when:
+        #   (a) ext slots: always (cloned proto carries the multi-SDT structure but
+        #       needs new LLM text); or
+        #   (b) regular slots: the model text differs from what the SDT content
+        #       currently holds (LLM replaced this paragraph).
+        _sdt_cnt = sum(1 for _c in elem if _c.tag == f"{{{_W}}}sdt")
+        if _sdt_cnt >= 2:
+            _is_ext = "_ext_" in (block.para_id or "")
+            _should_strip = _is_ext
+            if not _is_ext and pm.text.strip():
+                _xml_parts: list[str] = []
+                for _child in elem:
+                    if _child.tag == f"{{{_W}}}sdt":
+                        _sc = _child.find(f"{{{_W}}}sdtContent")
+                        if _sc is not None:
+                            for _r in _sc.findall(f".//{{{_W}}}r"):
+                                for _t in _r.findall(f"{{{_W}}}t"):
+                                    if _t.text:
+                                        _xml_parts.append(_t.text)
+                _xml_text = " ".join(_xml_parts)
+                _norm = lambda s: " ".join(s.lower().split())
+                _should_strip = _norm(pm.text) != _norm(_xml_text)
+            if _should_strip:
                 for _sdt_c in list(elem):
                     if _sdt_c.tag != f"{{{_W}}}pPr":
                         elem.remove(_sdt_c)
         _render_text = pm.text
         if pm.semantic == "role_meta" and "\n" in pm.text:
             _render_text = pm.text.split("\n")[0]
+        # Capture proto text and bold state before modification; used below to
+        # detect rewritten bold-proto slots where original template text differs
+        # from LLM output.  style.bold is not serialised so we read the XML.
+        _proto_text_raw = "".join(_t.text or "" for _t in elem.iter(f"{{{_W}}}t"))
+        _pPr_proto = elem.find(f"{{{_W}}}pPr")
+        _proto_para_bold = (
+            _pPr_proto is not None
+            and _pPr_proto.find(f"{{{_W}}}rPr/{{{_W}}}b") is not None
+        )
         _strip_text_wrapping_breaks(elem, _render_text)
-        _set_para_text(elem, _render_text)
+        _set_para_text(elem, _render_text, normalize_runs=pm.semantic in ("bullet", "paragraph", "role_meta", "role_intro"))
         _clear_sdt_placeholder(elem)
         # Cap oversized font when:
         #   (a) _ext_ blocks cloned from large-font heading protos (original guard), OR
@@ -3059,7 +4794,14 @@ def _render_block_into_elem(
         #       but whose semantic indicates body content — handles the case where a
         #       name-heading slot (sz=64) is reused for a body paragraph by the updater
         #       (e.g. sample 27 right-column: MATTHEW TURNER proto used for bullets).
-        _HEADING_SEMANTICS = frozenset({"section_heading", "role_header"})
+        _HEADING_SEMANTICS = frozenset({
+            "section_heading", "role_header",
+            # Classification-propagated adjunct types — preserve their template
+            # formatting (font size, bold label) rather than treating them as
+            # generic body content that should be capped or stripped.
+            "role_intro", "role_key_technologies", "role_tech_stack",
+            "role_project_label",
+        })
         _is_exempt_font = (
             exempt_font_cap_ids is not None
             and block.para_id is not None
@@ -3127,6 +4869,84 @@ def _render_block_into_elem(
                         _fel_ext2 = _rPr_ext2.find(_ftag_ext2)
                         if _fel_ext2 is not None:
                             _rPr_ext2.remove(_fel_ext2)
+        # Strip bold from rewritten non-heading paras whose XML proto is ALL BOLD.
+        # Template project headers (e.g. "OTA project") are styled all-bold; when
+        # the LLM assigns achievement text to such a slot the bold must not carry
+        # over.  Detected by comparing proto text (captured before _set_para_text)
+        # against the updated pm.text — a mismatch means the slot was rewritten.
+        # Bold may be set at paragraph-level (pPr/rPr/b) or run-level (r/rPr/b);
+        # both are stripped so the inherited formatting does not persist.
+        if (
+            pm.text.strip()
+            and pm.semantic not in _HEADING_SEMANTICS
+            and _proto_para_bold
+            and _proto_text_raw.strip() != pm.text.strip()
+        ):
+            for _rPr_ab in elem.iter(f"{{{_W}}}rPr"):
+                _par_ab = _rPr_ab.getparent()
+                if _par_ab is not None and _par_ab.tag in (
+                    f"{{{_W}}}r", f"{{{_W}}}pPr"
+                ):
+                    for _btag_ab in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                        _bel_ab = _rPr_ab.find(_btag_ab)
+                        if _bel_ab is not None:
+                            _rPr_ab.remove(_bel_ab)
+        # Strip bullet/list formatting (w:numPr) for semantic types that represent
+        # prose or technology-block text, not list items.  Some template paragraphs
+        # inherit ListParagraph style with w:numPr when their document position
+        # happens to fall inside a numbered list; for role_intro, role_key_technologies,
+        # role_tech_stack, and role_project_label content this bullet marker is wrong.
+        _NO_BULLET_SEMANTICS = frozenset({
+            "role_intro", "role_key_technologies", "role_tech_stack", "role_project_label",
+        })
+        if pm.semantic in _NO_BULLET_SEMANTICS and pm.text.strip():
+            _pPr_nb = elem.find(f"{{{_W}}}pPr")
+            if _pPr_nb is not None:
+                _numPr_nb = _pPr_nb.find(f"{{{_W}}}numPr")
+                if _numPr_nb is not None:
+                    _pPr_nb.remove(_numPr_nb)
+        # Semantic visual styling: apply italic for narrative intro types and bold
+        # for technology/label types so each semantic kind renders distinctly.
+        # Applied after bold-strip and bullet-strip so these take final precedence.
+        _SEM_ITALIC = frozenset({"role_intro", "project_intro"})
+        _SEM_BOLD = frozenset({
+            "role_key_technologies", "role_tech_stack",
+            "role_project_label", "highlight_header",
+        })
+        if pm.semantic in _SEM_ITALIC and pm.text.strip():
+            _pPr_si = elem.find(f"{{{_W}}}pPr")
+            if _pPr_si is not None:
+                _rPr_ppr_si = _pPr_si.find(f"{{{_W}}}rPr")
+                if _rPr_ppr_si is None:
+                    _rPr_ppr_si = etree.SubElement(_pPr_si, f"{{{_W}}}rPr")
+                for _t_si in (f"{{{_W}}}i", f"{{{_W}}}iCs"):
+                    if _rPr_ppr_si.find(_t_si) is None:
+                        etree.SubElement(_rPr_ppr_si, _t_si)
+            for _r_si in elem.findall(f".//{{{_W}}}r"):
+                _rPr_si = _r_si.find(f"{{{_W}}}rPr")
+                if _rPr_si is None:
+                    _rPr_si = etree.SubElement(_r_si, f"{{{_W}}}rPr")
+                    _r_si.insert(0, _rPr_si)
+                for _t_si in (f"{{{_W}}}i", f"{{{_W}}}iCs"):
+                    if _rPr_si.find(_t_si) is None:
+                        etree.SubElement(_rPr_si, _t_si)
+        elif pm.semantic in _SEM_BOLD and pm.text.strip():
+            _pPr_sb = elem.find(f"{{{_W}}}pPr")
+            if _pPr_sb is not None:
+                _rPr_ppr_sb = _pPr_sb.find(f"{{{_W}}}rPr")
+                if _rPr_ppr_sb is None:
+                    _rPr_ppr_sb = etree.SubElement(_pPr_sb, f"{{{_W}}}rPr")
+                for _t_sb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                    if _rPr_ppr_sb.find(_t_sb) is None:
+                        etree.SubElement(_rPr_ppr_sb, _t_sb)
+            for _r_sb in elem.findall(f".//{{{_W}}}r"):
+                _rPr_sb = _r_sb.find(f"{{{_W}}}rPr")
+                if _rPr_sb is None:
+                    _rPr_sb = etree.SubElement(_r_sb, f"{{{_W}}}rPr")
+                    _r_sb.insert(0, _rPr_sb)
+                for _t_sb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                    if _rPr_sb.find(_t_sb) is None:
+                        etree.SubElement(_rPr_sb, _t_sb)
         # Strip display-only (Symbol/Wingdings/SymbolMT) fonts from run rPr so
         # that injected text renders with normal characters instead of garbled
         # symbol glyphs.  These fonts map codepoints to dingbats/symbols rather
@@ -3167,6 +4987,8 @@ def _render_block_into_elem(
                         del _ind.attrib[f"{{{_W}}}left"]
                         if not _ind.attrib:
                             _pPr.remove(_ind)
+        if pm.semantic == "section_heading":
+            _strip_decorative_inline_images(elem)
     _collapse_oversized_spacer(elem)
     return elem
 
@@ -4070,9 +5892,17 @@ def _build_para_lookup(doc: ResumeDocument) -> dict[str, ParaModel]:
         else:
             seen[pm.para_id] = pm
 
+    def _force(pm: ParaModel) -> None:
+        """Override any existing entry — used for sec_summary_inserted which
+        reuses an empty header_para slot and must take priority over it."""
+        if pm.para_id:
+            seen[pm.para_id] = pm
+
     for pm in doc.header_paras:
         _add(pm)
     for sec in doc.sections:
+        _is_summary_inserted = getattr(sec, "section_id", "") == "sec_summary_inserted"
+        _add_fn = _force if _is_summary_inserted else _add
         _add(sec.heading)
         for role in sec.roles:
             _add(role.header)
@@ -4083,12 +5913,662 @@ def _build_para_lookup(doc: ResumeDocument) -> dict[str, ParaModel]:
             for pm in role.bullets:
                 _add(pm)
         for pm in sec.body_paras:
-            _add(pm)
+            _add_fn(pm)
     # Fallback: all_paras may contain paragraphs not yet in semantic sections
     for pm in (doc.all_paras or []):
         if pm.para_id and pm.para_id not in seen:
             seen[pm.para_id] = pm
     return seen
+
+
+def _build_synthetic_para(pm, pid: str):
+    """Build a w:p element for a ParaModel that has no LayoutParagraphBlock.
+
+    Used by the v2 timeline table to render right_para_ids that exist in
+    para_lookup but were never added to layout_blocks (e.g. para_103/104/115/116
+    in Sample 35 where the LLM assigned content to slots absent from the proto).
+    """
+    from copy import deepcopy
+    from lxml import etree
+
+    elem = None
+    if pm.style is not None and pm.style.xml_proto is not None:
+        elem = deepcopy(pm.style.xml_proto)
+        _strip_last_rendered_page_breaks(elem)
+        _strip_column_break(elem)
+        _strip_text_wrapping_breaks(elem, pm.text)
+        _set_para_text(
+            elem, pm.text,
+            normalize_runs=pm.semantic in ("bullet", "paragraph", "role_meta", "role_intro"),
+        )
+        _clear_sdt_placeholder(elem)
+    elif pm.paragraph_profile is not None:
+        from tailor.compiler.para_builder import build_para_element
+        elem = build_para_element(pm)
+    if elem is None:
+        return None
+    if pid and not elem.get(f"{{{_W14}}}paraId"):
+        elem.set(f"{{{_W14}}}paraId", pid)
+    return elem
+
+
+def _build_timeline_row_table(
+    doc: "ResumeDocument",
+    para_lookup: dict,
+    layout_blocks: list,
+    main_pgSz_w: "str | None",
+    main_pgSz_h: "str | None",
+    main_is_multicolumn: bool,
+    sectPr,
+) -> "tuple[Any, frozenset[str]]":
+    """Build a borderless two-column w:tbl for the timeline experience section.
+
+    Each row corresponds to one experience role whose layout_binding has
+    kind == "timeline_left_role_right".  Left cell receives the original
+    date sidebar paragraph XML verbatim; right cell receives the updated
+    role content rendered via _render_block_into_elem.
+
+    Returns (tbl_element, consumed_pids) where consumed_pids is the frozenset
+    of para_ids that were placed inside the table.  The caller's flat loop
+    must skip any LayoutParagraphBlock whose para_id is in this set.
+    """
+    from copy import deepcopy
+    from lxml import etree
+
+    # ── Collect timeline roles in row_index order ─────────────────────────
+    timeline_roles = []
+    for sec in (doc.sections or []):
+        for role in (sec.roles or []):
+            lb = role.layout_binding
+            if lb and lb.get("kind") == "timeline_left_role_right":
+                timeline_roles.append(role)
+    if not timeline_roles:
+        return None, frozenset()
+    timeline_roles.sort(key=lambda r: r.layout_binding["row_index"])
+
+    # ── Build para_id → LayoutParagraphBlock lookup ───────────────────────
+    lb_by_pid: dict[str, Any] = {}
+    for blk in layout_blocks:
+        if isinstance(blk, LayoutParagraphBlock) and blk.para_id:
+            lb_by_pid[blk.para_id] = blk
+
+    # ── Build anchor → [_ext_ blocks] in layout_blocks order ─────────────
+    ext_by_anchor: dict[str, list] = {}
+    for blk in layout_blocks:
+        if not isinstance(blk, LayoutParagraphBlock) or not blk.para_id:
+            continue
+        if "_ext_" not in blk.para_id:
+            continue
+        # para_id format: "{anchor_pid}_ext_{n}"
+        anchor = blk.para_id.split("_ext_")[0]
+        ext_by_anchor.setdefault(anchor, []).append(blk)
+
+    # ── Page geometry ─────────────────────────────────────────────────────
+    _content_w = 8748  # A4 default (~16 cm)
+    if sectPr is not None:
+        _pgSz = sectPr.find(f"{{{_W}}}pgSz")
+        _pgMar = sectPr.find(f"{{{_W}}}pgMar")
+        if _pgSz is not None and _pgMar is not None:
+            try:
+                _pw = int(_pgSz.get(f"{{{_W}}}w") or 0)
+                _ml = int(_pgMar.get(f"{{{_W}}}left") or 0)
+                _mr = int(_pgMar.get(f"{{{_W}}}right") or 0)
+                if _pw > 0:
+                    _content_w = _pw - _ml - _mr
+            except (ValueError, TypeError):
+                pass
+
+    _left_w = timeline_roles[0].layout_binding.get("column_width_twips", 1321)
+    _right_w = max(_content_w - _left_w, 1000)
+
+    # ── Build w:tbl element ───────────────────────────────────────────────
+    tbl = etree.Element(f"{{{_W}}}tbl")
+
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    _tblW = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    _tblW.set(f"{{{_W}}}w", str(_content_w))
+    _tblW.set(f"{{{_W}}}type", "dxa")
+    _tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for _bn in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        _be = etree.SubElement(_tblBorders, f"{{{_W}}}{_bn}")
+        _be.set(f"{{{_W}}}val", "none")
+        _be.set(f"{{{_W}}}sz", "0")
+        _be.set(f"{{{_W}}}space", "0")
+        _be.set(f"{{{_W}}}color", "auto")
+    _tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    _tblLayout.set(f"{{{_W}}}type", "fixed")
+    _tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for _ms in ("top", "left", "bottom", "right"):
+        _me = etree.SubElement(_tblCellMar, f"{{{_W}}}{_ms}")
+        _me.set(f"{{{_W}}}w", "0")
+        _me.set(f"{{{_W}}}type", "dxa")
+
+    tblGrid = etree.SubElement(tbl, f"{{{_W}}}tblGrid")
+    _gcL = etree.SubElement(tblGrid, f"{{{_W}}}gridCol")
+    _gcL.set(f"{{{_W}}}w", str(_left_w))
+    _gcR = etree.SubElement(tblGrid, f"{{{_W}}}gridCol")
+    _gcR.set(f"{{{_W}}}w", str(_right_w))
+
+    # ── Build rows ────────────────────────────────────────────────────────
+    n_roles = len(timeline_roles)
+    for _ri, _role in enumerate(timeline_roles):
+        _lb = _role.layout_binding
+        _is_last = _ri == n_roles - 1
+
+        tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+        trPr = etree.SubElement(tr, f"{{{_W}}}trPr")
+        etree.SubElement(trPr, f"{{{_W}}}cantSplit")
+
+        # Left cell: leading_spacers + date_paras [+ trailing_spacers if last row]
+        tc_left = etree.SubElement(tr, f"{{{_W}}}tc")
+        tcPr_left = etree.SubElement(tc_left, f"{{{_W}}}tcPr")
+        _twL = etree.SubElement(tcPr_left, f"{{{_W}}}tcW")
+        _twL.set(f"{{{_W}}}w", str(_left_w))
+        _twL.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr_left, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+
+        _left_pids: list[str] = (
+            list(_lb.get("left_leading_spacer_ids") or [])
+            + list(_lb.get("left_para_ids") or [])
+        )
+        if _is_last:
+            _left_pids += list(_lb.get("left_trailing_spacer_ids") or [])
+
+        for _pid in _left_pids:
+            _blk = lb_by_pid.get(_pid)
+            if _blk and _blk.xml_proto_xml:
+                _el = etree.fromstring(_blk.xml_proto_xml)
+                _strip_last_rendered_page_breaks(_el)
+                _strip_non_column_section_break(_el, main_pgSz_w, main_pgSz_h, False)
+                if _pid and not _el.get(f"{{{_W14}}}paraId"):
+                    _el.set(f"{{{_W14}}}paraId", _pid)
+                _pPr = _el.find(f"{{{_W}}}pPr")
+                if _pPr is not None:
+                    _sp = _pPr.find(f"{{{_W}}}spacing")
+                    if _sp is not None:
+                        _sp.attrib.pop(f"{{{_W}}}before", None)
+                        _sp.attrib.pop(f"{{{_W}}}after", None)
+                        if not _sp.attrib:
+                            _pPr.remove(_sp)
+                tc_left.append(_el)
+
+        if not tc_left.findall(f"{{{_W}}}p"):
+            tc_left.append(etree.Element(f"{{{_W}}}p"))
+
+        # Right cell: role header/meta/bullets + _ext_ blocks
+        tc_right = etree.SubElement(tr, f"{{{_W}}}tc")
+        tcPr_right = etree.SubElement(tc_right, f"{{{_W}}}tcPr")
+        _twR = etree.SubElement(tcPr_right, f"{{{_W}}}tcW")
+        _twR.set(f"{{{_W}}}w", str(_right_w))
+        _twR.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr_right, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+
+        for _pid in (_lb.get("right_para_ids") or []):
+            _blk = lb_by_pid.get(_pid)
+            if _blk:
+                _el = _render_block_into_elem(
+                    _blk, para_lookup, main_pgSz_w, main_pgSz_h,
+                    main_is_multicolumn=False,
+                )
+                if _el is not None:
+                    tc_right.append(_el)
+            # Also render any _ext_ blocks anchored to this right_para_id
+            for _ext_blk in ext_by_anchor.get(_pid, []):
+                _el = _render_block_into_elem(
+                    _ext_blk, para_lookup, main_pgSz_w, main_pgSz_h,
+                    main_is_multicolumn=False,
+                )
+                if _el is not None:
+                    tc_right.append(_el)
+
+        if not tc_right.findall(f"{{{_W}}}p"):
+            tc_right.append(etree.Element(f"{{{_W}}}p"))
+
+        for _rc_p in tc_right.findall(f"{{{_W}}}p"):
+            _rc_pPr = _rc_p.find(f"{{{_W}}}pPr")
+            if _rc_pPr is None:
+                continue
+            _rc_sp = _rc_pPr.find(f"{{{_W}}}spacing")
+            if _rc_sp is None:
+                continue
+            _rc_sp.attrib.pop(f"{{{_W}}}before", None)
+            if not _rc_sp.attrib:
+                _rc_pPr.remove(_rc_sp)
+
+    # ── Compute consumed_pids ─────────────────────────────────────────────
+    _consumed: set[str] = set()
+    for _role in timeline_roles:
+        _lb = _role.layout_binding
+        _consumed.update(_lb.get("left_leading_spacer_ids") or [])
+        _consumed.update(_lb.get("left_para_ids") or [])
+        _consumed.update(_lb.get("left_trailing_spacer_ids") or [])
+        for _rp in (_lb.get("right_para_ids") or []):
+            _consumed.add(_rp)
+            for _ext_blk in ext_by_anchor.get(_rp, []):
+                if _ext_blk.para_id:
+                    _consumed.add(_ext_blk.para_id)
+
+    # Also consume any timeline-left pids not claimed by any role (e.g. extra
+    # left-column date paras beyond the last experience role).
+    _all_left_pids: frozenset[str] = frozenset()
+    for _sec in (doc.sections or []):
+        for _r in (_sec.roles or []):
+            _lb2 = _r.layout_binding
+            if _lb2 and _lb2.get("kind") == "timeline_left_role_right":
+                _all_left_pids = _all_left_pids | frozenset(
+                    _lb2.get("left_para_ids") or []
+                ) | frozenset(
+                    _lb2.get("left_leading_spacer_ids") or []
+                ) | frozenset(
+                    _lb2.get("left_trailing_spacer_ids") or []
+                )
+    _consumed.update(_all_left_pids)
+
+    # Build a set of all header_para pids for range-based consumption below.
+    _header_pid_set: frozenset[str] = frozenset(
+        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
+    )
+
+    # Include col-break paragraphs, intermediate sectPr paragraphs, and any
+    # header_para pids that fall between the first and last consumed block in
+    # layout_blocks order.  This catches date-column paras (e.g. para_55-58)
+    # that belong to non-experience sections but appear inside the two-column
+    # layout region.
+    for _blk in layout_blocks:
+        if not isinstance(_blk, LayoutParagraphBlock) or not _blk.para_id:
+            continue
+        if _blk.xml_proto_xml and 'type="column"' in _blk.xml_proto_xml:
+            _consumed.add(_blk.para_id)
+    _consumed_idx = [
+        i for i, _blk in enumerate(layout_blocks)
+        if isinstance(_blk, LayoutParagraphBlock) and _blk.para_id in _consumed
+    ]
+    if _consumed_idx:
+        _min_i, _max_i = min(_consumed_idx), max(_consumed_idx)
+        for i, _blk in enumerate(layout_blocks):
+            if _min_i <= i <= _max_i:
+                if not isinstance(_blk, LayoutParagraphBlock) or not _blk.para_id:
+                    continue
+                if not _blk.xml_proto_xml:
+                    continue
+                if "sectPr" in _blk.xml_proto_xml:
+                    _consumed.add(_blk.para_id)
+                elif _blk.para_id in _header_pid_set:
+                    # Left-column sidebar paras in the layout region: consume
+                    # even if not bound to an experience role (e.g. education
+                    # dates that appear in the same two-column section region).
+                    _consumed.add(_blk.para_id)
+
+    _log.debug(
+        "TIMELINE_ROW_TABLE: %d roles → %d rows, %d para_ids consumed",
+        n_roles, n_roles, len(_consumed),
+    )
+    return tbl, frozenset(_consumed)
+
+
+def _build_timeline_segments(
+    doc,
+    para_lookup: dict,
+    layout_blocks: list,
+    main_pgSz_w,
+    main_pgSz_h,
+    sectPr,
+):
+    """Build two borderless w:tbl elements for Sample-35-style two-section timelines.
+
+    Segment 1 contains roles whose right_para_ids all appear BEFORE the sectPr
+    boundary paragraph in layout_blocks order.  Segment 2 contains roles after it.
+
+    Returns (seg1_tbl, seg2_tbl, consumed_pids, diag_dict).
+
+    consumed_pids includes ONLY explicit binding IDs (left_leading_spacer_ids,
+    left_para_ids, left_trailing_spacer_ids, right_para_ids, _ext_ para_ids).
+    No range sweeping.  Structural paragraphs para_59 and para_120 are NOT consumed.
+    """
+    from lxml import etree
+
+    # Collect timeline roles in row_index order
+    timeline_roles = []
+    for sec in (doc.sections or []):
+        for role in (sec.roles or []):
+            lb = role.layout_binding
+            if lb and lb.get("kind") == "timeline_left_role_right":
+                timeline_roles.append(role)
+    if not timeline_roles:
+        return None, None, frozenset(), {}
+    timeline_roles.sort(key=lambda r: r.layout_binding["row_index"])
+
+    # Build para_id → LayoutParagraphBlock and para_id → index lookups
+    lb_by_pid: dict = {}
+    pid_to_idx: dict = {}
+    for i, blk in enumerate(layout_blocks):
+        if isinstance(blk, LayoutParagraphBlock) and blk.para_id:
+            lb_by_pid[blk.para_id] = blk
+            pid_to_idx[blk.para_id] = i
+
+    # Build anchor → [_ext_ blocks] in layout_blocks order
+    ext_by_anchor: dict = {}
+    for blk in layout_blocks:
+        if not isinstance(blk, LayoutParagraphBlock) or not blk.para_id:
+            continue
+        if "_ext_" not in blk.para_id:
+            continue
+        anchor = blk.para_id.split("_ext_")[0]
+        ext_by_anchor.setdefault(anchor, []).append(blk)
+
+    # Locate sectPr boundary that cleanly splits role groups:
+    # some roles have ALL right_para_ids before it, others have ALL after it.
+    def _idx_of(pid):
+        return pid_to_idx.get(pid, -1)
+
+    right_max_idx: dict = {}  # row_index → max layout_blocks idx of any right_para_id
+    right_min_idx: dict = {}  # row_index → min layout_blocks idx
+    for r in timeline_roles:
+        lb = r.layout_binding
+        ri = lb["row_index"]
+        idxs = [_idx_of(p) for p in (lb.get("right_para_ids") or []) if _idx_of(p) >= 0]
+        if idxs:
+            right_max_idx[ri] = max(idxs)
+            right_min_idx[ri] = min(idxs)
+
+    sectpr_pid = None
+    sectpr_idx = -1
+    for i, blk in enumerate(layout_blocks):
+        if not isinstance(blk, LayoutParagraphBlock) or not blk.para_id:
+            continue
+        if not blk.xml_proto_xml or "sectPr" not in blk.xml_proto_xml:
+            continue
+        roles_before = [ri for ri, mx in right_max_idx.items() if mx < i]
+        roles_after = [ri for ri, mn in right_min_idx.items() if mn > i]
+        if roles_before and roles_after:
+            sectpr_pid = blk.para_id
+            sectpr_idx = i
+            break
+
+    if sectpr_pid is None:
+        _log.debug("TIMELINE_SEGMENTS_V2: no sectPr boundary found; skipping")
+        return None, None, frozenset(), {}
+
+    # Split roles into two segments
+    seg1_roles = [r for r in timeline_roles
+                  if right_max_idx.get(r.layout_binding["row_index"], -1) < sectpr_idx]
+    seg2_roles = [r for r in timeline_roles
+                  if right_min_idx.get(r.layout_binding["row_index"], 999999) > sectpr_idx]
+
+    # Page geometry from sectPr
+    _content_w = 8748
+    if sectPr is not None:
+        _pgSz = sectPr.find(f"{{{_W}}}pgSz")
+        _pgMar = sectPr.find(f"{{{_W}}}pgMar")
+        if _pgSz is not None and _pgMar is not None:
+            try:
+                _pw = int(_pgSz.get(f"{{{_W}}}w") or 0)
+                _ml = int(_pgMar.get(f"{{{_W}}}left") or 0)
+                _mr = int(_pgMar.get(f"{{{_W}}}right") or 0)
+                if _pw > 0:
+                    _content_w = _pw - _ml - _mr
+            except (ValueError, TypeError):
+                pass
+    _left_w = timeline_roles[0].layout_binding.get("column_width_twips", 1321)
+    _right_w = max(_content_w - _left_w, 1000)
+
+    consumed: set = set()
+    synthetic_pids: list = []
+    skipped_pids: list = []
+
+    def _make_tbl_shell():
+        tbl = etree.Element(f"{{{_W}}}tbl")
+        tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+        _tblW = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+        _tblW.set(f"{{{_W}}}w", str(_content_w))
+        _tblW.set(f"{{{_W}}}type", "dxa")
+        _tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+        for _bn in ("top", "left", "bottom", "right", "insideH", "insideV"):
+            _be = etree.SubElement(_tblBorders, f"{{{_W}}}{_bn}")
+            _be.set(f"{{{_W}}}val", "none")
+            _be.set(f"{{{_W}}}sz", "0")
+            _be.set(f"{{{_W}}}space", "0")
+            _be.set(f"{{{_W}}}color", "auto")
+        _tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+        _tblLayout.set(f"{{{_W}}}type", "fixed")
+        _tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+        for _ms in ("top", "left", "bottom", "right"):
+            _me = etree.SubElement(_tblCellMar, f"{{{_W}}}{_ms}")
+            _me.set(f"{{{_W}}}w", "0")
+            _me.set(f"{{{_W}}}type", "dxa")
+        tblGrid = etree.SubElement(tbl, f"{{{_W}}}tblGrid")
+        _gcL = etree.SubElement(tblGrid, f"{{{_W}}}gridCol")
+        _gcL.set(f"{{{_W}}}w", str(_left_w))
+        _gcR = etree.SubElement(tblGrid, f"{{{_W}}}gridCol")
+        _gcR.set(f"{{{_W}}}w", str(_right_w))
+        return tbl
+
+    def _build_seg(roles_for_seg):
+        tbl = _make_tbl_shell()
+        n = len(roles_for_seg)
+        for _ri, _role in enumerate(roles_for_seg):
+            _lb = _role.layout_binding
+            _is_last = _ri == n - 1
+
+            tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+            # Left cell: date_paras only.
+            # Leading and trailing spacers are consumed (to prevent flat-loop emission)
+            # but NOT rendered inside the cell: in the original two-column layout they
+            # vertically positioned the date opposite right-column content. In a table
+            # the row alignment handles positioning, so spacers only create blank gaps.
+            tc_left = etree.SubElement(tr, f"{{{_W}}}tc")
+            tcPr_left = etree.SubElement(tc_left, f"{{{_W}}}tcPr")
+            _twL = etree.SubElement(tcPr_left, f"{{{_W}}}tcW")
+            _twL.set(f"{{{_W}}}w", str(_left_w))
+            _twL.set(f"{{{_W}}}type", "dxa")
+            etree.SubElement(tcPr_left, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+
+            _left_pids = list(_lb.get("left_para_ids") or [])
+
+            for _pid in _left_pids:
+                _blk = lb_by_pid.get(_pid)
+                if _blk and _blk.xml_proto_xml:
+                    _el = etree.fromstring(_blk.xml_proto_xml)
+                    _strip_last_rendered_page_breaks(_el)
+                    _strip_non_column_section_break(_el, main_pgSz_w, main_pgSz_h, False)
+                    if not _el.get(f"{{{_W14}}}paraId"):
+                        _el.set(f"{{{_W14}}}paraId", _pid)
+                    # Strip paragraph spacing tuned for newspaper-column positioning:
+                    # inside a table cell, w:before/w:after offsets the date text
+                    # downward from the cell top, misaligning it with the role header.
+                    _pPr = _el.find(f"{{{_W}}}pPr")
+                    if _pPr is not None:
+                        _sp = _pPr.find(f"{{{_W}}}spacing")
+                        if _sp is not None:
+                            _sp.attrib.pop(f"{{{_W}}}before", None)
+                            _sp.attrib.pop(f"{{{_W}}}after", None)
+                            if not _sp.attrib:
+                                _pPr.remove(_sp)
+                    tc_left.append(_el)
+                    consumed.add(_pid)
+
+            if not tc_left.findall(f"{{{_W}}}p"):
+                tc_left.append(etree.Element(f"{{{_W}}}p"))
+
+            # Right cell: right_para_ids + _ext_ blocks
+            tc_right = etree.SubElement(tr, f"{{{_W}}}tc")
+            tcPr_right = etree.SubElement(tc_right, f"{{{_W}}}tcPr")
+            _twR = etree.SubElement(tcPr_right, f"{{{_W}}}tcW")
+            _twR.set(f"{{{_W}}}w", str(_right_w))
+            _twR.set(f"{{{_W}}}type", "dxa")
+            etree.SubElement(tcPr_right, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+
+            for _pid in (_lb.get("right_para_ids") or []):
+                _blk = lb_by_pid.get(_pid)
+                if _blk:
+                    _el = _render_block_into_elem(
+                        _blk, para_lookup, main_pgSz_w, main_pgSz_h,
+                        main_is_multicolumn=False,
+                    )
+                    if _el is not None:
+                        tc_right.append(_el)
+                        consumed.add(_pid)
+                else:
+                    # Synthetic: pid in right_para_ids but absent from layout_blocks
+                    pm = para_lookup.get(_pid)
+                    if pm is not None:
+                        _syn = _build_synthetic_para(pm, _pid)
+                        if _syn is not None:
+                            tc_right.append(_syn)
+                            consumed.add(_pid)
+                            synthetic_pids.append(_pid)
+                            _log.debug(
+                                "TIMELINE_SYNTHETIC_PARA: para_id=%r text=%r",
+                                _pid, (pm.text or "")[:60],
+                            )
+                        else:
+                            skipped_pids.append(_pid)
+                            _log.warning("TIMELINE_SYNTHETIC_PARA_FAILED: para_id=%r", _pid)
+                    else:
+                        skipped_pids.append(_pid)
+                        _log.warning("TIMELINE_PARA_NOT_FOUND: para_id=%r skipped", _pid)
+
+                for _ext_blk in ext_by_anchor.get(_pid, []):
+                    _el = _render_block_into_elem(
+                        _ext_blk, para_lookup, main_pgSz_w, main_pgSz_h,
+                        main_is_multicolumn=False,
+                    )
+                    if _el is not None:
+                        tc_right.append(_el)
+                        if _ext_blk.para_id:
+                            consumed.add(_ext_blk.para_id)
+
+            if not tc_right.findall(f"{{{_W}}}p"):
+                tc_right.append(etree.Element(f"{{{_W}}}p"))
+
+            # Strip w:spacing w:before from ALL right-cell paragraphs.
+            # In the newspaper-column template, w:before values on paragraphs after
+            # a column break had no visual effect (column break resets position).
+            # Inside a table cell every w:before renders as real whitespace above
+            # that paragraph, inflating row heights.  Multi-line role headers carry
+            # identical w:before on all header paragraphs (not just the first),
+            # so stripping only para[0] is insufficient.
+            # w:after (always absent), w:line, and w:lineRule are left untouched.
+            for _rc_p in tc_right.findall(f"{{{_W}}}p"):
+                _rc_pPr = _rc_p.find(f"{{{_W}}}pPr")
+                if _rc_pPr is None:
+                    continue
+                _rc_sp = _rc_pPr.find(f"{{{_W}}}spacing")
+                if _rc_sp is None:
+                    continue
+                _rc_sp.attrib.pop(f"{{{_W}}}before", None)
+                if not _rc_sp.attrib:
+                    _rc_pPr.remove(_rc_sp)
+
+        return tbl
+
+    seg1_tbl = _build_seg(seg1_roles) if seg1_roles else None
+    seg2_tbl = _build_seg(seg2_roles) if seg2_roles else None
+
+    # Scope multi-col sectPr consumption to the inter-segment boundary (≤ sectpr_idx).
+    # Multi-col sectPrs after sectpr_idx (e.g. para_128) govern post-table section
+    # geometry (top margin, page size) and must NOT be consumed.  The main loop emits
+    # them with only w:cols stripped so Education/Skills/Projects render single-column
+    # with their original margins intact.
+    _multi_col_sectpr_consumed: set[str] = set()
+    _multi_col_sectpr_strip_pids: set[str] = set()
+    for _blk in layout_blocks:
+        _blk_pid = getattr(_blk, "para_id", None)
+        _blk_xml = getattr(_blk, "xml_proto_xml", None)
+        if not _blk_pid or not _blk_xml:
+            continue
+        _blk_idx = pid_to_idx.get(_blk_pid, -1)
+        try:
+            _blk_el = etree.fromstring(_blk_xml)
+        except Exception:
+            continue
+        _blk_sp = _blk_el.find(f".//{{{_W}}}sectPr")
+        if _blk_sp is not None and _blk_sp.find(f"{{{_W}}}cols") is not None:
+            if _blk_idx <= sectpr_idx:
+                _multi_col_sectpr_consumed.add(_blk_pid)
+            else:
+                _multi_col_sectpr_strip_pids.add(_blk_pid)
+    consumed.update(_multi_col_sectpr_consumed)
+    if _multi_col_sectpr_consumed:
+        _log.debug(
+            "TIMELINE_V2_CONSUME_SECTPRS: %d consumed (≤ sectpr_idx %d): %s",
+            len(_multi_col_sectpr_consumed), sectpr_idx, sorted(_multi_col_sectpr_consumed),
+        )
+    if _multi_col_sectpr_strip_pids:
+        _log.debug(
+            "TIMELINE_V2_STRIP_SECTPR_COLS: %d outside boundary (emit + strip w:cols): %s",
+            len(_multi_col_sectpr_strip_pids), sorted(_multi_col_sectpr_strip_pids),
+        )
+
+    # Also consume ALL left spacer pids from every role to prevent stray flat-loop emission
+    for r in timeline_roles:
+        lb = r.layout_binding
+        consumed.update(lb.get("left_leading_spacer_ids") or [])
+        consumed.update(lb.get("left_trailing_spacer_ids") or [])
+
+    # Consume header_para blocks within the consumed-index range.
+    # These are sidebar date paras for non-Experience content (e.g. para_55-58 in
+    # S35 which carry Education section dates in the same left column).  They are not
+    # in any role binding but appear inside the two-column newspaper region and must
+    # be suppressed to prevent orphan body-paragraph emission after the tables.
+    _hp_ids: frozenset = frozenset(
+        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
+    )
+    if _hp_ids:
+        _ci = sorted(pid_to_idx[p] for p in consumed if p in pid_to_idx)
+        if _ci:
+            _ci_min, _ci_max = _ci[0], _ci[-1]
+            for _blk in layout_blocks[_ci_min:_ci_max + 1]:
+                if (isinstance(_blk, LayoutParagraphBlock)
+                        and _blk.para_id
+                        and _blk.para_id in _hp_ids):
+                    consumed.add(_blk.para_id)
+
+    # Find seg1 col-break heading: first non-consumed block with type="column" before
+    # the first seg1 right_para_id (this is para_59, the Experience section heading).
+    seg1_heading_pid = None
+    if seg1_roles:
+        _seg1_right_all = set()
+        for r in seg1_roles:
+            _seg1_right_all.update(r.layout_binding.get("right_para_ids") or [])
+        _seg1_right_min = min((pid_to_idx[p] for p in _seg1_right_all if p in pid_to_idx), default=999999)
+        for blk in layout_blocks[:_seg1_right_min]:
+            if (isinstance(blk, LayoutParagraphBlock)
+                    and blk.para_id
+                    and blk.para_id not in consumed
+                    and blk.xml_proto_xml
+                    and 'type="column"' in blk.xml_proto_xml):
+                seg1_heading_pid = blk.para_id
+                break
+
+    # Find seg2 trigger: first consumed pid of seg2 that appears after sectpr_idx
+    seg2_trigger_pid = None
+    for blk in layout_blocks[sectpr_idx + 1:]:
+        if isinstance(blk, LayoutParagraphBlock) and blk.para_id and blk.para_id in consumed:
+            seg2_trigger_pid = blk.para_id
+            break
+
+    diag = {
+        "sectpr_pid": sectpr_pid,
+        "seg1_heading_pid": seg1_heading_pid,
+        "seg2_trigger_pid": seg2_trigger_pid,
+        "seg1_roles": [r.layout_binding["row_index"] for r in seg1_roles],
+        "seg2_roles": [r.layout_binding["row_index"] for r in seg2_roles],
+        "consumed_count": len(consumed),
+        "synthetic_pids": synthetic_pids,
+        "skipped_pids": skipped_pids,
+        "multicol_sectpr_strip_pids": sorted(_multi_col_sectpr_strip_pids),
+    }
+    _log.debug(
+        "TIMELINE_SEGMENTS_V2: seg1=%d roles, seg2=%d roles, "
+        "consumed=%d pids, synthetic=%s, skipped=%s, "
+        "heading=%r, sectpr=%r, seg2_trigger=%r",
+        len(seg1_roles), len(seg2_roles), len(consumed),
+        synthetic_pids, skipped_pids,
+        seg1_heading_pid, sectpr_pid, seg2_trigger_pid,
+    )
+    return seg1_tbl, seg2_tbl, frozenset(consumed), diag
 
 
 def _render_from_layout_blocks(
@@ -4345,6 +6825,86 @@ def _render_from_layout_blocks(
         pm.para_id for pm in (doc.header_paras or []) if pm.para_id
     )
 
+    # Timeline-binding verbatim set: left-column date sidebar paragraphs and
+    # spacers that must NEVER have _set_para_text called on them.  Built from
+    # role.layout_binding where kind == "timeline_left_role_right".  Empty
+    # frozenset for all templates that do not carry a layout_binding — zero cost.
+    _timeline_left_pids: frozenset[str] = frozenset()
+    for _tlb_sec in doc.sections:
+        for _tlb_role in (_tlb_sec.roles or []):
+            _tlb = _tlb_role.layout_binding
+            if _tlb and _tlb.get("kind") == "timeline_left_role_right":
+                _timeline_left_pids = _timeline_left_pids | frozenset(
+                    _tlb.get("left_para_ids") or []
+                ) | frozenset(
+                    _tlb.get("left_leading_spacer_ids") or []
+                ) | frozenset(
+                    _tlb.get("left_trailing_spacer_ids") or []
+                )
+    if _timeline_left_pids:
+        _log.debug(
+            "TIMELINE_LEFT_VERBATIM_SET: %d para_ids will be emitted verbatim",
+            len(_timeline_left_pids),
+        )
+
+    # Timeline v2: two-segment table reconstruction.
+    # Auto-enabled when _TIMELINE_ROW_TABLE_V2_ENABLED is True (the default) and
+    # this document has timeline layout bindings with valid left/right para_ids.
+    # Set _TIMELINE_ROW_TABLE_V2_ENABLED=False via _set_timeline_row_table_v2(False)
+    # to disable globally (kill switch).
+    _tl_v2_eligible = (
+        bool(_timeline_left_pids)
+        and any(
+            (r.layout_binding or {}).get("left_para_ids")
+            for sec in (doc.sections or [])
+            for r in (sec.roles or [])
+            if (r.layout_binding or {}).get("kind") == "timeline_left_role_right"
+        )
+    )
+    _tl_v2_active = bool(_tl_v2_eligible and _TIMELINE_ROW_TABLE_V2_ENABLED)
+    _log.debug(
+        "TIMELINE_V2_STATUS: enabled=%s eligible=%s active=%s timeline_pids=%d",
+        _TIMELINE_ROW_TABLE_V2_ENABLED,
+        _tl_v2_eligible,
+        _tl_v2_active,
+        len(_timeline_left_pids),
+    )
+    # v2 replaces the two-column layout with explicit tables, so the main sectPr
+    # must NOT carry w:cols.  The _main_is_multicolumn detection above may have
+    # injected w:cols into sectPr (to read column widths); strip it now so
+    # LibreOffice does not constrain the v2 tables to one column's width.
+    if _tl_v2_active and sectPr is not None:
+        _v2_cols_el = sectPr.find(f"{{{_W}}}cols")
+        if _v2_cols_el is not None:
+            sectPr.remove(_v2_cols_el)
+            _log.debug("TIMELINE_V2: stripped w:cols from main sectPr")
+    _tl_seg1_tbl = None
+    _tl_seg2_tbl = None
+    _tl_consumed: frozenset = frozenset()
+    _tl_seg1_heading_pid: "str | None" = None
+    _tl_seg2_trigger_pid: "str | None" = None
+    _tl_sectpr_pid: "str | None" = None
+    _tl_seg1_emitted = False
+    _tl_seg2_emitted = False
+    _tl_multicol_strip_pids: frozenset = frozenset()
+    if _tl_v2_active:
+        _tl_seg1_tbl, _tl_seg2_tbl, _tl_consumed, _tl_diag = _build_timeline_segments(
+            doc, para_lookup, list(doc.layout_blocks),  # type: ignore[arg-type]
+            _main_pgSz_w, _main_pgSz_h, sectPr,
+        )
+        _tl_seg1_heading_pid = _tl_diag.get("seg1_heading_pid")
+        _tl_seg2_trigger_pid = _tl_diag.get("seg2_trigger_pid")
+        _tl_sectpr_pid = _tl_diag.get("sectpr_pid")
+        _tl_multicol_strip_pids = frozenset(_tl_diag.get("multicol_sectpr_strip_pids") or [])
+        _tl_seg1_rows = len(_tl_seg1_tbl.findall(f"{{{_W}}}tr")) if _tl_seg1_tbl is not None else 0
+        _tl_seg2_rows = len(_tl_seg2_tbl.findall(f"{{{_W}}}tr")) if _tl_seg2_tbl is not None else 0
+        _log.info(
+            "TIMELINE_V2_READY: seg1_rows=%d seg2_rows=%d consumed=%d "
+            "seg1_heading=%r seg2_trigger=%r sectpr=%r",
+            _tl_seg1_rows, _tl_seg2_rows,
+            len(_tl_consumed), _tl_seg1_heading_pid, _tl_seg2_trigger_pid, _tl_sectpr_pid,
+        )
+
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
             tbl_elem = etree.fromstring(block.xml_proto_xml)
@@ -4468,6 +7028,19 @@ def _render_from_layout_blocks(
 
         else:
             # LayoutParagraphBlock
+            # Timeline v2: skip consumed blocks; emit tables at trigger points.
+            if _tl_v2_active and _tl_consumed and block.para_id in _tl_consumed:
+                if (not _tl_seg2_emitted
+                        and _tl_seg2_tbl is not None
+                        and block.para_id == _tl_seg2_trigger_pid):
+                    _tl_seg2_emitted = True
+                    _RENDERER_CREATED_TABLES.add(_tl_seg2_tbl)
+                    if sectPr is not None:
+                        sectPr.addprevious(_tl_seg2_tbl)
+                    else:
+                        body.append(_tl_seg2_tbl)
+                    _log.debug("TIMELINE_SEG2_EMITTED at trigger para_id=%r", block.para_id)
+                continue
             if not block.xml_proto_xml:
                 # No XML prototype: fall back to para_builder or runtime xml_proto
                 pm = para_lookup.get(block.para_id) if block.para_id else None
@@ -4505,29 +7078,98 @@ def _render_from_layout_blocks(
                 _strip_non_column_section_break(
                     elem, _main_pgSz_w, _main_pgSz_h, _main_is_multicolumn
                 )
+                # Strip col-break from the seg1 Experience section heading so it
+                # flows as a plain paragraph above the table (not a column jump).
+                if _tl_v2_active and block.para_id == _tl_seg1_heading_pid:
+                    _strip_column_break(elem)
+                # v2: normalize the sectPr on non-consumed multi-col boundary paras
+                # (e.g. para_128).  The sectPr was part of the 2-column architecture
+                # (w:cols + pgMar for the experience section).  After the synthetic
+                # timeline tables replace that content, the sectPr serves no purpose
+                # and must be removed:
+                #   - Keeping it with type=absent causes an unwanted nextPage break
+                #     before Education/Skills/Projects.
+                #   - Keeping it with type=continuous (old _ensure_continuous approach)
+                #     imposed the sectPr's pgMar (top=860) on post-table content,
+                #     causing geometry shifts in Education/Skills/Projects.
+                # Removing the entire sectPr lets the global body sectPr govern the
+                # remainder of the document without any page break.
+                if (_tl_v2_active and _tl_multicol_strip_pids
+                        and block.para_id in _tl_multicol_strip_pids):
+                    _pPr_strip = elem.find(f"{{{_W}}}pPr")
+                    _sp_strip = _pPr_strip.find(f"{{{_W}}}sectPr") if _pPr_strip is not None else None
+                    if _sp_strip is not None:
+                        _pPr_strip.remove(_sp_strip)
+                    _log.debug(
+                        "TIMELINE_V2_SECTPR_REMOVED: para_id=%r sectPr removed (was 2-col break)",
+                        block.para_id,
+                    )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
-                if pm is not None:
-                    # Ext slots that inherited a multi-SDT proto: strip SDT children
-                    # so the new text is placed in a simple run (same fix as in
-                    # _render_block_into_elem for the two-col-table path).
-                    if block.para_id and "_ext_" in block.para_id:
-                        _sdt_cnt_lb = sum(1 for _c in elem if _c.tag == f"{{{_W}}}sdt")
-                        if _sdt_cnt_lb >= 2:
+                # Timeline-binding guard: left-column date sidebar and spacer
+                # paragraphs are emitted verbatim — _set_para_text must not
+                # rewrite them even when para_lookup has an entry.
+                # preserve_left_verbatim=True in layout_binding is the contract.
+                if _timeline_left_pids and block.para_id in _timeline_left_pids:
+                    _log.debug(
+                        "TIMELINE_LEFT_VERBATIM: para_id=%r", block.para_id
+                    )
+                elif pm is not None:
+                    # Strip SDT children when the block's model text differs from
+                    # what the template SDTs hold (same logic as _render_block_into_elem).
+                    # _set_para_text early-exits on ≥2 SDTs to preserve multi-column
+                    # contact rows; that guard incorrectly also fires for skills rows
+                    # when the LLM replaced their content.
+                    _sdt_cnt_lb = sum(1 for _c in elem if _c.tag == f"{{{_W}}}sdt")
+                    if _sdt_cnt_lb >= 2:
+                        _is_ext_lb = "_ext_" in (block.para_id or "")
+                        _should_strip_lb = _is_ext_lb
+                        if not _is_ext_lb and pm.text.strip():
+                            _xml_parts_lb: list[str] = []
+                            for _child_lb in elem:
+                                if _child_lb.tag == f"{{{_W}}}sdt":
+                                    _sc_lb = _child_lb.find(f"{{{_W}}}sdtContent")
+                                    if _sc_lb is not None:
+                                        for _r_lb in _sc_lb.findall(f".//{{{_W}}}r"):
+                                            for _t_lb in _r_lb.findall(f"{{{_W}}}t"):
+                                                if _t_lb.text:
+                                                    _xml_parts_lb.append(_t_lb.text)
+                            _xml_text_lb = " ".join(_xml_parts_lb)
+                            _norm_lb = lambda s: " ".join(s.lower().split())
+                            _should_strip_lb = _norm_lb(pm.text) != _norm_lb(_xml_text_lb)
+                        if _should_strip_lb:
                             for _sdt_c_lb in list(elem):
                                 if _sdt_c_lb.tag != f"{{{_W}}}pPr":
                                     elem.remove(_sdt_c_lb)
                     _render_text_lb = pm.text
                     if pm.semantic == "role_meta" and "\n" in pm.text:
                         _render_text_lb = pm.text.split("\n")[0]
+                    # Capture proto state before modification for bold-strip detection.
+                    _proto_text_raw_lb = "".join(
+                        _t.text or "" for _t in elem.iter(f"{{{_W}}}t")
+                    )
+                    _pPr_proto_lb = elem.find(f"{{{_W}}}pPr")
+                    _proto_para_bold_lb = (
+                        _pPr_proto_lb is not None
+                        and _pPr_proto_lb.find(f"{{{_W}}}rPr/{{{_W}}}b") is not None
+                    )
                     _strip_text_wrapping_breaks(elem, _render_text_lb)
-                    _set_para_text(elem, _render_text_lb)
+                    _text_written_lb = _set_para_text(
+                        elem, _render_text_lb,
+                        normalize_runs=pm.semantic in (
+                            "bullet", "paragraph", "role_meta", "role_intro"
+                        ),
+                    )
                     _clear_sdt_placeholder(elem)
                     # Reuse the expanded font-cap logic from _render_block_into_elem.
                     # The check covers both _ext_ blocks and any block where the XML
                     # proto carries large run-level fonts but pm.semantic is body content.
                     # Header paragraphs (name/title) are exempt: they are allowed to keep
                     # their original large font to preserve the resume branding.
-                    _HEADING_SEMANTICS_LB = frozenset({"section_heading", "role_header"})
+                    _HEADING_SEMANTICS_LB = frozenset({
+                        "section_heading", "role_header",
+                        "role_intro", "role_key_technologies", "role_tech_stack",
+                        "role_project_label",
+                    })
                     _is_header_para_lb = (
                         block.para_id is not None
                         and block.para_id in _header_para_ids
@@ -4612,7 +7254,87 @@ def _render_from_layout_blocks(
                                 }
                                 if _fn_lb and _fn_lb.issubset(_DISPLAY_FONTS_LB):
                                     _rPr_sym_lb.remove(_rFonts_sym_lb)
-                    _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
+                    # Strip bold from rewritten non-heading paras whose XML proto
+                    # is ALL BOLD (paragraph-level pPr/rPr/b set).  Template project
+                    # headers (e.g. "OTA project") are all-bold; when the LLM assigns
+                    # achievement text to such a slot the bold must not carry over.
+                    if (
+                        pm.text.strip()
+                        and pm.semantic not in _HEADING_SEMANTICS_LB
+                        and _proto_para_bold_lb
+                        and _proto_text_raw_lb.strip() != pm.text.strip()
+                    ):
+                        for _rPr_ab_lb in elem.iter(f"{{{_W}}}rPr"):
+                            _par_ab_lb = _rPr_ab_lb.getparent()
+                            if _par_ab_lb is not None and _par_ab_lb.tag in (
+                                f"{{{_W}}}r", f"{{{_W}}}pPr"
+                            ):
+                                for _btag_ab_lb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                                    _bel_ab_lb = _rPr_ab_lb.find(_btag_ab_lb)
+                                    if _bel_ab_lb is not None:
+                                        _rPr_ab_lb.remove(_bel_ab_lb)
+                    # Strip bullet/list formatting (w:numPr) for semantic types
+                    # that represent prose or technology-block text, not list items.
+                    _NO_BULLET_SEMANTICS_LB = frozenset({
+                        "role_intro", "role_key_technologies",
+                        "role_tech_stack", "role_project_label",
+                    })
+                    if pm.semantic in _NO_BULLET_SEMANTICS_LB and pm.text.strip():
+                        _pPr_nb_lb = elem.find(f"{{{_W}}}pPr")
+                        if _pPr_nb_lb is not None:
+                            _numPr_nb_lb = _pPr_nb_lb.find(f"{{{_W}}}numPr")
+                            if _numPr_nb_lb is not None:
+                                _pPr_nb_lb.remove(_numPr_nb_lb)
+                    # Semantic visual styling (layout-bound path): italic for
+                    # narrative intro types, bold for technology/label types.
+                    _SEM_ITALIC_LB = frozenset({"role_intro", "project_intro"})
+                    _SEM_BOLD_LB = frozenset({
+                        "role_key_technologies", "role_tech_stack",
+                        "role_project_label", "highlight_header",
+                    })
+                    if pm.semantic in _SEM_ITALIC_LB and pm.text.strip():
+                        _pPr_si_lb = elem.find(f"{{{_W}}}pPr")
+                        if _pPr_si_lb is not None:
+                            _rPr_ppr_si_lb = _pPr_si_lb.find(f"{{{_W}}}rPr")
+                            if _rPr_ppr_si_lb is None:
+                                _rPr_ppr_si_lb = etree.SubElement(_pPr_si_lb, f"{{{_W}}}rPr")
+                            for _t_si_lb in (f"{{{_W}}}i", f"{{{_W}}}iCs"):
+                                if _rPr_ppr_si_lb.find(_t_si_lb) is None:
+                                    etree.SubElement(_rPr_ppr_si_lb, _t_si_lb)
+                        for _r_si_lb in elem.findall(f".//{{{_W}}}r"):
+                            _rPr_si_lb = _r_si_lb.find(f"{{{_W}}}rPr")
+                            if _rPr_si_lb is None:
+                                _rPr_si_lb = etree.SubElement(_r_si_lb, f"{{{_W}}}rPr")
+                                _r_si_lb.insert(0, _rPr_si_lb)
+                            for _t_si_lb in (f"{{{_W}}}i", f"{{{_W}}}iCs"):
+                                if _rPr_si_lb.find(_t_si_lb) is None:
+                                    etree.SubElement(_rPr_si_lb, _t_si_lb)
+                    elif pm.semantic in _SEM_BOLD_LB and pm.text.strip():
+                        _pPr_sb_lb = elem.find(f"{{{_W}}}pPr")
+                        if _pPr_sb_lb is not None:
+                            _rPr_ppr_sb_lb = _pPr_sb_lb.find(f"{{{_W}}}rPr")
+                            if _rPr_ppr_sb_lb is None:
+                                _rPr_ppr_sb_lb = etree.SubElement(_pPr_sb_lb, f"{{{_W}}}rPr")
+                            for _t_sb_lb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                                if _rPr_ppr_sb_lb.find(_t_sb_lb) is None:
+                                    etree.SubElement(_rPr_ppr_sb_lb, _t_sb_lb)
+                        for _r_sb_lb in elem.findall(f".//{{{_W}}}r"):
+                            _rPr_sb_lb = _r_sb_lb.find(f"{{{_W}}}rPr")
+                            if _rPr_sb_lb is None:
+                                _rPr_sb_lb = etree.SubElement(_r_sb_lb, f"{{{_W}}}rPr")
+                                _r_sb_lb.insert(0, _rPr_sb_lb)
+                            for _t_sb_lb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                                if _rPr_sb_lb.find(_t_sb_lb) is None:
+                                    etree.SubElement(_rPr_sb_lb, _t_sb_lb)
+                    if pm.semantic == "section_heading":
+                        _strip_decorative_inline_images(elem)
+                    if _text_written_lb:
+                        _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
+                    else:
+                        _log.debug(
+                            "PARAGRAPH_BLOCK_PRESERVED_MULTI_SDT: para_id=%r",
+                            block.para_id,
+                        )
                 else:
                     if block.para_id:
                         _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: para_id=%r", block.para_id)
@@ -4704,6 +7426,19 @@ def _render_from_layout_blocks(
             sectPr.addprevious(elem)
         else:
             body.append(elem)
+
+        # Timeline v2: after emitting the seg1 heading para, append seg1 table.
+        if (_tl_v2_active
+                and not _tl_seg1_emitted
+                and _tl_seg1_tbl is not None
+                and block.para_id == _tl_seg1_heading_pid):
+            _tl_seg1_emitted = True
+            _RENDERER_CREATED_TABLES.add(_tl_seg1_tbl)
+            if sectPr is not None:
+                sectPr.addprevious(_tl_seg1_tbl)
+            else:
+                body.append(_tl_seg1_tbl)
+            _log.debug("TIMELINE_SEG1_EMITTED after heading para_id=%r", block.para_id)
 
     # NOTE: unbound paragraphs (para_id="") are intentionally NOT appended here.
     # Extra LLM content beyond template capacity is placed via the _extra_injections
@@ -5110,6 +7845,24 @@ _OVERSIZED_ROW_PARA_THRESHOLD = 14  # trigger row split when any cell exceeds th
 _RENDERER_CREATED_TABLES: set[Any] = set()
 
 
+# Kill switch for the v2 two-segment timeline table renderer.
+# True by default: v2 auto-activates for any document whose roles carry
+# layout_binding.kind == "timeline_left_role_right" with valid left_para_ids.
+# Set to False via _set_timeline_row_table_v2(False) to disable globally
+# (e.g. in tests that validate the flat newspaper-column path).
+_TIMELINE_ROW_TABLE_V2_ENABLED: bool = True
+
+
+def _set_timeline_row_table_v2(enabled: bool = True) -> None:
+    """Enable or disable the v2 timeline table renderer globally.
+
+    Pass False to engage the kill switch and force the flat newspaper-column
+    path regardless of layout_binding eligibility.
+    """
+    global _TIMELINE_ROW_TABLE_V2_ENABLED
+    _TIMELINE_ROW_TABLE_V2_ENABLED = enabled
+
+
 def _trim_trailing_cell_paras(body: Any) -> None:
     """Remove excess trailing empty paragraphs from table cells.
 
@@ -5146,6 +7899,44 @@ def _trim_trailing_cell_paras(body: Any) -> None:
                 # remove the extra empty paragraphs before it.
                 for p in trailing[1:]:
                     cell.remove(p)
+
+
+def _minimize_trailing_body_para(body: Any) -> None:
+    """Remove the empty trailing body paragraph to prevent blank overflow pages.
+
+    When injected content fills the page so that the mandatory trailing
+    paragraph overflows onto page 2, LibreOffice renders a completely blank
+    second page.  When the sectPr is already a direct body child (the common
+    case for layout_blocks-rendered DOCX), the trailing empty paragraph carries
+    no section properties and can be removed entirely.
+    """
+    # Only act when sectPr is already a direct body child — the trailing
+    # paragraph is then truly redundant.
+    has_direct_sectPr = body.find(f"{{{_W}}}sectPr") is not None
+    if not has_direct_sectPr:
+        return
+
+    direct_children = [c for c in body if c.tag in (f"{{{_W}}}p", f"{{{_W}}}tbl")]
+    if not direct_children:
+        return
+    last = direct_children[-1]
+    if last.tag != f"{{{_W}}}p":
+        return
+
+    # Guard: paragraph must not carry an embedded sectPr (section boundary).
+    pPr = last.find(f"{{{_W}}}pPr")
+    if pPr is not None and pPr.find(f"{{{_W}}}sectPr") is not None:
+        return
+
+    # Guard: paragraph must be empty.
+    runs = last.findall(f".//{{{_W}}}r")
+    text = "".join(
+        (t.text or "") for r in runs for t in r.findall(f"{{{_W}}}t")
+    )
+    if text.strip():
+        return
+
+    body.remove(last)
 
 
 def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
@@ -5574,6 +8365,12 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     ValueError
         If any paragraph in doc.all_paras has no xml_proto (cannot render).
     """
+    _log.info(
+        "RENDER_DOCX_START: template=%s output=%s source_kind=%s "
+        "TIMELINE_V2_ENABLED=%s",
+        template_path, output_path, doc.source_kind,
+        _TIMELINE_ROW_TABLE_V2_ENABLED,
+    )
     # Start from a copy of the template so styles and document settings are preserved
     # PDF two-column documents: use a fresh minimal DOCX rather than copying
     # the style template.  Style templates carry DOCX compat settings (e.g.
@@ -5603,6 +8400,17 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         sectPr = body.find(f"{{{_W}}}sectPr")
         _apply_pdf_page_geometry(sectPr, doc.layout)
         _render_pdf_single_col_dark_header(doc, body, sectPr, doc_part=d.part)
+        # When the entire page has a dark background (full_page_bg in page_images),
+        # use the DOCX page background color instead of a floating image.  Behind-text
+        # floating images are not reliably rendered by LibreOffice for single-column
+        # documents; <w:background> produces a reliable solid page fill.
+        _full_bg_list = [
+            img for img in (getattr(doc, "page_images", None) or [])
+            if img.category == "full_page_bg"
+        ]
+        if _full_bg_list and doc.layout.header_bg_color:
+            _apply_docx_page_background(d, doc.layout.header_bg_color)
+            doc.page_images = [img for img in doc.page_images if img.category != "full_page_bg"]
         _insert_page_images(doc, body, sectPr, d.part)
         d.save(output_path)
         return
@@ -5683,6 +8491,9 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
             # sub-row's cells (template spacing paragraphs that fell between
             # sections).  Strip them here so rows size to actual content.
             _trim_trailing_cell_paras(body)
+            # Minimize the mandatory trailing body paragraph so it does not
+            # push onto a blank second page when injected content fills page 1.
+            _minimize_trailing_body_para(body)
             # Inherit page background color for overflow pages.
             # (a) Solid-fill sidebar backgrounds (e.g. sample 11): clone the
             #     background paragraph from the body start to the body end so
@@ -5791,12 +8602,97 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
             d.save(output_path)
             return
 
+    _h_rule_borders_fallback = (
+        _build_h_rule_border_map(doc)
+        if doc.source_kind == "pdf" and not has_table_blocks
+        else {}
+    )
+
+    # For PDF single-col plain rendering: emit header_paras with y-grouping so
+    # 3-col contact bars (email | phone | LinkedIn) appear side-by-side rather
+    # than stacked.  header_paras are the first len(doc.header_paras) items of
+    # all_paras; emit them now and skip them in the main loop below.
+    _plain_pdf_hdr_done: "frozenset[int]" = frozenset()
+    if doc.source_kind == "pdf" and not has_table_blocks and doc.header_paras:
+        _pdf_text_w = _get_text_area_width_twips(sectPr)
+        _hdr_buckets: "list" = []  # each entry: [y_val_or_None, [para_list]]
+        for _hp in doc.header_paras:
+            _hp_y = _hp.paragraph_profile.y_top_pt if _hp.paragraph_profile else None
+            if (
+                _hp_y is not None
+                and _hdr_buckets
+                and _hdr_buckets[-1][0] is not None
+                and abs(_hp_y - _hdr_buckets[-1][0]) <= 3.0
+            ):
+                _hdr_buckets[-1][1].append(_hp)
+            else:
+                _hdr_buckets.append([_hp_y, [_hp]])
+
+        # Collect floating h_rules (anchor=None) within the header y-range so they
+        # can be emitted as inline separator paragraphs before the correct bucket.
+        # Floating images at absolute PDF coordinates land in wrong positions after
+        # LLM reflow; inline separators track document flow instead.
+        _max_hdr_y = max(
+            (pm.paragraph_profile.y_top_pt or 0.0)
+            for pm in doc.header_paras
+            if pm.paragraph_profile and pm.paragraph_profile.y_top_pt
+        ) if doc.header_paras else 0.0
+        _floating_hrules_hdr = sorted(
+            [
+                img for img in (getattr(doc, "page_images", None) or [])
+                if img.category == "h_rule"
+                and img.anchor_next_section_id is None
+                and (img.y_pt or 0.0) <= _max_hdr_y + 20.0
+            ],
+            key=lambda _img: _img.y_pt or 0.0,
+        )
+
+        _prev_bkt_y = -1.0
+        for _hb_y, _hb_group in _hdr_buckets:
+            # Before each bucket with a known y, emit inline separators for any
+            # floating h_rule whose y falls between the previous bucket and this one.
+            if _hb_y is not None and _floating_hrules_hdr:
+                for _fhr in _floating_hrules_hdr:
+                    _fhr_y = _fhr.y_pt or 0.0
+                    if _prev_bkt_y < _fhr_y < _hb_y:
+                        _sep = _make_h_rule_separator_para(_fhr)
+                        if sectPr is not None:
+                            sectPr.addprevious(_sep)
+                        else:
+                            body.append(_sep)
+            if _hb_y is not None:
+                _prev_bkt_y = _hb_y
+
+            if len(_hb_group) >= 2:
+                _hb_tbl = _build_contact_row_table(_hb_group, _pdf_text_w, d.part)
+                if _hb_tbl is not None:
+                    if sectPr is not None:
+                        sectPr.addprevious(_hb_tbl)
+                    else:
+                        body.append(_hb_tbl)
+                    continue
+            for _hp in _hb_group:
+                _render_para(_hp, body, sectPr, preserve_section_break=id(_hp) in header_para_ids)
+        _plain_pdf_hdr_done = frozenset(id(pm) for pm in doc.header_paras)
+
     for item in render_items:
+        if id(item) in _plain_pdf_hdr_done:
+            continue  # already emitted in header y-grouping phase above
         if isinstance(item, TableBlock):
             _render_table_block(item, doc, body, sectPr)
         else:
             _render_para(item, body, sectPr, preserve_section_break=id(item) in header_para_ids)
+            if _h_rule_borders_fallback and item.para_id in _h_rule_borders_fallback:
+                # _render_para inserts before sectPr; find the just-added element.
+                _last = sectPr.getprevious() if sectPr is not None else (body[-1] if len(body) else None)
+                if _last is not None:
+                    _apply_h_rule_top_border(_last, _h_rule_borders_fallback[item.para_id])
 
     if doc.source_kind == "pdf":
-        _insert_page_images(doc, body, sectPr, d.part)
+        # skip_floating_hrules=True: floating h_rules were converted to inline
+        # separator paragraphs in the header bucket loop above; inserting them
+        # again as floating images at their original PDF y-coordinates would place
+        # them at wrong positions after LLM reflow.
+        _skip_fhr = not has_table_blocks and bool(doc.header_paras)
+        _insert_page_images(doc, body, sectPr, d.part, skip_floating_hrules=_skip_fhr)
     d.save(output_path)
