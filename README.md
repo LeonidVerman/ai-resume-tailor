@@ -2,7 +2,7 @@
 
 AI-powered resume tailoring tool — generates tailored resumes and cover letters for specific job descriptions using a two-phase LLM pipeline.
 
-**Version 0.8.9.BETA** — DOCX and PDF rendering bugfixes: LLM-content injection overhaul, PDF-origin grading, cross-pipeline verification
+**Version 0.8.9.1.BETA** — bugfix release: PDF-origin stored-IR rendering crash (#156), sample 36 remaining rendering/injection fixes (#152)
 
 ---
 
