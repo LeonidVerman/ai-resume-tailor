@@ -32,6 +32,18 @@ class User(Base, CreatedAtMixin):
     free_generations_used: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     role: Mapped[str] = mapped_column(String(32), nullable=False, default=ROLE_USER)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # Guest generation (issue #155): anonymous Supabase identity created for
+    # the public /try flow.  Synthetic email; claimed/merged into a real
+    # account via /guest/claim, or purged after the retention window.
+    is_anonymous: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    guest_claimed_by: Mapped[str | None] = mapped_column(
+        UUID(as_uuid=False), nullable=True
+    )
+    guest_purged_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

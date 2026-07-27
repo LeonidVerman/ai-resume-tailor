@@ -47,6 +47,7 @@ import backend.app.db.models.tailored_document  # noqa: F401
 import backend.app.db.models.user  # noqa: F401
 import backend.app.db.models.legal  # noqa: F401
 import backend.app.db.models.candidate_profile_resume_draft  # noqa: F401
+import backend.app.db.models.guest  # noqa: F401
 from backend.app.db.models.billing import Billing
 from backend.app.db.models.monthly_usage import MonthlyUsage
 from backend.app.db.models.user import User

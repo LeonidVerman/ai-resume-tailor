@@ -102,6 +102,15 @@ class SupabaseClientWrapper:
             "email": response.user.email,
         }
 
+    def sign_in_anonymous(self):
+        """Create an anonymous Supabase Auth user (guest generation, #155).
+
+        Returns AuthResponse with .user (anonymous identity) and .session
+        (access/refresh tokens).  Requires anonymous sign-ins to be enabled
+        in the Supabase project settings.
+        """
+        return self._get_client().auth.sign_in_anonymously()
+
     def sign_up(self, email: str, password: str):
         """Register a new user via Supabase Auth. Returns AuthResponse."""
         return self._get_client().auth.sign_up({"email": email, "password": password})

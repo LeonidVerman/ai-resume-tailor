@@ -43,6 +43,16 @@ class Settings(BaseSettings):
     supabase_anon_key: str = ""
     supabase_service_role_key: str = ""
 
+    # ── Guest generation (issue #155) ─────────────────────────────────────
+    # Cloudflare Turnstile keys; verification is performed by the backend
+    # before a guest identity is created.  Empty secret disables the check
+    # in development only (session endpoint rejects in other envs).
+    turnstile_site_key: str = ""
+    turnstile_secret: str = ""
+    # HMAC key for the daily IP grouping hash (no clear IPs are stored) and
+    # for signing guest device tokens.  Falls back to secret_key if empty.
+    guest_hash_secret: str = ""
+
     # ── Object storage ────────────────────────────────────────────────────
     storage_type: str = "local"          # "s3" | "local"
     storage_local_path: str = "storage"  # root dir for local backend

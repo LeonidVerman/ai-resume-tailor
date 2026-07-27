@@ -24,6 +24,10 @@ class StructuredResume(Base, CreatedAtMixin):
     )
     resume_jsonb: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     source_file_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # SHA-256 of the uploaded file bytes (issue #155).  Persisted for every
+    # upload; no behavior attached yet (future: dedup, merge, caching, abuse
+    # investigation).
+    sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
     # Set when the uploaded file was converted from PDF to DOCX.
     # Contains the user-visible disclaimer; None for DOCX uploads.
     input_conversion_warning: Mapped[str | None] = mapped_column(Text, nullable=True)

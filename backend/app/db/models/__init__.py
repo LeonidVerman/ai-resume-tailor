@@ -5,6 +5,7 @@ from backend.app.db.models import (  # noqa: F401
     candidate_profile,
     evaluation_run,
     generation_run,
+    guest,
     job_description,
     monthly_usage,
     structured_resume,
