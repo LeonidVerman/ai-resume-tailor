@@ -16,6 +16,14 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # This revision was applied to the shared database out-of-band (during
+    # local guest testing) before it existed on main, and the version stamp
+    # was later reset to n7o8p9q0r1s2 so production deploys could boot.
+    # The schema is transactional-DDL all-or-nothing, so the presence of
+    # guest_entitlements means everything below already exists — skip.
+    if sa.inspect(op.get_bind()).has_table("guest_entitlements"):
+        return
+
     # users — guest identity flags
     op.add_column(
         "users",
