@@ -39,6 +39,8 @@ import type {
   SignupCreditPolicyResponse,
   GenerationRequest,
   GenerationResponse,
+  GuestSessionRequest,
+  GuestSessionResponse,
   GenerationRunDetail,
   GenerationRunSummary,
   JobDescriptionManualRequest,
@@ -475,6 +477,37 @@ export const admin = {
       inputBlob: new Blob([JSON.stringify(json.llm_input, null, 2)], { type: "application/json" }),
       inputFilename: `${basename}_input.json`,
     };
+  },
+};
+
+// ── Guest (public /try flow, issue #155) ──────────────────────────────────
+
+export const guest = {
+  /**
+   * Create an anonymous guest session (public endpoint, no auth header).
+   * Uses credentials: "include" so the backend can read/set the httpOnly
+   * guest device cookie across origins. The caller stores the returned
+   * tokens in the standard art_access_token / art_refresh_token slots so
+   * every subsequent call flows through the normal Authorization header.
+   */
+  createSession: async (body: GuestSessionRequest): Promise<GuestSessionResponse> => {
+    const res = await fetch(`${BASE_URL}/guest/session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const data = await res.json();
+        detail = data.detail ?? detail;
+      } catch {
+        // ignore parse errors
+      }
+      throw new ApiError(res.status, detail);
+    }
+    return res.json() as Promise<GuestSessionResponse>;
   },
 };
 

@@ -51,6 +51,20 @@ export interface LegalAcceptRequest {
   source_surface: string;
 }
 
+// ── Guest (public /try flow) ───────────────────────────────────────────────
+
+export interface GuestSessionRequest {
+  turnstile_token: string;
+  terms_document_id: number;
+  privacy_document_id: number;
+}
+
+export interface GuestSessionResponse {
+  access_token: string;
+  refresh_token: string;
+  user_id: string;
+}
+
 export interface AuthStatusResponse {
   auth_mode: string;  // "supabase" | "dev_bypass"
   status: string;
