@@ -8887,11 +8887,17 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         # can be emitted as inline separator paragraphs before the correct bucket.
         # Floating images at absolute PDF coordinates land in wrong positions after
         # LLM reflow; inline separators track document flow instead.
+        # default=0.0: header paras may exist with no y_top_pt profiles at
+        # all (IR round-trip path) — an empty filtered sequence must not
+        # crash the render (guest PDF upload, #155 testing).
         _max_hdr_y = max(
-            (pm.paragraph_profile.y_top_pt or 0.0)
-            for pm in doc.header_paras
-            if pm.paragraph_profile and pm.paragraph_profile.y_top_pt
-        ) if doc.header_paras else 0.0
+            (
+                (pm.paragraph_profile.y_top_pt or 0.0)
+                for pm in doc.header_paras
+                if pm.paragraph_profile and pm.paragraph_profile.y_top_pt
+            ),
+            default=0.0,
+        )
         _floating_hrules_hdr = sorted(
             [
                 img for img in (getattr(doc, "page_images", None) or [])
