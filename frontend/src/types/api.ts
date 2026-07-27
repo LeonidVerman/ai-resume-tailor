@@ -11,6 +11,7 @@ export interface AuthMeResponse {
   plan_type: string;
   onboarding_completed: boolean;
   legal_accepted: boolean;
+  is_anonymous: boolean; // guest (/try) identity, issue #155
 }
 
 // ── Legal ──────────────────────────────────────────────────────────────────
@@ -63,6 +64,20 @@ export interface GuestSessionResponse {
   access_token: string;
   refresh_token: string;
   user_id: string;
+}
+
+export interface GuestClaimRequest {
+  guest_access_token: string;
+}
+
+export interface GuestClaimResponse {
+  guest_user_id: string;
+  resumes_moved: number;
+  job_descriptions_moved: number;
+  generation_runs_moved: number;
+  documents_moved: number;
+  profile_moved: boolean;
+  credits_added: number;
 }
 
 export interface AuthStatusResponse {

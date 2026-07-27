@@ -22,13 +22,19 @@ import { ResumeUpload } from "@/components/resume/ResumeUpload";
 import { TurnstileWidget } from "@/components/guest/TurnstileWidget";
 import { GuestResult } from "@/components/guest/GuestResult";
 import {
+  auth,
   guest,
   legal,
   jobDescriptions,
   generations,
   ApiError,
 } from "@/lib/api";
-import { setStoredToken, setStoredRefreshToken } from "@/lib/auth";
+import {
+  getStoredToken,
+  markGuestSession,
+  setStoredToken,
+  setStoredRefreshToken,
+} from "@/lib/auth";
 import type {
   GenerationResponse,
   JobDescriptionResponse,
@@ -59,6 +65,10 @@ export default function TryPage() {
   // Guest session is created at most once per page visit.
   const sessionCreatedRef = useRef(false);
 
+  // Registered (non-anonymous) users should NOT run the guest flow — it
+  // would silently overwrite their session tokens.
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
+
   // Flow state
   const [resume, setResume] = useState<StructuredResumeResponse | null>(null);
   const [jd, setJd] = useState<JobDescriptionResponse | null>(null);
@@ -82,6 +92,19 @@ export default function TryPage() {
       .current()
       .then(setLegalDocs)
       .catch(() => setLegalError(true));
+  }, []);
+
+  // Detect an authenticated registered user (is_anonymous=false on /auth/me).
+  useEffect(() => {
+    if (!getStoredToken()) return;
+    auth
+      .me()
+      .then((me) => {
+        if (!me.is_anonymous) setAlreadyRegistered(true);
+      })
+      .catch(() => {
+        // Invalid/expired token — let the guest flow proceed as usual.
+      });
   }, []);
 
   /** Detect the backend kill switch and switch to the fatal message. */
@@ -112,6 +135,7 @@ export default function TryPage() {
       });
       setStoredToken(session.access_token);
       setStoredRefreshToken(session.refresh_token);
+      markGuestSession();
       sessionCreatedRef.current = true;
     } catch (e) {
       handleGuestError(e);
@@ -216,6 +240,36 @@ export default function TryPage() {
     } finally {
       setGenerating(false);
     }
+  }
+
+  // ── Registered user visiting /try ───────────────────────────────────────
+  if (alreadyRegistered) {
+    return (
+      <PublicShell>
+        <Card>
+          <CardBody className="py-10 text-center space-y-3">
+            <Rocket className="h-8 w-8 text-indigo-600 mx-auto" />
+            <h1 className="text-lg font-semibold text-gray-900">
+              You already have an account
+            </h1>
+            <p className="text-sm text-gray-500 max-w-md mx-auto">
+              The free trial is for visitors without an account. You are
+              signed in — generate tailored resumes directly from your
+              workspace.
+            </p>
+            <div className="pt-2">
+              <Link
+                href="/generate"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
+              >
+                <Zap className="h-4 w-4" />
+                Go to Generate
+              </Link>
+            </div>
+          </CardBody>
+        </Card>
+      </PublicShell>
+    );
   }
 
   // ── Kill switch / trial unavailable ─────────────────────────────────────

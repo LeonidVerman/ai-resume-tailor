@@ -10,6 +10,12 @@ POST /guest/session
     frontend stores them in the standard token slots so every other API
     call flows through the normal Authorization header.
 
+POST /guest/claim
+    Authenticated (as the NEW registered user).  Merges a guest account —
+    proven by possession of its still-valid Supabase JWT — into the caller:
+    content rows are reassigned, guest usage is added to the claimer's
+    lifetime free-generation counter, and the guest row is deactivated.
+
 The guest identity is created here — after Turnstile succeeds and the
 visitor initiates the flow — never on page view.
 """
@@ -22,7 +28,7 @@ from datetime import timedelta
 from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel
 
-from backend.app.dependencies import DbDep, SettingsDep
+from backend.app.dependencies import CurrentUserDep, DbDep, SettingsDep
 from backend.app.services.guest_service import (
     GuestService,
     ip_daily_hash,
@@ -103,3 +109,36 @@ def create_guest_session(
         samesite="lax",
     )
     return GuestSessionResponse(**session)
+
+
+# ── Claim/merge after registration (Phase 4) ───────────────────────────────
+
+class GuestClaimRequest(BaseModel):
+    guest_access_token: str
+
+
+class GuestClaimResponse(BaseModel):
+    guest_user_id: str
+    resumes_moved: int
+    job_descriptions_moved: int
+    generation_runs_moved: int
+    documents_moved: int
+    profile_moved: bool
+    credits_added: int
+
+
+@router.post("/claim", response_model=GuestClaimResponse)
+def claim_guest(
+    body: GuestClaimRequest,
+    user: CurrentUserDep,
+    db: DbDep,
+    settings: SettingsDep,
+):
+    """Merge a guest session's content into the authenticated account.
+
+    Deliberately NOT gated by the guest kill switch — claiming already
+    generated content must keep working even when new guest sessions are
+    disabled.
+    """
+    result = GuestService(db, settings).claim_guest(user, body.guest_access_token)
+    return GuestClaimResponse(**result)

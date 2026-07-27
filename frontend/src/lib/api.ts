@@ -39,6 +39,8 @@ import type {
   SignupCreditPolicyResponse,
   GenerationRequest,
   GenerationResponse,
+  GuestClaimRequest,
+  GuestClaimResponse,
   GuestSessionRequest,
   GuestSessionResponse,
   GenerationRunDetail,
@@ -509,6 +511,17 @@ export const guest = {
     }
     return res.json() as Promise<GuestSessionResponse>;
   },
+
+  /**
+   * Claim/merge a guest session into the authenticated account (Phase 4).
+   * Sent with the NEW registered user's Authorization header; the guest
+   * access token in the body is the ownership proof.
+   */
+  claim: (body: GuestClaimRequest) =>
+    request<GuestClaimResponse>("/guest/claim", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };
 
 // ── Legal ──────────────────────────────────────────────────────────────────

@@ -439,3 +439,131 @@ class GuestService:
         return datetime.now(timezone.utc) - timedelta(
             minutes=STALE_RESERVATION_MINUTES
         )
+
+    # -- claim/merge after registration (Phase 4) ------------------------------
+
+    def claim_guest(self, claimer: User, guest_access_token: str) -> dict:
+        """Merge a guest account into the freshly registered ``claimer``.
+
+        Possession of a valid guest JWT is the ownership proof (design doc
+        Phase 4).  All row moves happen in the caller's request transaction,
+        so the merge commits or rolls back as one unit.  R2/storage keys stay
+        under the old guest namespace — authorization is row-based.
+        """
+        from sqlalchemy import update
+
+        from backend.app.clients.supabase_client import (
+            make_supabase_client_from_settings,
+        )
+        from backend.app.db.models.candidate_profile import CandidateProfile
+        from backend.app.db.models.generation_run import GenerationRun
+        from backend.app.db.models.job_description import JobDescription
+        from backend.app.db.models.structured_resume import StructuredResume
+        from backend.app.db.models.tailored_document import TailoredDocument
+
+        if getattr(claimer, "is_anonymous", False):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Create a full account to claim guest results",
+            )
+
+        supabase = make_supabase_client_from_settings()
+        try:
+            payload = supabase.verify_token(guest_access_token)
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired guest token",
+            )
+
+        guest = self._db.execute(
+            select(User)
+            .where(User.supabase_user_id == payload["id"])
+            .with_for_update()
+        ).scalar_one_or_none()
+        if guest is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Guest account not found",
+            )
+        if not guest.is_anonymous:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Not a guest account",
+            )
+        if guest.id == claimer.id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot claim your own session",
+            )
+        if guest.guest_claimed_by is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This guest session was already claimed",
+            )
+
+        # Reassign content rows guest → claimer (one transaction with the
+        # rest of this method; get_db_session commits on request success).
+        counts: dict[str, int] = {}
+        for key, model in (
+            ("resumes_moved", StructuredResume),
+            ("job_descriptions_moved", JobDescription),
+            ("generation_runs_moved", GenerationRun),
+            ("documents_moved", TailoredDocument),
+        ):
+            result = self._db.execute(
+                update(model)
+                .where(model.user_id == guest.id)
+                .values(user_id=claimer.id)
+            )
+            counts[key] = result.rowcount or 0
+
+        # Move the auto-accepted guest profile ONLY if the claimer has none;
+        # otherwise it stays with the guest row for the retention purge.
+        profile_moved = False
+        claimer_profile = self._db.execute(
+            select(CandidateProfile).where(CandidateProfile.user_id == claimer.id)
+        ).scalars().first()
+        if claimer_profile is None:
+            guest_profile = self._db.execute(
+                select(CandidateProfile).where(CandidateProfile.user_id == guest.id)
+            ).scalars().first()
+            if guest_profile is not None:
+                guest_profile.user_id = claimer.id
+                profile_moved = True
+
+        # Lifetime free-generation accounting: the guest usage now counts
+        # against the claimer's 3 lifetime free generations.
+        ent = self._db.get(GuestEntitlement, guest.id)
+        credits_added = ent.used if ent is not None else 0
+        if credits_added:
+            claimer.free_generations_used = (
+                claimer.free_generations_used or 0
+            ) + credits_added
+
+        now = datetime.now(timezone.utc)
+        guest.guest_claimed_by = claimer.id
+        guest.is_active = False
+        guest.updated_at = now
+
+        self.record_funnel(
+            "guest_claimed",
+            user_id=claimer.id,
+            meta={"guest_user_id": guest.id},
+        )
+        self._db.flush()
+
+        logger.info(
+            "Guest %s claimed by %s (resumes=%d jds=%d runs=%d docs=%d "
+            "profile_moved=%s credits=%d)",
+            guest.id, claimer.id, counts["resumes_moved"],
+            counts["job_descriptions_moved"], counts["generation_runs_moved"],
+            counts["documents_moved"], profile_moved, credits_added,
+        )
+
+        return {
+            "guest_user_id": guest.id,
+            **counts,
+            "profile_moved": profile_moved,
+            "credits_added": credits_added,
+        }

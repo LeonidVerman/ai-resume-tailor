@@ -4,6 +4,8 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { guest } from "@/lib/api";
+import { takeGuestClaimToken } from "@/lib/auth";
 import { Sidebar } from "./Sidebar";
 import { Spinner } from "@/components/ui/Spinner";
 
@@ -45,6 +47,21 @@ export function AppShell({ children }: AppShellProps) {
       router.replace("/profile-onboarding");
     }
   }, [loading, isAuthenticated, user, pathname, router]);
+
+  // Guest claim (issue #155): if a guest token was stashed during a
+  // registration that required email confirmation, attempt the claim once
+  // on the first authenticated arrival. takeGuestClaimToken() removes the
+  // key, so this runs at most once regardless of the outcome (non-fatal).
+  useEffect(() => {
+    if (loading || !isAuthenticated || !user || user.is_anonymous) return;
+    const stashed = takeGuestClaimToken();
+    if (!stashed) return;
+    guest
+      .claim({ guest_access_token: stashed })
+      .catch((err) =>
+        console.warn("Could not attach guest results to this account:", err)
+      );
+  }, [loading, isAuthenticated, user]);
 
   if (loading) {
     return (

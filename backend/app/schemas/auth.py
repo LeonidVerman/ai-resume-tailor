@@ -54,6 +54,7 @@ class AuthMeResponse(APIModel):
     plan_type: str
     onboarding_completed: bool
     legal_accepted: bool  # True if user has accepted all currently required legal docs
+    is_anonymous: bool = False  # True for guest (/try) identities (issue #155)
 
 
 class ForgotPasswordRequest(APIModel):
