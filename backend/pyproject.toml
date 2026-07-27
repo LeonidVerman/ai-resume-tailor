@@ -45,6 +45,8 @@ dependencies = [
     "playwright-stealth>=1.0.6",
     # Environment
     "python-dotenv>=1.0",
+    # In-process scheduled jobs (guest retention cleanup, issue #155)
+    "apscheduler>=3.10",
 ]
 
 [project.optional-dependencies]

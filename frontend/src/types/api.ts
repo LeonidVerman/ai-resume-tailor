@@ -80,6 +80,15 @@ export interface GuestClaimResponse {
   credits_added: number;
 }
 
+export interface GuestDataDeleteResponse {
+  purged: boolean;
+  resumes_deleted: number;
+  job_descriptions_deleted: number;
+  generation_runs_deleted: number;
+  documents_deleted: number;
+  profiles_deleted: number;
+}
+
 export interface AuthStatusResponse {
   auth_mode: string;  // "supabase" | "dev_bypass"
   status: string;
@@ -497,7 +506,43 @@ export interface SignupCreditPolicyRequest {
 }
 
 export interface GenerationConfigRequest {
-  simple_model: string;
+  // All fields optional — only the provided ones are updated (single-row
+  // admin config upsert shared by the generation model and guest controls).
+  simple_model?: string;
+  guest_enabled?: boolean;
+  guest_daily_global_cap?: number;
+  guest_concurrent_cap?: number;
+  guest_ip_daily_limit?: number;
+  guest_retention_days?: number;
+}
+
+// ── Guest metrics (admin, issue #155 Phase 5) ─────────────────────────────
+
+export interface GuestConfigValues {
+  guest_enabled: boolean;
+  guest_daily_global_cap: number;
+  guest_concurrent_cap: number;
+  guest_ip_daily_limit: number;
+  guest_retention_days: number;
+}
+
+export interface GuestFunnelTotals {
+  sessions: number;
+  profiles: number;
+  generations_started: number;
+  generations_completed: number;
+  generations_failed: number;
+  claims: number;
+}
+
+export interface GuestFunnelDay extends GuestFunnelTotals {
+  date: string; // ISO YYYY-MM-DD (UTC)
+}
+
+export interface GuestMetricsResponse {
+  days: GuestFunnelDay[];
+  totals: GuestFunnelTotals;
+  config: GuestConfigValues;
 }
 
 export interface AdminActionResponse {

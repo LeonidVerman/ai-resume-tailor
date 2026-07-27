@@ -8,7 +8,8 @@ Endpoints
 POST /admin/evaluate-run              — score a completed generation run
 GET  /admin/system-stats              — aggregate counts for all users
 GET  /admin/generation-config         — retrieve persisted generation config
-PUT  /admin/generation-config         — update generation mode / models
+PUT  /admin/generation-config         — update generation mode / models / guest caps
+GET  /admin/guest-metrics             — guest funnel counts (14 days) + caps/kill switch
 GET  /admin/logs/download             — download zipped log files for a date range
 GET  /admin/run-data/download         — download zipped run packs (debug+artifacts) for a date range
 GET  /admin/run-data/download/{run_id} — download a zip pack (debug+artifacts) for a specific run
@@ -51,6 +52,10 @@ from backend.app.schemas.admin import (
     BenchmarkStartRequest,
     GenerationConfigRequest,
     GenerationConfigResponse,
+    GuestConfigValues,
+    GuestFunnelDay,
+    GuestFunnelTotals,
+    GuestMetricsResponse,
     SignupCreditPolicyRequest,
     SignupCreditPolicyResponse,
     SystemStats,
@@ -162,9 +167,29 @@ def get_generation_config(_admin: AdminDep, db: DbDep):
 def save_generation_config(
     request: GenerationConfigRequest, _admin: AdminDep, db: DbDep
 ):
-    """Persist admin generation configuration."""
-    AdminConfigRepository(db).upsert(simple_model=request.simple_model)
-    return AdminActionResponse(ok=True, message="Generation configuration saved.")
+    """Persist admin configuration — only the provided fields are updated.
+
+    Accepts the generation model plus the guest generation controls
+    (kill switch and caps, issue #155).
+    """
+    updates = request.model_dump(exclude_none=True)
+    if not updates:
+        raise HTTPException(status_code=422, detail="No configuration fields provided.")
+    for field in (
+        "guest_daily_global_cap",
+        "guest_concurrent_cap",
+        "guest_ip_daily_limit",
+    ):
+        if field in updates and updates[field] < 0:
+            raise HTTPException(
+                status_code=422, detail=f"{field} must be 0 or greater."
+            )
+    if "guest_retention_days" in updates and updates["guest_retention_days"] < 1:
+        raise HTTPException(
+            status_code=422, detail="guest_retention_days must be 1 or greater."
+        )
+    AdminConfigRepository(db).upsert(**updates)
+    return AdminActionResponse(ok=True, message="Configuration saved.")
 
 
 # ── Signup credit policy ───────────────────────────────────────────────────
@@ -195,6 +220,77 @@ def save_signup_credit_policy(
     return AdminActionResponse(
         ok=True,
         message=f"Signup initial credits set to {request.initial_credits}.",
+    )
+
+
+# ── Guest metrics (issue #155, Phase 5) ────────────────────────────────────
+
+# funnel_events.event_type → response field name
+_GUEST_FUNNEL_FIELDS = {
+    "guest_session_created": "sessions",
+    "guest_profile_created": "profiles",
+    "guest_generation_started": "generations_started",
+    "guest_generation_completed": "generations_completed",
+    "guest_generation_failed": "generations_failed",
+    "guest_claimed": "claims",
+}
+
+_GUEST_METRICS_DAYS = 14
+
+
+@router.get("/guest-metrics", response_model=GuestMetricsResponse)
+def guest_metrics(_admin: AdminDep, db: DbDep):
+    """Guest funnel counts per day for the last 14 days (UTC) + totals +
+    the current guest caps / kill-switch values."""
+    from datetime import datetime, timezone
+
+    from sqlalchemy import func, select
+
+    from backend.app.db.models.guest import FunnelEvent
+
+    today = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    start = today - timedelta(days=_GUEST_METRICS_DAYS - 1)
+
+    rows = db.execute(
+        select(
+            func.date(FunnelEvent.created_at),
+            FunnelEvent.event_type,
+            func.count(),
+        )
+        .where(
+            FunnelEvent.created_at >= start,
+            FunnelEvent.event_type.in_(_GUEST_FUNNEL_FIELDS),
+        )
+        .group_by(func.date(FunnelEvent.created_at), FunnelEvent.event_type)
+    ).all()
+
+    by_day: dict[str, dict[str, int]] = {}
+    for day, event_type, count in rows:
+        field = _GUEST_FUNNEL_FIELDS[event_type]
+        by_day.setdefault(str(day), {})[field] = count
+
+    days: list[GuestFunnelDay] = []
+    totals: dict[str, int] = {f: 0 for f in _GUEST_FUNNEL_FIELDS.values()}
+    for offset in range(_GUEST_METRICS_DAYS):
+        d = (start + timedelta(days=offset)).date().isoformat()
+        counts = by_day.get(d, {})
+        days.append(GuestFunnelDay(date=d, **counts))
+        for field, count in counts.items():
+            totals[field] += count
+
+    cfg = AdminConfigRepository(db).get()
+    return GuestMetricsResponse(
+        days=days,
+        totals=GuestFunnelTotals(**totals),
+        config=GuestConfigValues(
+            guest_enabled=cfg.guest_enabled,
+            guest_daily_global_cap=cfg.guest_daily_global_cap,
+            guest_concurrent_cap=cfg.guest_concurrent_cap,
+            guest_ip_daily_limit=cfg.guest_ip_daily_limit,
+            guest_retention_days=cfg.guest_retention_days,
+        ),
     )
 
 

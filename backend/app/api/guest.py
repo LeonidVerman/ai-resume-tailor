@@ -16,6 +16,12 @@ POST /guest/claim
     content rows are reassigned, guest usage is added to the claimer's
     lifetime free-generation counter, and the guest row is deactivated.
 
+DELETE /guest/data
+    Authenticated guest only ("Delete my files now", Phase 5).  Immediately
+    purges the caller's storage objects and content rows using the same
+    logic as the retention job — the users row stays as a tombstone with
+    guest_purged_at stamped.
+
 The guest identity is created here — after Turnstile succeeds and the
 visitor initiates the flow — never on page view.
 """
@@ -25,7 +31,7 @@ from __future__ import annotations
 import logging
 from datetime import timedelta
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import BaseModel
 
 from backend.app.dependencies import CurrentUserDep, DbDep, SettingsDep
@@ -142,3 +148,41 @@ def claim_guest(
     """
     result = GuestService(db, settings).claim_guest(user, body.guest_access_token)
     return GuestClaimResponse(**result)
+
+
+# ── Delete my files now (Phase 5) ──────────────────────────────────────────
+
+class GuestDataDeleteResponse(BaseModel):
+    purged: bool
+    resumes_deleted: int
+    job_descriptions_deleted: int
+    generation_runs_deleted: int
+    documents_deleted: int
+    profiles_deleted: int
+
+
+@router.delete("/data", response_model=GuestDataDeleteResponse)
+def delete_guest_data(
+    user: CurrentUserDep,
+    db: DbDep,
+    settings: SettingsDep,
+):
+    """Immediately purge the authenticated guest's files and content rows.
+
+    Guest accounts only — registered users manage their data through the
+    normal account surfaces.  The users row is kept as a tombstone
+    (guest_purged_at stamped), same as the retention job.  Deliberately NOT
+    gated by the kill switch — deleting one's data must always work.
+    """
+    if not getattr(user, "is_anonymous", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only guest accounts can delete data through this endpoint",
+        )
+
+    from backend.app.services.guest_cleanup_service import GuestCleanupService
+
+    counts = GuestCleanupService(db, settings).purge_guest(user)
+    GuestService(db, settings).record_funnel("guest_data_deleted", user_id=user.id)
+    logger.info("Guest data deleted on request user=%s counts=%s", user.id, counts)
+    return GuestDataDeleteResponse(purged=True, **counts)

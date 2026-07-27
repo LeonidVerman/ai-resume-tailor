@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, Users, Zap, FileText, ClipboardCheck, Settings2, Download, BarChart2, Eye } from "lucide-react";
+import { ShieldCheck, Users, Zap, FileText, ClipboardCheck, Settings2, Download, BarChart2, Eye, Rocket } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -21,6 +21,7 @@ import type {
   GenerationMode,
   BenchmarkRunSummary,
   BenchmarkRunDetail,
+  GuestMetricsResponse,
   SignupCreditPolicyResponse,
 } from "@/types/api";
 import { formatDateTime } from "@/lib/utils";
@@ -90,6 +91,19 @@ export default function AdminPage() {
   const [downloadingBenchmarkZip, setDownloadingBenchmarkZip] = useState<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Guest generation (issue #155) state
+  const [guestMetrics, setGuestMetrics] = useState<GuestMetricsResponse | null>(null);
+  const [loadingGuestMetrics, setLoadingGuestMetrics] = useState(true);
+  const [guestMetricsError, setGuestMetricsError] = useState<string | null>(null);
+  const [guestEnabled, setGuestEnabled] = useState(false);
+  const [guestDailyCap, setGuestDailyCap] = useState(25);
+  const [guestConcurrentCap, setGuestConcurrentCap] = useState(2);
+  const [guestIpDailyLimit, setGuestIpDailyLimit] = useState(3);
+  const [guestRetentionDays, setGuestRetentionDays] = useState(7);
+  const [savingGuestConfig, setSavingGuestConfig] = useState(false);
+  const [guestConfigSaved, setGuestConfigSaved] = useState(false);
+  const [guestConfigError, setGuestConfigError] = useState<string | null>(null);
+
   const [grantUserId, setGrantUserId] = useState("");
   const [grantAmount, setGrantAmount] = useState(10);
   const [granting, setGranting] = useState(false);
@@ -99,6 +113,24 @@ export default function AdminPage() {
   const hasActiveBenchmark = benchmarkRuns.some(
     (r) => r.status === "queued" || r.status === "running"
   );
+
+  function loadGuestMetrics() {
+    setLoadingGuestMetrics(true);
+    admin
+      .getGuestMetrics()
+      .then((m) => {
+        setGuestMetrics(m);
+        setGuestEnabled(m.config.guest_enabled);
+        setGuestDailyCap(m.config.guest_daily_global_cap);
+        setGuestConcurrentCap(m.config.guest_concurrent_cap);
+        setGuestIpDailyLimit(m.config.guest_ip_daily_limit);
+        setGuestRetentionDays(m.config.guest_retention_days);
+      })
+      .catch((e) =>
+        setGuestMetricsError(e instanceof ApiError ? e.detail : "Failed to load guest metrics.")
+      )
+      .finally(() => setLoadingGuestMetrics(false));
+  }
 
   function loadBenchmarkRuns() {
     setLoadingBenchmarkRuns(true);
@@ -145,6 +177,7 @@ export default function AdminPage() {
       .catch(() => {})
       .finally(() => setLoadingSignupPolicy(false));
 
+    loadGuestMetrics();
     loadBenchmarkRuns();
   }, [user]);
 
@@ -199,6 +232,29 @@ export default function AdminPage() {
       setSignupPolicyError(e instanceof ApiError ? e.detail : "Failed to save policy.");
     } finally {
       setSavingSignupPolicy(false);
+    }
+  }
+
+  async function handleSaveGuestConfig(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingGuestConfig(true);
+    setGuestConfigError(null);
+    setGuestConfigSaved(false);
+    try {
+      await admin.saveGenerationConfig({
+        guest_enabled: guestEnabled,
+        guest_daily_global_cap: guestDailyCap,
+        guest_concurrent_cap: guestConcurrentCap,
+        guest_ip_daily_limit: guestIpDailyLimit,
+        guest_retention_days: guestRetentionDays,
+      });
+      setGuestConfigSaved(true);
+      setTimeout(() => setGuestConfigSaved(false), 3000);
+      loadGuestMetrics();
+    } catch (e) {
+      setGuestConfigError(e instanceof ApiError ? e.detail : "Failed to save guest settings.");
+    } finally {
+      setSavingGuestConfig(false);
     }
   }
 
@@ -496,6 +552,126 @@ export default function AdminPage() {
                 )}
               </div>
             </div>
+          )}
+        </CardBody>
+      </Card>
+
+      {/* Guest generation (issue #155) */}
+      <Card className="mb-8">
+        <CardHeader>
+          <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+            <Rocket className="h-4 w-4 text-indigo-600" />
+            Guest generation
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Kill switch and caps for the public /try flow, plus the guest funnel
+            for the last 14 days.
+          </p>
+        </CardHeader>
+        <CardBody className="space-y-6">
+          {loadingGuestMetrics && !guestMetrics ? (
+            <Spinner label="Loading guest metrics..." />
+          ) : guestMetricsError ? (
+            <p className="text-sm text-red-600">✗ {guestMetricsError}</p>
+          ) : (
+            <>
+              <form onSubmit={handleSaveGuestConfig} className="space-y-4">
+                <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer w-fit">
+                  <input
+                    type="checkbox"
+                    checked={guestEnabled}
+                    onChange={(e) => setGuestEnabled(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="font-medium">
+                    Guest trial enabled
+                    <span className="font-normal text-gray-500"> (kill switch — off disables /try entirely)</span>
+                  </span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl">
+                  <GuestNumField
+                    label="Daily global cap"
+                    value={guestDailyCap}
+                    min={0}
+                    onChange={setGuestDailyCap}
+                  />
+                  <GuestNumField
+                    label="Concurrent cap"
+                    value={guestConcurrentCap}
+                    min={0}
+                    onChange={setGuestConcurrentCap}
+                  />
+                  <GuestNumField
+                    label="IP daily limit"
+                    value={guestIpDailyLimit}
+                    min={0}
+                    onChange={setGuestIpDailyLimit}
+                  />
+                  <GuestNumField
+                    label="Retention (days)"
+                    value={guestRetentionDays}
+                    min={1}
+                    onChange={setGuestRetentionDays}
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button type="submit" loading={savingGuestConfig}>
+                    Save guest settings
+                  </Button>
+                  {guestConfigSaved && (
+                    <span className="text-sm text-green-600">✓ Saved</span>
+                  )}
+                  {guestConfigError && (
+                    <span className="text-sm text-red-600">✗ {guestConfigError}</span>
+                  )}
+                </div>
+              </form>
+
+              {guestMetrics && (
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    Guest funnel — last 14 days (UTC)
+                  </p>
+                  <div className="overflow-x-auto rounded border border-gray-200">
+                    <table className="w-full text-xs">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="text-left px-3 py-2 font-medium text-gray-600">Date</th>
+                          <th className="text-right px-3 py-2 font-medium text-gray-600">Sessions</th>
+                          <th className="text-right px-3 py-2 font-medium text-gray-600">Profiles</th>
+                          <th className="text-right px-3 py-2 font-medium text-gray-600">Started</th>
+                          <th className="text-right px-3 py-2 font-medium text-gray-600">Completed</th>
+                          <th className="text-right px-3 py-2 font-medium text-gray-600">Failed</th>
+                          <th className="text-right px-3 py-2 font-medium text-gray-600">Claims</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {guestMetrics.days.map((d) => (
+                          <tr key={d.date} className="hover:bg-gray-50">
+                            <td className="px-3 py-1.5 text-gray-700 font-mono">{d.date}</td>
+                            <td className="px-3 py-1.5 text-right tabular-nums">{d.sessions}</td>
+                            <td className="px-3 py-1.5 text-right tabular-nums">{d.profiles}</td>
+                            <td className="px-3 py-1.5 text-right tabular-nums">{d.generations_started}</td>
+                            <td className="px-3 py-1.5 text-right tabular-nums">{d.generations_completed}</td>
+                            <td className="px-3 py-1.5 text-right tabular-nums">{d.generations_failed}</td>
+                            <td className="px-3 py-1.5 text-right tabular-nums">{d.claims}</td>
+                          </tr>
+                        ))}
+                        <tr className="bg-gray-50 font-semibold">
+                          <td className="px-3 py-2 text-gray-700">Total</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{guestMetrics.totals.sessions}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{guestMetrics.totals.profiles}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{guestMetrics.totals.generations_started}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{guestMetrics.totals.generations_completed}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{guestMetrics.totals.generations_failed}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{guestMetrics.totals.claims}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardBody>
       </Card>
@@ -1089,6 +1265,31 @@ function ModelSelect({
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+function GuestNumField({
+  label,
+  value,
+  min,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-700 mb-1">{label}</label>
+      <input
+        type="number"
+        min={min}
+        value={value}
+        onChange={(e) => onChange(Math.max(min, parseInt(e.target.value) || 0))}
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+      />
     </div>
   );
 }

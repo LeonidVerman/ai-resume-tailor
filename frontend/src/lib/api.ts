@@ -41,6 +41,8 @@ import type {
   GenerationResponse,
   GuestClaimRequest,
   GuestClaimResponse,
+  GuestDataDeleteResponse,
+  GuestMetricsResponse,
   GuestSessionRequest,
   GuestSessionResponse,
   GenerationRunDetail,
@@ -412,6 +414,8 @@ export const admin = {
       method: "PUT",
       body: JSON.stringify(body),
     }),
+  getGuestMetrics: () =>
+    request<GuestMetricsResponse>("/admin/guest-metrics"),
   getSignupCreditPolicy: () =>
     request<SignupCreditPolicyResponse>("/admin/signup-credit-policy"),
   saveSignupCreditPolicy: (body: SignupCreditPolicyRequest) =>
@@ -522,6 +526,13 @@ export const guest = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  /**
+   * "Delete my files now" (Phase 5): immediately purge the authenticated
+   * guest's uploaded resume and generated artifacts. Guest accounts only.
+   */
+  deleteData: () =>
+    request<GuestDataDeleteResponse>("/guest/data", { method: "DELETE" }),
 };
 
 // ── Legal ──────────────────────────────────────────────────────────────────

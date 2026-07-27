@@ -9,10 +9,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { CheckCircle, Download, FileText, GitCompare, Lock, UserPlus } from "lucide-react";
+import { CheckCircle, Download, FileText, GitCompare, Lock, Trash2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
-import { documents, ApiError } from "@/lib/api";
+import { documents, guest, ApiError } from "@/lib/api";
 import type { GenerationResponse, TailoredDocumentDetail } from "@/types/api";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +35,11 @@ export function GuestResult({ result }: GuestResultProps) {
   const [previewPart, setPreviewPart] = useState<PreviewPart>("resume");
   const [downloading, setDownloading] = useState<PreviewPart | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  // "Delete my files now" (Phase 5)
+  const [deleting, setDeleting] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (result.tailored_document_id) {
@@ -76,6 +81,55 @@ export function GuestResult({ result }: GuestResultProps) {
     } finally {
       setDownloading(null);
     }
+  }
+
+  async function handleDeleteData() {
+    if (
+      !window.confirm(
+        "Delete your uploaded resume and all generated files now? " +
+          "This cannot be undone."
+      )
+    ) {
+      return;
+    }
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      await guest.deleteData();
+      setDeleted(true);
+    } catch (e) {
+      setDeleteError(
+        e instanceof ApiError ? e.detail : "Could not delete your files."
+      );
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  if (deleted) {
+    return (
+      <Card className="shadow-md border-gray-200">
+        <CardBody className="py-10 text-center space-y-3">
+          <Trash2 className="h-8 w-8 text-gray-400 mx-auto" />
+          <h2 className="text-lg font-semibold text-gray-900">
+            Your files were deleted
+          </h2>
+          <p className="text-sm text-gray-500 max-w-md mx-auto">
+            Your uploaded resume and generated documents have been permanently
+            removed from our servers.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
+            >
+              <UserPlus className="h-4 w-4" />
+              Create free account
+            </Link>
+          </div>
+        </CardBody>
+      </Card>
+    );
   }
 
   return (
@@ -178,6 +232,25 @@ export function GuestResult({ result }: GuestResultProps) {
             <UserPlus className="h-4 w-4" />
             Create free account and save
           </Link>
+        </div>
+
+        {/* Delete my files now */}
+        <div className="pt-3 border-t border-gray-100 text-center">
+          <button
+            type="button"
+            onClick={handleDeleteData}
+            disabled={deleting}
+            className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            {deleting ? "Deleting…" : "Delete my files now"}
+          </button>
+          <p className="text-xs text-gray-400 mt-1">
+            Otherwise your files are deleted automatically after 7 days.
+          </p>
+          {deleteError && (
+            <p className="text-xs text-red-600 mt-1">✗ {deleteError}</p>
+          )}
         </div>
       </CardBody>
     </Card>

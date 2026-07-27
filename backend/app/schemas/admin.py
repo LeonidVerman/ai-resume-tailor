@@ -30,8 +30,18 @@ class SignupCreditPolicyRequest(APIModel):
 
 
 class GenerationConfigRequest(APIModel):
-    """PUT /admin/generation-config request body."""
-    simple_model: str
+    """PUT /admin/generation-config request body.
+
+    All fields are optional — only the provided ones are updated.  The
+    guest_* fields (issue #155) share this endpoint so the admin config
+    stays a single-row upsert.
+    """
+    simple_model: str | None = None
+    guest_enabled: bool | None = None
+    guest_daily_global_cap: int | None = None
+    guest_concurrent_cap: int | None = None
+    guest_ip_daily_limit: int | None = None
+    guest_retention_days: int | None = None
 
 
 class GenerationConfigResponse(APIModel):
@@ -56,6 +66,39 @@ class AdminActionResponse(APIModel):
     """Generic success response for admin actions."""
     ok: bool
     message: str
+
+
+# ── Guest metrics (issue #155, Phase 5) ────────────────────────────────────
+
+class GuestConfigValues(APIModel):
+    """Current guest generation config (kill switch + caps)."""
+    guest_enabled: bool
+    guest_daily_global_cap: int
+    guest_concurrent_cap: int
+    guest_ip_daily_limit: int
+    guest_retention_days: int
+
+
+class GuestFunnelTotals(APIModel):
+    """Aggregate funnel counts over the reporting window."""
+    sessions: int = 0
+    profiles: int = 0
+    generations_started: int = 0
+    generations_completed: int = 0
+    generations_failed: int = 0
+    claims: int = 0
+
+
+class GuestFunnelDay(GuestFunnelTotals):
+    """Per-day funnel counts (date is ISO YYYY-MM-DD, UTC)."""
+    date: str
+
+
+class GuestMetricsResponse(APIModel):
+    """GET /admin/guest-metrics response."""
+    days: list[GuestFunnelDay]
+    totals: GuestFunnelTotals
+    config: GuestConfigValues
 
 
 # ── Benchmark schemas ──────────────────────────────────────────────────────
