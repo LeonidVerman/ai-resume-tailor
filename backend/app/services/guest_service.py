@@ -275,6 +275,112 @@ class GuestService:
             "user_id": user.id,
         }
 
+    # -- guest pipeline helpers (Phase 2) -------------------------------------
+
+    def check_generation_caps(self) -> None:
+        """Global daily cap + concurrency cap (circuit breakers)."""
+        cfg = self._admin_config()
+        daily_cap = cfg.guest_daily_global_cap if cfg else 25
+        conc_cap = cfg.guest_concurrent_cap if cfg else 2
+        day_start = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        today = self._db.execute(
+            select(func.count()).select_from(GuestAbuseEvent).where(
+                GuestAbuseEvent.event_type == "generation_reserved",
+                GuestAbuseEvent.created_at >= day_start,
+            )
+        ).scalar_one()
+        if today >= daily_cap:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="The free trial is temporarily at capacity — please "
+                       "try again later or create a free account",
+            )
+        in_flight = self._db.execute(
+            select(func.coalesce(func.sum(GuestEntitlement.reserved), 0))
+        ).scalar_one()
+        if in_flight >= conc_cap:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="The free trial is busy right now — please try again "
+                       "in a minute",
+            )
+
+    def mark_device_used(self, user_id: str) -> None:
+        device = self._db.execute(
+            select(GuestDevice).where(GuestDevice.guest_user_id == user_id)
+        ).scalars().first()
+        if device is not None and device.generation_used_at is None:
+            device.generation_used_at = datetime.now(timezone.utc)
+            self._db.flush()
+
+    def replace_guest_resumes(self, user_id: str) -> None:
+        """Guest keeps at most ONE resume: soft-delete previous rows and drop
+        the stale auto-generated profile so it is rebuilt from the new file."""
+        from backend.app.db.models.candidate_profile import CandidateProfile
+        from backend.app.db.models.structured_resume import StructuredResume
+
+        stale = self._db.execute(
+            select(StructuredResume).where(
+                StructuredResume.user_id == user_id,
+                StructuredResume.delete_flg.is_(False),
+            )
+        ).scalars().all()
+        for r in stale:
+            r.delete_flg = True
+        if stale:
+            profile = self._db.execute(
+                select(CandidateProfile).where(
+                    CandidateProfile.user_id == user_id,
+                    CandidateProfile.is_unreviewed.is_(True),
+                )
+            ).scalars().first()
+            if profile is not None:
+                self._db.delete(profile)
+            logger.info(
+                "Guest resume replaced user=%s (%d previous soft-deleted)",
+                user_id, len(stale),
+            )
+        self._db.flush()
+
+    def ensure_guest_profile(self, user_id: str, resume_id: int):
+        """Auto-accept a resume-derived temporary profile (unreviewed).
+
+        Marks onboarding_completed so the standard generation gate passes;
+        the resume remains the authoritative evidence.  Returns the profile.
+        """
+        from backend.app.db.models.candidate_profile import CandidateProfile
+        from backend.app.services.profile_autofill_service import (
+            ProfileAutofillService,
+        )
+
+        existing = self._db.execute(
+            select(CandidateProfile).where(CandidateProfile.user_id == user_id)
+        ).scalars().first()
+        if existing is not None:
+            return existing
+
+        draft = ProfileAutofillService(self._db).generate(user_id, resume_id)
+        if draft.status != "ready":
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Could not extract a candidate profile from this resume",
+            )
+        now = datetime.now(timezone.utc)
+        profile = CandidateProfile(
+            user_id=user_id,
+            profile_jsonb=draft.draft.model_dump(mode="json"),
+            onboarding_completed=True,
+            onboarding_completed_at=now,
+            is_unreviewed=True,
+            source_resume_id=resume_id,
+        )
+        self._db.add(profile)
+        self._db.flush()
+        self.record_funnel("guest_profile_created", user_id=user_id)
+        return profile
+
     # -- entitlement reservation (used by the generation endpoint, Phase 2) --
 
     def reserve_generation(self, user_id: str) -> GuestEntitlement:

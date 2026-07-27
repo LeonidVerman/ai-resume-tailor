@@ -155,6 +155,15 @@ def download_document(
     if doc.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
+    # Guest generation (#155): guests download PDF only — DOCX/TXT unlock
+    # with a free account (registration incentive).
+    if getattr(user, "is_anonymous", False) and format != "pdf":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="REGISTER_TO_UNLOCK: create a free account to download "
+                   "DOCX and text formats",
+        )
+
     if part not in ("resume", "cover_letter"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

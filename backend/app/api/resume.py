@@ -126,12 +126,22 @@ async def upload_resume(file: UploadFile, user: CurrentUserDep, db: DbDep, backg
             "Try saving it as a standard .docx file."
         )
 
+    # Guest generation (#155): a guest keeps at most one resume — uploading
+    # another replaces it (previous rows soft-deleted, stale auto profile
+    # dropped so it is rebuilt from the new file).
+    if getattr(user, "is_anonymous", False):
+        from backend.app.config import get_settings
+        from backend.app.services.guest_service import GuestService
+        GuestService(db, get_settings()).replace_guest_resumes(user.id)
+
+    import hashlib as _hashlib
     resume = _repo(db).create(
         user_id=user.id,
         resume_jsonb=doc_dict,
         source_file_url=None,
         input_conversion_warning=conversion_warning,
         template_ir_jsonb=norm.template_ir,
+        sha256=_hashlib.sha256(data).hexdigest(),
     )
 
     # Upload the original file bytes to storage using the correct extension so
@@ -161,7 +171,37 @@ async def upload_resume(file: UploadFile, user: CurrentUserDep, db: DbDep, backg
         norm.template_ir,
     )
 
+    # Guest generation (#155): pre-build the auto-accepted temporary profile
+    # in the background so the generate click doesn't pay the extraction
+    # latency.  The generation endpoint has a synchronous fallback if this
+    # has not completed (or failed) by then.
+    if getattr(user, "is_anonymous", False):
+        background_tasks.add_task(_run_guest_profile_background, user.id, resume.id)
+
     return _to_response(resume)
+
+
+def _run_guest_profile_background(user_id: str, resume_id: int) -> None:
+    """Background task: auto-accept a temporary guest profile (#155).
+
+    Opens its own DB session; failures are logged — the generation endpoint
+    falls back to synchronous profile creation.
+    """
+    from backend.app.config import get_settings
+    from backend.app.db.session import get_session_factory
+    from backend.app.services.guest_service import GuestService
+
+    settings = get_settings()
+    factory = get_session_factory(settings.database_url)
+    db = factory()
+    try:
+        GuestService(db, settings).ensure_guest_profile(user_id, resume_id)
+        db.commit()
+    except Exception as exc:
+        logger.error("Guest profile background task failed user=%s: %s", user_id, exc)
+        db.rollback()
+    finally:
+        db.close()
 
 
 @router.get("", response_model=list[StructuredResumeSummary])

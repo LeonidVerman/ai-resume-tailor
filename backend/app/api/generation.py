@@ -125,6 +125,18 @@ def generate(request: GenerationRequest, user: CurrentUserDep, db: DbDep):
         )
 
     # ── Onboarding gate ────────────────────────────────────────────────────
+    _is_guest = bool(getattr(user, "is_anonymous", False))
+    _guest_svc = None
+    if _is_guest:
+        # Guest generation (#155): the profile is auto-accepted from the
+        # uploaded resume (unreviewed).  Normally created at upload time;
+        # synchronous fallback here if that has not completed yet.
+        from backend.app.config import get_settings
+        from backend.app.services.guest_service import GuestService
+        _guest_svc = GuestService(db, get_settings())
+        _guest_svc.require_enabled()
+        _guest_svc.ensure_guest_profile(user.id, request.structured_resume_id)
+
     profile = CandidateProfileRepository(db).get_by_user_id(user.id)
     if profile is None or not profile.onboarding_completed:
         raise HTTPException(
@@ -143,6 +155,38 @@ def generate(request: GenerationRequest, user: CurrentUserDep, db: DbDep):
 
     # ── Quota gate (check only — consume happens on success inside generate()) ─
     billing = BillingRepository(db).get_by_user_id(user.id)
+    if _is_guest:
+        # Guest gauntlet (#155): circuit breakers + atomic entitlement
+        # reservation replace the account quota system.  The reservation is
+        # committed before the long synchronous pipeline so a crash cannot
+        # double-spend; internal failures release the credit.
+        _guest_svc.check_generation_caps()
+        _guest_svc.reserve_generation(user.id)
+        _guest_svc.record_abuse("", "generation_reserved", user_id=user.id)
+        _guest_svc.record_funnel("guest_generation_started", user_id=user.id)
+        db.commit()
+        try:
+            result = _service(db).generate(user.id, request, billing)
+        except HTTPException:
+            _guest_svc.release_generation(user.id)
+            db.commit()
+            raise
+        except Exception as exc:
+            _guest_svc.release_generation(user.id)
+            _guest_svc.record_funnel(
+                "guest_generation_failed", user_id=user.id,
+                meta={"error": str(exc)[:200]},
+            )
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Generation failed: {exc}",
+            )
+        _guest_svc.finalize_generation(user.id)
+        _guest_svc.mark_device_used(user.id)
+        _guest_svc.record_funnel("guest_generation_completed", user_id=user.id)
+        return result
+
     UsagePolicyService(
         billing_repo=BillingRepository(db),
         monthly_usage_repo=MonthlyUsageRepository(db),
