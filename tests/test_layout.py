@@ -372,29 +372,48 @@ class TestRedistributeAdditional:
     def _containers(self, tmp_path):
         return extract_containers(parse_docx(_make_sidebar_docx(tmp_path)))
 
-    def test_languages_removed_from_skills(self, tmp_path):
+    def test_languages_stays_in_place_when_container_locked(self, tmp_path):
+        """Locked destination → the labeled line stays in Technical Skills
+        exactly where the LLM put it, label intact (issue #152)."""
         containers = self._containers(tmp_path)
         llm = parse_llm_output(_LLM_WITH_LABELED_ADDITIONAL)
+        orig_lines = next(
+            s for s in llm if s.semantic_type == "skills"
+        ).body_lines
         result = redistribute_additional(llm, containers)
         skills = next(s for s in result if s.semantic_type == "skills")
-        for line in skills.body_lines:
-            assert not line.strip().lower().startswith("languages"), (
-                "Languages line still in Technical Skills after redistribution"
+        lang_orig = [
+            (i, l) for i, l in enumerate(orig_lines)
+            if l.strip().lower().startswith("languages")
+        ]
+        for i, l in lang_orig:
+            assert skills.body_lines[i] == l, (
+                "Languages line must keep its label and original position "
+                "when the destination container is locked"
             )
 
-    def test_certifications_removed_from_skills(self, tmp_path):
+    def test_certifications_stays_in_place_when_container_locked(self, tmp_path):
+        """Locked destination → certification line keeps label and position."""
         containers = self._containers(tmp_path)
         llm = parse_llm_output(_LLM_WITH_LABELED_ADDITIONAL)
+        orig_lines = next(
+            s for s in llm if s.semantic_type == "skills"
+        ).body_lines
         result = redistribute_additional(llm, containers)
         skills = next(s for s in result if s.semantic_type == "skills")
-        for line in skills.body_lines:
-            assert not line.strip().lower().startswith("certifications"), (
-                "Certifications line still in Technical Skills after redistribution"
+        cert_orig = [
+            (i, l) for i, l in enumerate(orig_lines)
+            if l.strip().lower().startswith("certifications")
+        ]
+        for i, l in cert_orig:
+            assert skills.body_lines[i] == l, (
+                "Certifications line must keep its label and original "
+                "position when the destination container is locked"
             )
 
     def test_dedicated_languages_section_locked_stays_in_skills(self, tmp_path):
         """Languages/Certs containers are locked (verbatim-only).
-        Labeled content from Technical Skills must stay there (label stripped),
+        Labeled content from Technical Skills must stay there verbatim,
         not be routed to the locked container where it would be discarded.
         """
         containers = self._containers(tmp_path)
@@ -405,15 +424,15 @@ class TestRedistributeAdditional:
         assert not injected, (
             "No Languages LLM section should be injected when the container is locked"
         )
-        # Extracted value must survive in Technical Skills (label stripped)
+        # Value must survive in Technical Skills
         skills = next(s for s in result if s.semantic_type == "skills")
         all_text = " ".join(skills.body_lines)
         assert "English" in all_text or "French" in all_text, (
-            "Extracted languages value must remain in Technical Skills when container is locked"
+            "Languages value must remain in Technical Skills when container is locked"
         )
 
     def test_dedicated_cert_section_locked_stays_in_skills(self, tmp_path):
-        """Certifications container is locked; extracted value must stay in Technical Skills."""
+        """Certifications container is locked; value must stay in Technical Skills."""
         containers = self._containers(tmp_path)
         llm = parse_llm_output(_LLM_WITH_LABELED_ADDITIONAL)
         result = redistribute_additional(llm, containers)
@@ -425,12 +444,27 @@ class TestRedistributeAdditional:
         assert not injected, (
             "No Certifications LLM section should be injected when the container is locked"
         )
-        # Extracted cert value must survive in Technical Skills (label stripped)
         skills = next(s for s in result if s.semantic_type == "skills")
         all_text = " ".join(skills.body_lines)
         assert "AWS Certified" in all_text, (
-            "Extracted certifications value must remain in Technical Skills when container is locked"
+            "Certifications value must remain in Technical Skills when container is locked"
         )
+
+    def test_programming_languages_never_extracted(self):
+        """'Languages: Java, Kotlin, TypeScript' is a programming-skills
+        line — never spoken-language proficiency (issue #152, sample 36)."""
+        lines = [
+            "Languages: Java, Kotlin, TypeScript",
+            "Backend: Spring Boot",
+        ]
+        clean, subs = extract_additional_subgroups(lines)
+        assert clean == lines
+        assert "languages" not in subs
+
+    def test_spoken_languages_with_markers_extracted(self):
+        lines = ["Languages: English (fluent), German (B2)"]
+        clean, subs = extract_additional_subgroups(lines)
+        assert subs.get("languages") == ["English (fluent), German (B2)"]
 
     def test_no_container_for_subkind_falls_back_to_skills(self):
         """When no dedicated container exists, extracted value stays in skills."""
@@ -763,27 +797,37 @@ class TestApplyLayoutFitting:
         assert any(s.semantic_type == "experience" for s in result)
         assert any(s.semantic_type == "skills" for s in result)
 
-    def test_sidebar_lang_redistribution(self, tmp_path):
-        """Sidebar template: Languages extracted from Technical Skills."""
+    def test_sidebar_lang_stays_labeled_when_locked(self, tmp_path):
+        """Sidebar template: the Languages container is locked, so the
+        labeled line stays in Technical Skills verbatim (issue #152)."""
         original = parse_docx(_make_sidebar_docx(tmp_path))
         llm = parse_llm_output(_LLM_WITH_LABELED_ADDITIONAL)
         result = apply_layout_fitting(original, llm)
         skills = next(s for s in result if s.semantic_type == "skills")
-        for line in skills.body_lines:
-            assert not line.strip().lower().startswith("languages"), (
-                "Languages still in Technical Skills after apply_layout_fitting"
-            )
+        labeled = [
+            l for l in skills.body_lines
+            if l.strip().lower().startswith("languages")
+        ]
+        assert labeled, (
+            "Languages line must stay in Technical Skills (label intact) "
+            "when the destination container is locked"
+        )
 
-    def test_sidebar_cert_redistribution(self, tmp_path):
-        """Sidebar template: Certifications extracted from Technical Skills."""
+    def test_sidebar_cert_stays_labeled_when_locked(self, tmp_path):
+        """Sidebar template: the Certifications container is locked, so
+        the labeled line stays in Technical Skills verbatim (issue #152)."""
         original = parse_docx(_make_sidebar_docx(tmp_path))
         llm = parse_llm_output(_LLM_WITH_LABELED_ADDITIONAL)
         result = apply_layout_fitting(original, llm)
         skills = next(s for s in result if s.semantic_type == "skills")
-        for line in skills.body_lines:
-            assert not line.strip().lower().startswith("certif"), (
-                "Certifications still in Technical Skills after apply_layout_fitting"
-            )
+        labeled = [
+            l for l in skills.body_lines
+            if l.strip().lower().startswith("certif")
+        ]
+        assert labeled, (
+            "Certifications line must stay in Technical Skills (label "
+            "intact) when the destination container is locked"
+        )
 
     def test_oversized_summary_compacted_in_narrow_container(self, tmp_path):
         """Narrow summary container: long summary is compacted."""
@@ -835,8 +879,9 @@ class TestApplyLayoutFitting:
 class TestCompileIntegration:
     """compile_resume now includes apply_layout_fitting; smoke-test the full path."""
 
-    def test_sidebar_compile_no_lang_in_skills(self, tmp_path):
-        """Compiled DOCX must not have Languages embedded in Technical Skills."""
+    def test_sidebar_compile_lang_stays_labeled_in_skills(self, tmp_path):
+        """Locked Languages container → the labeled line survives inside
+        Technical Skills in the compiled DOCX (issue #152)."""
         template = _make_sidebar_docx(tmp_path)
         output = str(tmp_path / "out.docx")
         compile_resume(template, _LLM_WITH_LABELED_ADDITIONAL, output)
@@ -844,8 +889,10 @@ class TestCompileIntegration:
         skills = next((s for s in doc.sections if s.semantic_type == "skills"), None)
         assert skills is not None
         skills_text = " ".join(p.text for p in skills.body_paras)
-        # Languages content should not be in the skills section text
-        assert "Languages:" not in skills_text
+        assert "Languages:" in skills_text, (
+            "Labeled Languages line must survive in Technical Skills when "
+            "the destination container is locked"
+        )
 
     def test_sidebar_compile_dedicated_lang_section_populated(self, tmp_path):
         """Compiled DOCX Languages section must contain the redistributed text."""

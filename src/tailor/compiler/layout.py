@@ -405,24 +405,53 @@ def _classify_line_subkind(line: str) -> str:
     return ""
 
 
+_SPOKEN_LANGUAGE_HINT_RE = re.compile(
+    r"\b(?:native|fluent|advanced|intermediate|basic|beginner|elementary|"
+    r"professional|working|conversational|proficien\w*|mother\s+tongue)\b"
+    r"|\b[ABC][12]\b",
+    re.IGNORECASE,
+)
+
+# Unambiguous programming-language names.  A "Languages:" line in Technical
+# Skills that mentions any of these is a programming-skills line, not spoken-
+# language proficiency, and must never be routed to a Languages section.
+_PROG_LANG_TOKEN_RE = re.compile(
+    r"(?:\b(?:java|kotlin|typescript|javascript|python|golang|go|rust|scala|"
+    r"php|ruby|swift|sql|html|css|bash|shell|perl|dart|groovy|matlab|"
+    r"fortran|cobol|haskell|clojure|erlang|elixir|node(?:\.js)?|js|ts)\b"
+    r"|c\+\+|c#)",
+    re.IGNORECASE,
+)
+
+
 def extract_additional_subgroups(
     body_lines: list[str],
+    allowed_subkinds: "set[str] | None" = None,
 ) -> tuple[list[str], dict[str, list[str]]]:
     """Split *body_lines* into (clean_skills_lines, subgroups_dict).
 
     Lines that start with a recognized Additional label
     (``Languages: …``, ``Certifications: …``, etc.) are extracted into
     *subgroups_dict* keyed by subkind, and removed from clean_skills_lines.
+    When *allowed_subkinds* is given, only those subkinds are extracted;
+    other labeled lines stay in clean_skills_lines verbatim (label and
+    position intact).
+
+    A ``Languages:`` line naming programming languages ("Languages: Java,
+    Kotlin, TypeScript") is never extracted — it stays in Technical Skills
+    (sample 36 lost its label and order to this) — unless it also carries
+    spoken-proficiency markers ("English (fluent)").
 
     Example::
 
         clean, subs = extract_additional_subgroups([
             "Python, Java",
-            "Languages: English, French",
+            "Languages: English (fluent), French (B1)",
             "Certifications: AWS",
         ])
         # clean  = ["Python, Java"]
-        # subs   = {"languages": ["English, French"], "certifications": ["AWS"]}
+        # subs   = {"languages": ["English (fluent), French (B1)"],
+        #           "certifications": ["AWS"]}
     """
     clean: list[str] = []
     subgroups: dict[str, list[str]] = {}
@@ -430,6 +459,16 @@ def extract_additional_subgroups(
     for line in body_lines:
         for pattern, subkind in _LABEL_PATTERNS:
             if pattern.match(line.strip()):
+                if allowed_subkinds is not None and subkind not in allowed_subkinds:
+                    clean.append(line)
+                    break
+                if (
+                    subkind == "languages"
+                    and _PROG_LANG_TOKEN_RE.search(line)
+                    and not _SPOKEN_LANGUAGE_HINT_RE.search(line)
+                ):
+                    clean.append(line)
+                    break
                 value = pattern.sub("", line.strip()).strip()
                 if value:
                     subgroups.setdefault(subkind, []).append(value)
@@ -489,19 +528,26 @@ def redistribute_additional(
 
     skills_section = llm_sections[skills_idx]
 
-    # Pre-check: only proceed if at least one subkind has a dedicated container.
-    # When no dedicated container exists for ANY label subkind, redistribution
-    # would just re-append extracted content at the END of Technical Skills,
-    # destroying the LLM output order.  Skip entirely in that case to preserve
-    # the original line order inside Technical Skills.
-    _has_dedicated_subkind_container = any(
-        _find_container_for_subkind(sk, containers) is not None
-        for _, sk in _LABEL_PATTERNS
-    )
-    if not _has_dedicated_subkind_container:
+    # Only extract subkinds whose dedicated container exists AND is writable.
+    # Extracting a line whose destination is locked (or missing) used to
+    # re-append it to Technical Skills label-stripped and at the END —
+    # sample 36's 'Languages: Java, Kotlin, TypeScript' lost its label and
+    # moved from first to last.  Such lines now stay exactly where the LLM
+    # put them, label intact.
+    _LOCKED_TYPES = frozenset({"education", "certifications", "languages", "websites"})
+    _writable_subkinds = {
+        sk for _, sk in _LABEL_PATTERNS
+        if (
+            (_c := _find_container_for_subkind(sk, containers)) is not None
+            and _c.semantic_type not in _LOCKED_TYPES
+        )
+    }
+    if not _writable_subkinds:
         return llm_sections
 
-    clean_lines, subgroups = extract_additional_subgroups(skills_section.body_lines)
+    clean_lines, subgroups = extract_additional_subgroups(
+        skills_section.body_lines, allowed_subkinds=_writable_subkinds
+    )
 
     if not subgroups:
         return llm_sections
@@ -518,34 +564,11 @@ def redistribute_additional(
 
     insert_after = skills_idx  # cursor for sequential inserts
 
-    # Locked section types are preserved verbatim by apply_tailored and never
-    # accept LLM content.  Routing extracted subgroup lines to a locked container
-    # would silently discard them (e.g. "Languages: Java, Python" routed to the
-    # natural-language "Languages" section which is locked).  Keep them in
-    # Technical Skills instead, exactly like the "no dedicated container" case.
-    _LOCKED_TYPES = frozenset({"education", "certifications", "languages", "websites"})
-
     for subkind, lines in subgroups.items():
         dedicated = _find_container_for_subkind(subkind, containers)
-        if dedicated is None:
-            # No dedicated container — return content to Technical Skills as
-            # plain lines (e.g. "Languages: Java, Python" when no Languages
-            # block exists).
-            cur = result[skills_idx]
-            result[skills_idx] = LlmSection(
-                heading=cur.heading,
-                semantic_type=cur.semantic_type,
-                body_lines=cur.body_lines + lines,
-                roles=cur.roles,
-            )
-            continue
-        if dedicated.semantic_type in _LOCKED_TYPES:
-            # Dedicated container exists but is locked (verbatim-only).
-            # Return the content to Technical Skills as plain lines so it is
-            # not silently discarded (e.g. "Languages: Java, Python" should
-            # remain visible even when the template LANGUAGES section is locked).
-            # Natural-language proficiency lines ("English (native), German…")
-            # are then removed by _sanitize_skills_body before rendering.
+        if dedicated is None or dedicated.semantic_type in _LOCKED_TYPES:
+            # Defensive: extraction is limited to writable subkinds above,
+            # so this should not happen — but never discard content.
             cur = result[skills_idx]
             result[skills_idx] = LlmSection(
                 heading=cur.heading,
