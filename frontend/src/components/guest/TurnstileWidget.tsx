@@ -28,7 +28,11 @@ declare global {
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 const SCRIPT_SRC =
   "https://challenges.cloudflare.com/turnstile/api.js?render=explicit";
-const DEV_STUB = !SITE_KEY && process.env.NODE_ENV === "development";
+// Explicit local-testing bypass: renders the stub even in production
+// builds.  Never set this in a real deployment.
+const DEV_BYPASS = process.env.NEXT_PUBLIC_TURNSTILE_DEV_BYPASS === "1";
+const DEV_STUB =
+  DEV_BYPASS || (!SITE_KEY && process.env.NODE_ENV === "development");
 export const DEV_STUB_TOKEN = "dev-stub-turnstile-token";
 
 interface TurnstileWidgetProps {
