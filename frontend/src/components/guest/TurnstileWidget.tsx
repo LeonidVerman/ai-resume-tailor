@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface TurnstileOptions {
   sitekey: string;
@@ -40,6 +40,7 @@ export function TurnstileWidget({ onToken }: TurnstileWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const onTokenRef = useRef(onToken);
   onTokenRef.current = onToken;
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     if (DEV_STUB) {
@@ -76,13 +77,45 @@ export function TurnstileWidget({ onToken }: TurnstileWidgetProps) {
         document.head.appendChild(script);
       }
       script.addEventListener("load", renderWidget);
+      script.addEventListener("error", () => {
+        if (!cancelled) setLoadFailed(true);
+      });
     }
+
+    // Fallback poll: closes the race where the script finished loading
+    // between the window.turnstile check and addEventListener, and surfaces
+    // a visible error if the script never arrives (blocked/offline).
+    const startedAt = Date.now();
+    const poll = window.setInterval(() => {
+      if (cancelled || widgetId) {
+        window.clearInterval(poll);
+        return;
+      }
+      if (window.turnstile) {
+        renderWidget();
+        window.clearInterval(poll);
+      } else if (Date.now() - startedAt > 15000) {
+        setLoadFailed(true);
+        window.clearInterval(poll);
+      }
+    }, 500);
 
     return () => {
       cancelled = true;
+      window.clearInterval(poll);
       if (widgetId && window.turnstile) window.turnstile.remove(widgetId);
     };
   }, []);
+
+  if (loadFailed) {
+    return (
+      <p className="text-sm text-red-600">
+        Could not load the verification widget (challenges.cloudflare.com may
+        be blocked by your network or an extension). Please allow it and
+        reload.
+      </p>
+    );
+  }
 
   if (DEV_STUB) {
     return (
