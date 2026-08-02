@@ -8103,6 +8103,27 @@ def apply_tailored(
                         _pid_fd, _pm_fd.text[:40],
                     )
                     _pm_fd.text = ""
+    # Issue #158: original body paragraphs of a NON-experience section that
+    # apply_tailored rebuilt are stale template fragments (typically wrapped
+    # continuation lines of a replaced paragraph — the "…Proven expertise in
+    # Java…" summary tail), not dropped content.  An untouched section keeps
+    # its body paras in all_paras (→ _known_pids), so a para reaching this
+    # loop while its owning section survives in new_sections means the body
+    # was rebuilt without it.  Blank it instead of re-appending verbatim.
+    # Experience sections keep the verbatim safety net (dropped roles are
+    # real content loss).
+    def _sec_key_fd(sec) -> str:
+        return sec.section_id or " ".join((sec.title or "").split()).lower()
+
+    _rebuilt_sec_keys = {_sec_key_fd(s) for s in new_sections}
+    _orig_nonexp_body_owner: dict[str, str] = {}
+    for _osec_fd in original.sections:
+        if _osec_fd.semantic_type == "experience" and _osec_fd.roles:
+            continue
+        for _obp_fd in _osec_fd.body_paras:
+            if _obp_fd.para_id:
+                _orig_nonexp_body_owner[_obp_fd.para_id] = _sec_key_fd(_osec_fd)
+
     for _opm in (original.all_paras or []):
         if not _opm.para_id or _opm.para_id in _known_pids:
             continue
@@ -8115,6 +8136,16 @@ def apply_tailored(
             _reg = _opm.with_text("")
             _log.debug(
                 "ORPHAN_BLOCK_COVERED_BLANKED: para_id=%r (%r)",
+                _opm.para_id, _opm.text[:40],
+            )
+        elif (
+            _opm.text.strip()
+            and _opm.semantic in ("bullet", "paragraph")
+            and _orig_nonexp_body_owner.get(_opm.para_id) in _rebuilt_sec_keys
+        ):
+            _reg = _opm.with_text("")
+            _log.debug(
+                "ORPHAN_REBUILT_SECTION_BLANKED: para_id=%r (%r)",
                 _opm.para_id, _opm.text[:40],
             )
         all_paras.append(_reg)
