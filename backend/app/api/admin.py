@@ -41,6 +41,7 @@ from backend.app.db.repositories.benchmark_run_position_repository import Benchm
 from backend.app.db.repositories.candidate_profile_repository import CandidateProfileRepository
 from backend.app.db.repositories.evaluation_run_repository import EvaluationRunRepository
 from backend.app.db.repositories.generation_run_repository import GenerationRunRepository
+from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
 from backend.app.db.repositories.tailored_document_repository import TailoredDocumentRepository
 from backend.app.schemas.admin import (
     AVAILABLE_MODELS,
@@ -511,10 +512,23 @@ def _doc_filename(doc, part: str, fmt: str) -> str:
     return f"{prefix}_{safe_company}.{fmt}"
 
 
+def _template_filename(doc, ext: str) -> str:
+    """Archive name for the original uploaded resume template (issue #159).
+
+    Format: {CandidateName}_Resume_Template.{ext}
+    """
+    import re as _re
+    raw = _re.sub(r"[^A-Za-z0-9_-]", "_", (doc.resume_jsonb or {}).get("candidate_name", "")).strip("_")
+    safe_name = _re.sub(r"_+", "_", raw)
+    prefix = f"{safe_name}_Resume_Template" if safe_name else "Resume_Template"
+    return f"{prefix}.{ext}"
+
+
 def _collect_run_pack(run, db, storage, prefix: str = "") -> list[tuple[str, bytes]]:
     """Return (arcname, bytes) pairs for all available files for a generation run.
 
-    Collects: debug JSON + resume (pdf/docx/txt) + cover letter (pdf/docx/txt).
+    Collects: debug JSON + resume (pdf/docx/txt) + cover letter (pdf/docx/txt)
+    + the original uploaded resume template (pdf or docx).
     Missing or failed files are silently skipped.
     prefix is prepended to every arcname (use "{run_id}/" for multi-run zips).
     """
@@ -567,6 +581,22 @@ def _collect_run_pack(run, db, storage, prefix: str = "") -> list[tuple[str, byt
     if doc.cover_letter_pdf_url:
         try:
             files.append((prefix + _doc_filename(doc, "cover_letter", "pdf"), storage.get_bytes(doc.cover_letter_pdf_url)))
+        except Exception:
+            pass
+
+    # Original resume template used for this generation (issue #159).
+    # Resolved via structured_resume_id stored in resume_jsonb (same linkage
+    # the download-fallback render uses in documents.py).
+    resume_id = (doc.resume_jsonb or {}).get("structured_resume_id")
+    if resume_id:
+        try:
+            resume = StructuredResumeRepository(db).get_by_id(resume_id)
+            if resume is not None and resume.source_file_url:
+                ext = Path(resume.source_file_url).suffix.lstrip(".").lower() or "bin"
+                files.append((
+                    prefix + _template_filename(doc, ext),
+                    storage.get_bytes(resume.source_file_url),
+                ))
         except Exception:
             pass
 
@@ -634,8 +664,9 @@ def download_run_data(
     Download a ZIP archive of run packs for the given date range.
 
     Each run's files are placed in a subfolder named by run ID.
-    Each subfolder contains up to 7 files: debug JSON + resume (pdf/docx/txt) +
-    cover letter (pdf/docx/txt). Missing files are skipped silently.
+    Each subfolder contains up to 8 files: debug JSON + resume (pdf/docx/txt) +
+    cover letter (pdf/docx/txt) + the original uploaded resume template
+    (pdf or docx). Missing files are skipped silently.
     Returns run-data-YYYY-MM-DD-to-YYYY-MM-DD.zip.
     """
     effective_to = _validate_date_range(from_date, to_date)
@@ -669,8 +700,9 @@ def download_run_data_by_id(run_id: str, _admin: AdminDep, db: DbDep):
     """
     Download a ZIP pack for a specific generation run.
 
-    Contains up to 7 files: debug JSON + resume (pdf/docx/txt) +
-    cover letter (pdf/docx/txt). Missing files are skipped silently.
+    Contains up to 8 files: debug JSON + resume (pdf/docx/txt) +
+    cover letter (pdf/docx/txt) + the original uploaded resume template
+    (pdf or docx). Missing files are skipped silently.
     Returns 404 if the run does not exist or none of the files could be fetched.
     """
     try:

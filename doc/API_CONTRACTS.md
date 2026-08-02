@@ -340,13 +340,12 @@ Auth: `X-Cli-Secret` header (or no auth in development without a secret configur
 Download a ZIP of daily log files. Query params: `from_date` (required), `to_date`.
 
 ### GET /admin/run-data/download
-Download a ZIP of run-data JSONs for a date range. Query params: `from_date`, `to_date`.
+Download a ZIP of run packs for a date range (one subfolder per run ID). Query params: `from_date`, `to_date`.
 
 ### GET /admin/run-data/download/{run_id}
-Download the run-data JSON for a single generation run.
+Download the run pack ZIP for a single generation run (`run-data-{run_id}.zip`).
 
-Response headers include `Content-Disposition: attachment; filename="Name-Company-Role-RunID-Timestamp.json"`.
-The filename format is `FirstName_LastName-Company-Role-{run_id}-yyyyMMdd-HHmmss.json`.
+Each run pack contains up to 8 files: the debug JSON (`FirstName_LastName-Company-Role-{run_id}-yyyyMMdd-HHmmss.json`), the resume and cover letter in pdf/docx/txt, and the original uploaded resume template (`{CandidateName}_Resume_Template.pdf|docx`). Missing files are skipped silently.
 
 ### GET /admin/benchmark-runs
 List recent benchmark runs.
