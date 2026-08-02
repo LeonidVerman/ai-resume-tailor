@@ -1,5 +1,15 @@
 # Release Notes
 
+## 0.8.9.2.BETA — 2026-08-01
+
+### Bug fixes
+- **#158 Broken layout in PDF path**: three fixes for PDF-origin resumes generated through the SaaS pipeline. (1) `ParagraphProfile.y_top_pt` is now serialized in the stored IR (with `y_pt` fallback for existing rows), so the DB round-trip no longer zeroes the geometry the renderer keys on — previously the header collapsed into a one-row contact-bar table with the LinkedIn line rendering one character per line, and after this fix fresh-parse and round-trip renders are byte-identical; 41 previously failing tests (IR round-trip, page images, format round-trip) turned out to be latent symptoms and now pass. (2) Wrapped continuation lines of replaced summary/skills paragraphs are blanked instead of being re-appended verbatim and rendering as stray text after the last section. (3) The download-time render fallback converts resume PDFs via LibreOffice instead of the low-fidelity xhtml2pdf converter.
+
+### New features
+- **#159 Add original resume template to download run data archive**: the run pack (single-run and date-range admin downloads) now includes the original uploaded resume template (`{CandidateName}_Resume_Template.pdf|docx`) alongside the debug JSON and the generated resume/cover-letter artifacts.
+
+---
+
 ## 0.8.9.1.BETA — 2026-07-27
 
 ### Bug fixes
