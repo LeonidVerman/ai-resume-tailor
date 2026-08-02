@@ -234,7 +234,11 @@ def download_document(
     svc = RenderingService()
     try:
         if part == "resume":
-            pdf_bytes = svc.render_resume_pdf(docx_bytes, method="local")
+            # Use LibreOffice like the generation-time path: xhtml2pdf ("local")
+            # produces visibly degraded resumes (wrong fonts, flat layout) and
+            # this fallback serves real downloads when stored artifacts are
+            # missing (issue #158, Storm2 sample).
+            pdf_bytes = svc.render_resume_pdf(docx_bytes, method="subprocess")
         else:
             pdf_bytes = svc.render_cover_letter_pdf(docx_bytes, method="local")
     except Exception as exc:
