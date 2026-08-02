@@ -59,6 +59,41 @@ class TestLayoutParagraphBlockSerialization:
 
 
 # ---------------------------------------------------------------------------
+# Unit: ParagraphProfile geometry serialization (issue #158)
+# ---------------------------------------------------------------------------
+
+class TestParagraphProfileGeometryRoundTrip:
+    """y_top_pt must survive the DB JSON round-trip.
+
+    The SaaS PDF path stores the parsed IR in the database and re-loads it
+    via from_dict before rendering.  y_top_pt used to be runtime-only, so
+    every paragraph came back with 0.0 and the renderer's same-y header
+    grouping collapsed the whole header into one contact-bar table
+    (issue #158).
+    """
+
+    def test_y_top_pt_round_trip(self):
+        from tailor.compiler.models import ParagraphProfile
+        pp = ParagraphProfile(y_top_pt=107.45, y_pt=107.45, x_pt=136.75)
+        restored = ParagraphProfile.from_dict(json.loads(json.dumps(pp.to_dict())))
+        assert restored.y_top_pt == pytest.approx(107.45)
+
+    def test_legacy_dict_falls_back_to_y_pt(self):
+        # IR dicts stored in the DB before the fix have no y_top_pt key;
+        # y_pt carries the identical parse-time value.
+        from tailor.compiler.models import ParagraphProfile
+        d = ParagraphProfile(y_top_pt=56.55, y_pt=56.55).to_dict()
+        del d["y_top_pt"]
+        restored = ParagraphProfile.from_dict(d)
+        assert restored.y_top_pt == pytest.approx(56.55)
+
+    def test_missing_geometry_defaults_to_zero(self):
+        from tailor.compiler.models import ParagraphProfile
+        restored = ParagraphProfile.from_dict({})
+        assert restored.y_top_pt == 0.0
+
+
+# ---------------------------------------------------------------------------
 # Unit: LayoutTableBlock serialization
 # ---------------------------------------------------------------------------
 
