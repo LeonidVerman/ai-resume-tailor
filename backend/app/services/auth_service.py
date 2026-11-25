@@ -54,6 +54,16 @@ class AuthService:
         if user is not None:
             return user, False
 
+        # Anonymous Supabase identities (guest generation, #155) carry no
+        # email.  Their local row is pre-created by /guest/session; if it is
+        # missing here the guest was purged or never initialized — reject
+        # rather than creating an email-less user.
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Guest session no longer valid",
+            )
+
         # Migration path: pre-existing dev-bypass user — link Supabase identity
         user = self._users.get_by_email(email)
         if user is not None:

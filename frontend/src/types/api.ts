@@ -11,6 +11,7 @@ export interface AuthMeResponse {
   plan_type: string;
   onboarding_completed: boolean;
   legal_accepted: boolean;
+  is_anonymous: boolean; // guest (/try) identity, issue #155
 }
 
 // ── Legal ──────────────────────────────────────────────────────────────────
@@ -49,6 +50,43 @@ export interface LegalAcceptRequest {
   privacy_document_id: number;
   acceptance_method: string;
   source_surface: string;
+}
+
+// ── Guest (public /try flow) ───────────────────────────────────────────────
+
+export interface GuestSessionRequest {
+  turnstile_token: string;
+  terms_document_id: number;
+  privacy_document_id: number;
+}
+
+export interface GuestSessionResponse {
+  access_token: string;
+  refresh_token: string;
+  user_id: string;
+}
+
+export interface GuestClaimRequest {
+  guest_access_token: string;
+}
+
+export interface GuestClaimResponse {
+  guest_user_id: string;
+  resumes_moved: number;
+  job_descriptions_moved: number;
+  generation_runs_moved: number;
+  documents_moved: number;
+  profile_moved: boolean;
+  credits_added: number;
+}
+
+export interface GuestDataDeleteResponse {
+  purged: boolean;
+  resumes_deleted: number;
+  job_descriptions_deleted: number;
+  generation_runs_deleted: number;
+  documents_deleted: number;
+  profiles_deleted: number;
 }
 
 export interface AuthStatusResponse {
@@ -468,7 +506,43 @@ export interface SignupCreditPolicyRequest {
 }
 
 export interface GenerationConfigRequest {
-  simple_model: string;
+  // All fields optional — only the provided ones are updated (single-row
+  // admin config upsert shared by the generation model and guest controls).
+  simple_model?: string;
+  guest_enabled?: boolean;
+  guest_daily_global_cap?: number;
+  guest_concurrent_cap?: number;
+  guest_ip_daily_limit?: number;
+  guest_retention_days?: number;
+}
+
+// ── Guest metrics (admin, issue #155 Phase 5) ─────────────────────────────
+
+export interface GuestConfigValues {
+  guest_enabled: boolean;
+  guest_daily_global_cap: number;
+  guest_concurrent_cap: number;
+  guest_ip_daily_limit: number;
+  guest_retention_days: number;
+}
+
+export interface GuestFunnelTotals {
+  sessions: number;
+  profiles: number;
+  generations_started: number;
+  generations_completed: number;
+  generations_failed: number;
+  claims: number;
+}
+
+export interface GuestFunnelDay extends GuestFunnelTotals {
+  date: string; // ISO YYYY-MM-DD (UTC)
+}
+
+export interface GuestMetricsResponse {
+  days: GuestFunnelDay[];
+  totals: GuestFunnelTotals;
+  config: GuestConfigValues;
 }
 
 export interface AdminActionResponse {

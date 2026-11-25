@@ -201,6 +201,7 @@ def auth_me(user: CurrentUserDep, db: DbDep):
         plan_type=plan_type,
         onboarding_completed=onboarding_completed,
         legal_accepted=legal_accepted,
+        is_anonymous=bool(getattr(user, "is_anonymous", False)),
     )
 
 

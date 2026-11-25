@@ -1,4 +1,5 @@
-// Root page — redirect to dashboard if logged in, otherwise to login.
+// Root page — redirect to dashboard if logged in, otherwise to the public
+// guest trial at /try (issue #155; a real landing page may replace this).
 "use client";
 
 import { useEffect } from "react";
@@ -10,7 +11,7 @@ export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace(isAuthenticated() ? "/dashboard" : "/login");
+    router.replace(isAuthenticated() ? "/dashboard" : "/try");
   }, [router]);
 
   return (

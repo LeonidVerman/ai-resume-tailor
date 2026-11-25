@@ -39,6 +39,12 @@ import type {
   SignupCreditPolicyResponse,
   GenerationRequest,
   GenerationResponse,
+  GuestClaimRequest,
+  GuestClaimResponse,
+  GuestDataDeleteResponse,
+  GuestMetricsResponse,
+  GuestSessionRequest,
+  GuestSessionResponse,
   GenerationRunDetail,
   GenerationRunSummary,
   JobDescriptionManualRequest,
@@ -408,6 +414,8 @@ export const admin = {
       method: "PUT",
       body: JSON.stringify(body),
     }),
+  getGuestMetrics: () =>
+    request<GuestMetricsResponse>("/admin/guest-metrics"),
   getSignupCreditPolicy: () =>
     request<SignupCreditPolicyResponse>("/admin/signup-credit-policy"),
   saveSignupCreditPolicy: (body: SignupCreditPolicyRequest) =>
@@ -476,6 +484,55 @@ export const admin = {
       inputFilename: `${basename}_input.json`,
     };
   },
+};
+
+// ── Guest (public /try flow, issue #155) ──────────────────────────────────
+
+export const guest = {
+  /**
+   * Create an anonymous guest session (public endpoint, no auth header).
+   * Uses credentials: "include" so the backend can read/set the httpOnly
+   * guest device cookie across origins. The caller stores the returned
+   * tokens in the standard art_access_token / art_refresh_token slots so
+   * every subsequent call flows through the normal Authorization header.
+   */
+  createSession: async (body: GuestSessionRequest): Promise<GuestSessionResponse> => {
+    const res = await fetch(`${BASE_URL}/guest/session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const data = await res.json();
+        detail = data.detail ?? detail;
+      } catch {
+        // ignore parse errors
+      }
+      throw new ApiError(res.status, detail);
+    }
+    return res.json() as Promise<GuestSessionResponse>;
+  },
+
+  /**
+   * Claim/merge a guest session into the authenticated account (Phase 4).
+   * Sent with the NEW registered user's Authorization header; the guest
+   * access token in the body is the ownership proof.
+   */
+  claim: (body: GuestClaimRequest) =>
+    request<GuestClaimResponse>("/guest/claim", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  /**
+   * "Delete my files now" (Phase 5): immediately purge the authenticated
+   * guest's uploaded resume and generated artifacts. Guest accounts only.
+   */
+  deleteData: () =>
+    request<GuestDataDeleteResponse>("/guest/data", { method: "DELETE" }),
 };
 
 // ── Legal ──────────────────────────────────────────────────────────────────

@@ -53,9 +53,18 @@ def scrape_job_description(
     """
     Fetch a job listing from a URL and persist it.
 
+    Guests are paste-only (#155): URL fetching exposes the scraper to
+    anonymous traffic and stays registered-only.
+
     Uses the existing generator's scraper (LinkedIn, Wellfound, generic JSON-LD).
     Falls back to raw HTML extraction via httpx / Playwright.
     """
+    if getattr(user, "is_anonymous", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="GUEST_PASTE_ONLY: paste the job description text — URL "
+                   "fetch is available after creating a free account",
+        )
     scraper = JobScraperService()
     try:
         scraped = scraper.scrape(request.url)

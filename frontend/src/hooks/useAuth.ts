@@ -2,14 +2,17 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { auth, ApiError } from "@/lib/api";
+import { auth, guest, ApiError } from "@/lib/api";
 import {
   clearStoredToken,
   getStoredToken,
   getStoredUserId,
+  isGuestSession,
   setStoredRefreshToken,
   setStoredToken,
   setStoredUserId,
+  stashGuestClaimToken,
+  takeGuestClaimToken,
 } from "@/lib/auth";
 import type { AuthMeResponse } from "@/types/api";
 
@@ -97,15 +100,32 @@ export function useAuth() {
   const register = useCallback(
     async (email: string, password: string) => {
       setState((s) => ({ ...s, loading: true, error: null }));
+      // Guest claim (issue #155): capture the guest access token BEFORE the
+      // new session tokens overwrite the shared storage slots.
+      const guestToken = isGuestSession() ? getStoredToken() : null;
       try {
         const result = await auth.register({ email, password });
         setStoredToken(result.session.access_token);
         setStoredRefreshToken(result.session.refresh_token);
+        // Claim the guest content with the NEW user's Authorization.
+        // Non-fatal: a failed claim must never block registration.
+        const claimToken = guestToken ?? takeGuestClaimToken();
+        if (claimToken) {
+          try {
+            await guest.claim({ guest_access_token: claimToken });
+          } catch (claimErr) {
+            console.warn("Could not attach guest results to the new account:", claimErr);
+          }
+        }
         const me = await auth.me();
         setState({ user: me, loading: false, error: null });
         // New users always need to accept legal docs before using the app.
         router.push(me.legal_accepted ? "/dashboard" : "/legal/accept");
       } catch (err: unknown) {
+        // Registration did not produce a session (e.g. email confirmation
+        // required, or a retryable error). Stash the guest token so the
+        // claim can happen on the first authenticated arrival instead.
+        if (guestToken) stashGuestClaimToken(guestToken);
         clearStoredToken();
         const msg =
           err instanceof Error ? err.message : "Registration failed.";

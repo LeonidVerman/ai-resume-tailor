@@ -29,6 +29,9 @@ class CandidateProfile(Base, TimestampMixin):
     candidate_prompt: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
     prompt_synched: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
     onboarding_completed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    # Guest generation (issue #155): profile auto-accepted from the uploaded
+    # resume without user review; the resume remains authoritative evidence.
+    is_unreviewed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
     onboarding_completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, default=None
     )

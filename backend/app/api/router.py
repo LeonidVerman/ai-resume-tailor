@@ -28,6 +28,7 @@ from backend.app.api import (
     candidate_profile,
     documents,
     generation,
+    guest,
     health,
     job_description,
     legal,
@@ -49,4 +50,5 @@ api_router.include_router(documents.router, prefix="/documents", tags=["document
 api_router.include_router(billing.router, prefix="/billing", tags=["billing"])
 api_router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 api_router.include_router(legal.router, prefix="/legal", tags=["legal"])
+api_router.include_router(guest.router, prefix="/guest", tags=["guest"])
 api_router.include_router(admin.router, prefix="/admin", tags=["admin"])

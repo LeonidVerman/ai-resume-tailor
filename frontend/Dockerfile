@@ -23,6 +23,14 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# Turnstile site key for the guest /try flow (#155).  NEXT_PUBLIC_* values
+# are inlined at build time; empty means the widget shows "not configured"
+# in production builds.  Use Cloudflare's test key locally.
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
+ARG NEXT_PUBLIC_TURNSTILE_DEV_BYPASS=
+ENV NEXT_PUBLIC_TURNSTILE_DEV_BYPASS=$NEXT_PUBLIC_TURNSTILE_DEV_BYPASS
+
 RUN npm run build
 
 # ── Stage 3: Production runtime ───────────────────────────────────────────────
