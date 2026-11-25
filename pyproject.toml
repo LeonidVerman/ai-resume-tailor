@@ -10,6 +10,7 @@ dependencies = [
     "openai",
     "python-dotenv",
     "requests",
+    "httpx>=0.27",  # used directly by tailor.job (indeed, scrape); no longer pulled in by openai>=3
     "beautifulsoup4",
     "python-docx",
     "playwright",
