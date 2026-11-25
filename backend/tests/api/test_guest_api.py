@@ -26,6 +26,18 @@ from backend.app.services import guest_service as gs
 from backend.tests.conftest import _seed_legal_docs
 
 
+@pytest.fixture(autouse=True)
+def _stub_turnstile(monkeypatch):
+    """Never call Cloudflare from tests.
+
+    ``verify_turnstile`` returns 503 when ``TURNSTILE_SECRET`` is unset outside
+    development, so without this stub the session tests pass or fail depending
+    on the developer's .env (CI has no secret).
+    """
+    import backend.app.api.guest as guest_api
+    monkeypatch.setattr(guest_api, "verify_turnstile", lambda *a, **k: None)
+
+
 @pytest.fixture()
 def guest_client(db):
     """TestClient with the DB override but NO auth override (public route)."""
