@@ -1,5 +1,23 @@
 # Release Notes
 
+## 0.8.9.2.BETA — 2026-08-01
+
+### Bug fixes
+- **#158 Broken layout in PDF path**: three fixes for PDF-origin resumes generated through the SaaS pipeline. (1) `ParagraphProfile.y_top_pt` is now serialized in the stored IR (with `y_pt` fallback for existing rows), so the DB round-trip no longer zeroes the geometry the renderer keys on — previously the header collapsed into a one-row contact-bar table with the LinkedIn line rendering one character per line, and after this fix fresh-parse and round-trip renders are byte-identical; 41 previously failing tests (IR round-trip, page images, format round-trip) turned out to be latent symptoms and now pass. (2) Wrapped continuation lines of replaced summary/skills paragraphs are blanked instead of being re-appended verbatim and rendering as stray text after the last section. (3) The download-time render fallback converts resume PDFs via LibreOffice instead of the low-fidelity xhtml2pdf converter.
+
+### New features
+- **#159 Add original resume template to download run data archive**: the run pack (single-run and date-range admin downloads) now includes the original uploaded resume template (`{CandidateName}_Resume_Template.pdf|docx`) alongside the debug JSON and the generated resume/cover-letter artifacts.
+
+---
+
+## 0.8.9.1.BETA — 2026-07-27
+
+### Bug fixes
+- **#156 Error in PDF template generation**: PDF-origin resumes rendered from their stored IR (the SaaS generation and download path) crashed with `max() arg is an empty sequence` when no header paragraph carried a layout profile, leaving runs without resume DOCX/PDF artifacts; the header-height computation now falls back to 0 so rendering completes.
+- **#152 DOCX - remaining rendering/injection problems of sample 36**: skills redistribution guarded so programming-language content no longer lands in spoken-language slots; orphan template bullets left after role replacement are neutralized instead of rendering empty; injected bullets and tech-stack lines inherit numbering and indentation from same-role donor paragraphs; preserved adjunct paragraphs are removed when a full-role replacement leaves them unused.
+
+---
+
 ## 0.8.9.BETA — 2026-07-26
 
 ### Bug fixes

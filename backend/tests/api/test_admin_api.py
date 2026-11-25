@@ -62,6 +62,18 @@ def _mock_storage(*, debug_bytes=b'{"generation_run_id":"1"}', file_bytes=b"fake
     return storage
 
 
+def _make_structured_resume(db, user, *, source_file_url="documents/u/templates/316.pdf"):
+    from backend.app.db.models.structured_resume import StructuredResume
+    resume = StructuredResume(
+        user_id=user.id,
+        resume_jsonb={"text": "template text"},
+        source_file_url=source_file_url,
+    )
+    db.add(resume)
+    db.flush()
+    return resume
+
+
 def _fake_eval_response(run_id: int) -> EvaluationResponse:
     return EvaluationResponse(
         id=1,
@@ -195,6 +207,59 @@ class TestDownloadRunDataById:
         assert any(n.endswith(".pdf") for n in names)
         # no subfolder prefix for single-run download
         assert all("/" not in n for n in names)
+
+    def test_includes_resume_template_when_linked(self, admin_client, db, admin_user):
+        # Issue #159: the pack contains the original uploaded template when
+        # resume_jsonb carries structured_resume_id.
+        resume = _make_structured_resume(db, admin_user)
+        run = _make_run(db, admin_user)
+        _make_doc(db, run, admin_user,
+                  resume_jsonb={"text": "resume text", "candidate_name": "Jane Smith",
+                                "structured_resume_id": resume.id},
+                  resume_docx_url="resume/docx/key",
+                  resume_pdf_url="resume/pdf/key",
+                  cover_letter_docx_url="cl/docx/key",
+                  cover_letter_pdf_url="cl/pdf/key")
+
+        with patch("backend.app.api.admin._storage_service", return_value=_mock_storage()):
+            resp = admin_client.get(f"{API_RUN_DATA}/{run.id}")
+
+        assert resp.status_code == 200
+        zf = zipfile.ZipFile(io.BytesIO(resp.content))
+        names = zf.namelist()
+        assert len(names) == 8
+        assert "Jane_Smith_Resume_Template.pdf" in names
+
+    def test_template_extension_follows_source_file(self, admin_client, db, admin_user):
+        resume = _make_structured_resume(db, admin_user, source_file_url="documents/u/templates/28.docx")
+        run = _make_run(db, admin_user)
+        _make_doc(db, run, admin_user,
+                  resume_jsonb={"text": "resume text", "candidate_name": "Jane Smith",
+                                "structured_resume_id": resume.id})
+
+        with patch("backend.app.api.admin._storage_service", return_value=_mock_storage()):
+            resp = admin_client.get(f"{API_RUN_DATA}/{run.id}")
+
+        assert resp.status_code == 200
+        names = zipfile.ZipFile(io.BytesIO(resp.content)).namelist()
+        assert "Jane_Smith_Resume_Template.docx" in names
+
+    def test_pack_unchanged_when_no_structured_resume_id(self, admin_client, db, admin_user):
+        # Legacy docs without the linkage keep the 7-file pack, no error.
+        run = _make_run(db, admin_user)
+        _make_doc(db, run, admin_user,
+                  resume_docx_url="resume/docx/key",
+                  resume_pdf_url="resume/pdf/key",
+                  cover_letter_docx_url="cl/docx/key",
+                  cover_letter_pdf_url="cl/pdf/key")
+
+        with patch("backend.app.api.admin._storage_service", return_value=_mock_storage()):
+            resp = admin_client.get(f"{API_RUN_DATA}/{run.id}")
+
+        assert resp.status_code == 200
+        names = zipfile.ZipFile(io.BytesIO(resp.content)).namelist()
+        assert len(names) == 7
+        assert not any("Template" in n for n in names)
 
     def test_skips_missing_storage_urls(self, admin_client, db, admin_user):
         run = _make_run(db, admin_user)

@@ -102,8 +102,12 @@ class ParagraphProfile:
     # Set by pdf_parser for role headers with non-uniform bold across spans.
     # Not serialised to JSON (runtime-only, like inline_image_bytes).
     text_runs: list | None = None
-    # Absolute Y position of the block top in PDF points (runtime-only; not serialised).
-    # Set by _extract_paragraphs for section-label-column pairing in parse_pdf.
+    # Absolute Y position of the block top in PDF points.  Set by
+    # _extract_paragraphs for section-label-column pairing in parse_pdf.
+    # Serialised since issue #158: the renderer keys header grouping, column
+    # sorting, and same-level section detection on it, so losing it in the DB
+    # round-trip broke SaaS PDF-path layout (from_dict falls back to y_pt for
+    # rows stored before the fix).
     y_top_pt: float = 0.0
     # Serialised geometry fields — page-absolute PDF coordinates for the line/span.
     # Set by _extract_paragraphs; preserved in IR JSON so renderers and downstream
@@ -129,7 +133,8 @@ class ParagraphProfile:
             "text_color": self.text_color,
             "background_color": self.background_color,
             "column_id": self.column_id,
-            # inline_image_bytes, body_text_x0_pt, text_runs, y_top_pt: runtime-only, not serialised
+            # inline_image_bytes, body_text_x0_pt, text_runs: runtime-only, not serialised
+            "y_top_pt": self.y_top_pt,
             "x_pt": self.x_pt,
             "y_pt": self.y_pt,
             "width_pt": self.width_pt,
@@ -153,6 +158,10 @@ class ParagraphProfile:
             text_color=d.get("text_color"),
             background_color=d.get("background_color"),
             column_id=d.get("column_id"),
+            # y_top_pt was runtime-only until issue #158; IR dicts stored in the
+            # DB before then lack the key, but y_pt carries the identical value
+            # at parse time, so fall back to it for pre-existing rows.
+            y_top_pt=float(d.get("y_top_pt", d.get("y_pt", 0.0)) or 0.0),
             x_pt=float(d.get("x_pt", 0.0)),
             y_pt=float(d.get("y_pt", 0.0)),
             width_pt=float(d.get("width_pt", 0.0)),
